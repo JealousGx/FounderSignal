@@ -49,6 +49,17 @@ update when done.
 
 FounderSignal is inspired by the need to quickly iterate on startup ideas, get real feedback, and reduce time spent building products no one wants.
 
-## 📄 License
+## 📜 License & Attribution
 
-MIT License
+### Code License
+
+This project's **code** is licensed under the [MIT License](LICENSE).
+
+## 🔏 Enforcement
+
+All derivative works must include:
+
+```text
+Originally created by Abdul Mateen - https://github.com/JealousGx
+Derived from https://github.com/JealousGx/FounderSignal
+```

@@ -32,5 +32,14 @@
     "tailwindcss": "^4",
     "tw-animate-css": "^1.2.9",
     "typescript": "^5"
+  },
+  "author": {
+    "name": "JealousGx",
+    "url": "https://jealous.dev"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JealousGx/FounderSignal"
   }
 }
