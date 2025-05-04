@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/utils";
+import { auth } from "@clerk/nextjs/server";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import Image from "next/image";
 
@@ -74,27 +75,31 @@ function formatCommentDate(dateString: string) {
 }
 
 export const CommentsSection = async ({ ideaId }: { ideaId: string }) => {
+  const { userId } = await auth();
   const comments = await getCommentsForIdea(ideaId);
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-8">
-      <div className="p-6 md:p-8 border-b border-gray-100">
+      <div className="p-4 md:p-6 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">Comments ({comments.length})</h2>
-          <Link
-            href="#comment-form"
-            variant="ghost"
-            size="sm"
-            className="text-primary font-medium"
-          >
-            Add comment
-          </Link>
+
+          {userId && (
+            <Link
+              href="#comment-form"
+              variant="ghost"
+              size="sm"
+              className="text-primary font-medium"
+            >
+              Add comment
+            </Link>
+          )}
         </div>
       </div>
 
       <div className="divide-y divide-gray-100">
         {comments.map((comment) => (
-          <div key={comment.id} className="p-6 md:p-8">
+          <div key={comment.id} className="p-4 md:p-6">
             <div className="flex gap-4">
               <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
                 <Image
@@ -105,6 +110,7 @@ export const CommentsSection = async ({ ideaId }: { ideaId: string }) => {
                   className="object-cover"
                 />
               </div>
+
               <div className="flex-1">
                 <div className="flex justify-between items-center mb-2">
                   <div>
@@ -114,41 +120,48 @@ export const CommentsSection = async ({ ideaId }: { ideaId: string }) => {
                     </p>
                   </div>
                 </div>
-                <p className="text-gray-700 mb-4">{comment.content}</p>
-                <div className="flex items-center gap-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`flex items-center gap-1 text-sm ${
-                      comment.likedByUser
-                        ? "text-primary font-medium"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    <ThumbsUp className="w-4 h-4" />
-                    <span>{comment.likes}</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`${
-                      comment.dislikedByUser
-                        ? "text-red-500 font-medium"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    <ThumbsDown className="w-4 h-4" />
 
-                    <span>{comment.dislikes}</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    Reply
-                  </Button>
-                </div>
+                <p className="text-gray-700 mb-4">{comment.content}</p>
+
+                {userId && (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`flex items-center gap-1 text-sm ${
+                        comment.likedByUser
+                          ? "text-primary font-medium"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      <ThumbsUp className="w-4 h-4" />
+
+                      <span>{comment.likes}</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`${
+                        comment.dislikedByUser
+                          ? "text-red-500 font-medium"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      <ThumbsDown className="w-4 h-4" />
+
+                      <span>{comment.dislikes}</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      Reply
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -156,20 +169,24 @@ export const CommentsSection = async ({ ideaId }: { ideaId: string }) => {
       </div>
 
       {/* Comment form */}
-      <div className="p-6 md:p-8 bg-gray-50">
-        <h3 className="text-md font-medium mb-4">Leave a comment</h3>
+      {userId && (
+        <div className="p-4 md:p-6 bg-gray-50">
+          <h3 className="text-md font-medium mb-4">Leave a comment</h3>
 
-        <form className="space-y-4" id="comment-form">
-          <Textarea
-            className="w-full border border-gray-300 rounded-lg p-3 min-h-[100px]"
-            placeholder="Share your thoughts on this idea..."
-          ></Textarea>
+          <form className="space-y-4" id="comment-form">
+            <Textarea
+              className="w-full border border-gray-300 rounded-lg p-3 min-h-[100px]"
+              placeholder="Share your thoughts on this idea..."
+            ></Textarea>
 
-          <div className="flex justify-end">
-            <Button type="submit">Post comment</Button>
-          </div>
-        </form>
-      </div>
+            <div className="flex justify-end">
+              <Button type="submit" className="flex justify-end w-max">
+                Post comment
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

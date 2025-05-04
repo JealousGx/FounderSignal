@@ -248,11 +248,12 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
                   </div>
                 ))}
               </div>
+
               <div className="mt-8 pt-6 border-t border-gray-100">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium">Is this idea helpful?</h3>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
                     <Button size="sm" variant="ghost">
                       <ThumbsUp
                         className={`w-5 h-5 ${

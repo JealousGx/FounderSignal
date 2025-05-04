@@ -1,4 +1,3 @@
-// web/app/dashboard/page.tsx
 import { auth } from "@clerk/nextjs/server";
 
 export default async function Dashboard() {
