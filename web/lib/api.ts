@@ -1,3 +1,6 @@
+import { Idea } from "@/types/idea";
+import { Report } from "@/types/report";
+
 export async function submitIdea(data: {
   title: string;
   description: string;
@@ -53,4 +56,352 @@ export async function getTopIdeasForUser(userId: string) {
       dates: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     },
   ];
+}
+
+export async function getIdeaById(id: string): Promise<Idea | null> {
+  const ideas = await getUserIdeas(id);
+  return ideas.find((idea) => idea.id === id) || null;
+}
+
+export async function getUserIdeas(userId: string): Promise<Idea[]> {
+  // This would be an API call in a real app
+  return [
+    {
+      id: "idea-1",
+      title: "EcoTrack",
+      description:
+        "An app that helps consumers track their carbon footprint across daily activities and purchases with personalized recommendations for reducing environmental impact.",
+      status: "Active",
+      stage: "Validation",
+      signups: 183,
+      views: 458,
+      engagementRate: 72,
+      createdAt: "2023-10-15T14:32:00Z",
+      updatedAt: "2023-10-20T09:15:00Z",
+      imageUrl:
+        "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=200&auto=format&fit=crop",
+    },
+    {
+      id: "idea-2",
+      title: "RemoteTeamOS",
+      description:
+        "All-in-one platform for remote teams with project management tools, virtual watercooler and automated check-ins to build culture across time zones.",
+      status: "Completed",
+      stage: "MVP",
+      signups: 427,
+      views: 1203,
+      engagementRate: 81,
+      createdAt: "2023-09-28T16:20:00Z",
+      updatedAt: "2023-10-18T11:42:00Z",
+      imageUrl:
+        "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=200&auto=format&fit=crop",
+    },
+    {
+      id: "idea-3",
+      title: "SkillSwap",
+      description:
+        "Peer-to-peer platform where professionals can exchange skills and knowledge through 1:1 virtual sessions.",
+      status: "Paused",
+      stage: "Validation",
+      signups: 91,
+      views: 245,
+      engagementRate: 43,
+      createdAt: "2023-10-03T09:15:00Z",
+      updatedAt: "2023-10-12T14:30:00Z",
+      imageUrl:
+        "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=200&auto=format&fit=crop",
+    },
+    {
+      id: "idea-4",
+      title: "HealthHub",
+      description:
+        "A personalized health tracking app that integrates with wearables and provides AI-driven insights to improve wellness outcomes.",
+      status: "Draft",
+      stage: "Ideation",
+      signups: 0,
+      views: 0,
+      engagementRate: 0,
+      createdAt: "2023-10-22T10:45:00Z",
+      updatedAt: "2023-10-22T10:45:00Z",
+      imageUrl:
+        "https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=200&auto=format&fit=crop",
+    },
+    {
+      id: "idea-5",
+      title: "LocalFresh",
+      description:
+        "Marketplace connecting consumers directly to local farmers and food producers for fresher ingredients and supporting local agriculture.",
+      status: "Active",
+      stage: "MVP",
+      signups: 214,
+      views: 680,
+      engagementRate: 67,
+      createdAt: "2023-09-12T13:20:00Z",
+      updatedAt: "2023-10-19T16:25:00Z",
+      imageUrl:
+        "https://images.unsplash.com/photo-1474440692490-2e83ae13ba29?q=80&w=200&auto=format&fit=crop",
+    },
+  ];
+}
+
+export async function getUserReports(userId: string): Promise<Report[]> {
+  // This would be an API call in a real app
+  // For now, we'll return mock data
+  return [
+    {
+      id: "report-1",
+      ideaId: "idea-1",
+      ideaTitle: "EcoTrack",
+      date: "2023-10-28T09:00:00Z",
+      type: "Weekly",
+      views: 458,
+      signups: 183,
+      conversionRate: 39.9,
+      validated: true,
+      sentiment: 0.87,
+    },
+    {
+      id: "report-2",
+      ideaId: "idea-2",
+      ideaTitle: "RemoteTeamOS",
+      date: "2023-10-21T15:30:00Z",
+      type: "Monthly",
+      views: 1203,
+      signups: 427,
+      conversionRate: 35.5,
+      validated: true,
+      sentiment: 0.92,
+    },
+    {
+      id: "report-3",
+      ideaId: "idea-3",
+      ideaTitle: "SkillSwap",
+      date: "2023-10-14T11:15:00Z",
+      type: "Weekly",
+      views: 245,
+      signups: 91,
+      conversionRate: 37.1,
+      validated: false,
+      sentiment: 0.76,
+    },
+    {
+      id: "report-4",
+      ideaId: "idea-5",
+      ideaTitle: "LocalFresh",
+      date: "2023-10-07T16:45:00Z",
+      type: "Milestone",
+      views: 680,
+      signups: 214,
+      conversionRate: 31.5,
+      validated: true,
+      sentiment: 0.81,
+    },
+    {
+      id: "report-5",
+      ideaId: "idea-1",
+      ideaTitle: "EcoTrack",
+      date: "2023-09-30T10:30:00Z",
+      type: "Weekly",
+      views: 352,
+      signups: 127,
+      conversionRate: 36.1,
+      validated: false,
+      sentiment: 0.72,
+    },
+    {
+      id: "report-6",
+      ideaId: "idea-2",
+      ideaTitle: "RemoteTeamOS",
+      date: "2023-09-23T14:00:00Z",
+      type: "Final",
+      views: 982,
+      signups: 335,
+      conversionRate: 34.1,
+      validated: true,
+      sentiment: 0.89,
+    },
+    {
+      id: "report-7",
+      ideaId: "idea-3",
+      ideaTitle: "SkillSwap",
+      date: "2023-09-16T09:15:00Z",
+      type: "Weekly",
+      views: 198,
+      signups: 67,
+      conversionRate: 33.8,
+      validated: false,
+      sentiment: 0.65,
+    },
+  ];
+}
+
+export async function getReportById(id: string): Promise<Report | null> {
+  const reports = await getUserReports("user_123");
+  return reports.find((report) => report.id === id) || null;
+}
+
+export async function getAudienceStats(userId: string) {
+  // This would be an API call in a real app
+  // For now, we'll return mock data
+  return {
+    totalSubscribers: 823,
+    newSubscribers: 127,
+    newSubscribersChange: 12, // percent change compared to previous period
+    averageConversionRate: 32.5,
+    conversionRateChange: -2.3, // percent change compared to previous period
+    confirmedSubscribers: 741,
+    totalIdeas: 5,
+  };
+}
+
+export async function getAudienceMembers(userId: string) {
+  // This would be an API call in a real app
+  // For now, we'll return mock data
+  return [
+    {
+      id: "sub_1",
+      email: "sarah.johnson@example.com",
+      ideaId: "idea-1",
+      ideaTitle: "EcoTrack",
+      signupDate: "2023-04-22T14:32:00Z",
+      confirmed: true,
+    },
+    {
+      id: "sub_2",
+      email: "michael.smith@example.com",
+      ideaId: "idea-2",
+      ideaTitle: "RemoteTeamOS",
+      signupDate: "2023-04-21T10:15:00Z",
+      confirmed: true,
+    },
+    {
+      id: "sub_3",
+      email: "emily.davis@example.com",
+      ideaId: "idea-1",
+      ideaTitle: "EcoTrack",
+      signupDate: "2023-04-20T16:48:00Z",
+      confirmed: false,
+    },
+    {
+      id: "sub_4",
+      email: "david.wilson@example.com",
+      ideaId: "idea-3",
+      ideaTitle: "SkillSwap",
+      signupDate: "2023-04-20T09:22:00Z",
+      confirmed: true,
+    },
+    {
+      id: "sub_5",
+      email: "jennifer.brown@example.com",
+      ideaId: "idea-2",
+      ideaTitle: "RemoteTeamOS",
+      signupDate: "2023-04-19T14:05:00Z",
+      confirmed: true,
+    },
+    {
+      id: "sub_6",
+      email: "robert.thompson@example.com",
+      ideaId: "idea-1",
+      ideaTitle: "EcoTrack",
+      signupDate: "2023-04-19T11:37:00Z",
+      confirmed: true,
+    },
+    {
+      id: "sub_7",
+      email: "lisa.garcia@example.com",
+      ideaId: "idea-3",
+      ideaTitle: "SkillSwap",
+      signupDate: "2023-04-18T16:20:00Z",
+      confirmed: false,
+    },
+    {
+      id: "sub_8",
+      email: "james.martinez@example.com",
+      ideaId: "idea-1",
+      ideaTitle: "EcoTrack",
+      signupDate: "2023-04-18T10:45:00Z",
+      confirmed: true,
+    },
+    {
+      id: "sub_9",
+      email: "linda.rodriguez@example.com",
+      ideaId: "idea-2",
+      ideaTitle: "RemoteTeamOS",
+      signupDate: "2023-04-17T15:30:00Z",
+      confirmed: true,
+    },
+    {
+      id: "sub_10",
+      email: "william.lee@example.com",
+      ideaId: "idea-3",
+      ideaTitle: "SkillSwap",
+      signupDate: "2023-04-17T09:15:00Z",
+      confirmed: true,
+    },
+    {
+      id: "sub_11",
+      email: "karen.walker@example.com",
+      ideaId: "idea-1",
+      ideaTitle: "EcoTrack",
+      signupDate: "2023-04-16T16:50:00Z",
+      confirmed: true,
+    },
+    {
+      id: "sub_12",
+      email: "richard.hall@example.com",
+      ideaId: "idea-2",
+      ideaTitle: "RemoteTeamOS",
+      signupDate: "2023-04-16T11:25:00Z",
+      confirmed: true,
+    },
+  ];
+}
+
+export async function getUserSettings(userId: string) {
+  // This would be an API call in a real app
+  // For now, we'll return mock data
+  return {
+    profile: {
+      title: "Founder & Product Manager",
+      location: "San Francisco, CA",
+      bio: "Building the next generation of tools for founders and early-stage startups. Passionate about product development and user experience.",
+      company: "FounderSignal",
+      website: "https://foundersignal.io",
+    },
+    notifications: {
+      email_marketing: true,
+      email_updates: true,
+      email_validation: true,
+      browser_push: false,
+      weekly_summary: true,
+      idea_comments: true,
+    },
+    integrations: {
+      google_analytics: {
+        connected: true,
+        connectedAt: "2023-01-15T09:24:00Z",
+      },
+      mailchimp: {
+        connected: false,
+      },
+      stripe: {
+        connected: true,
+        connectedAt: "2023-02-10T14:30:00Z",
+      },
+      zapier: {
+        connected: false,
+      },
+    },
+    appearance: {
+      theme: "system",
+      densityMode: "comfortable",
+      animations: true,
+    },
+  };
+}
+
+export async function updateUserSettings(userId: string, settings: any) {
+  // This would update settings via an API call in a real app
+  console.log("Settings updated:", settings);
+  return { success: true };
 }

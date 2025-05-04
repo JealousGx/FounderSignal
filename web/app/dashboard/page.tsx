@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import MetricsOverview from "@/components/dashboard/metrics-overview";
 import RecentIdeas from "@/components/dashboard/ideas/recent-ideas";
 import ActivityFeed from "@/components/dashboard/activity-feed";
-import IdeaAnalytics from "@/components/dashboard/idea-analytics";
+import IdeaAnalytics from "@/components/dashboard/ideas/idea-analytics";
 import WelcomeBanner from "@/components/dashboard/welcome-banner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTopIdeasForUser } from "@/lib/api";

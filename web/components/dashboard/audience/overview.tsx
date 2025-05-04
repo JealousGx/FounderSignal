@@ -1,0 +1,79 @@
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+
+interface AudienceOverviewProps {
+  stats: {
+    totalSubscribers: number;
+    newSubscribers: number;
+    newSubscribersChange: number;
+    averageConversionRate: number;
+    conversionRateChange: number;
+    totalIdeas: number;
+  };
+}
+
+export default function AudienceOverview({ stats }: AudienceOverviewProps) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <MetricCard
+        label="Total Subscribers"
+        value={stats.totalSubscribers}
+        valueFormatted={stats.totalSubscribers.toLocaleString()}
+      />
+
+      <MetricCard
+        label="New Subscribers (30 days)"
+        value={stats.newSubscribers}
+        valueFormatted={stats.newSubscribers.toLocaleString()}
+        change={stats.newSubscribersChange}
+      />
+
+      <MetricCard
+        label="Average Conversion Rate"
+        value={stats.averageConversionRate}
+        valueFormatted={`${stats.averageConversionRate.toFixed(1)}%`}
+        change={stats.conversionRateChange}
+      />
+
+      <MetricCard
+        label="Active Ideas"
+        value={stats.totalIdeas}
+        valueFormatted={stats.totalIdeas.toString()}
+      />
+    </div>
+  );
+}
+
+interface MetricCardProps {
+  label: string;
+  value: number;
+  valueFormatted: string;
+  change?: number;
+}
+
+function MetricCard({ label, valueFormatted, change }: MetricCardProps) {
+  return (
+    <Card>
+      <CardContent className="p-4 md:p-6">
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <div className="flex items-baseline mt-1 gap-2">
+          <h3 className="text-2xl font-bold">{valueFormatted}</h3>
+          {change !== undefined && Math.abs(change) > 0 && (
+            <div
+              className={`flex items-center text-xs font-medium ${
+                change > 0 ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {change > 0 ? (
+                <ArrowUpRight className="h-3.5 w-3.5 mr-0.5" />
+              ) : (
+                <ArrowDownRight className="h-3.5 w-3.5 mr-0.5" />
+              )}
+              {Math.abs(change)}%
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
