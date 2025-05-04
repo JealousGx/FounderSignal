@@ -8,6 +8,7 @@ export default async function ActivityFeed({ userId }: { userId: string }) {
     <div className="bg-white rounded-xl border border-gray-200 h-max">
       <div className="px-4 md:px-6 pt-4 md:pt-6 pb-3 md:pb-4">
         <h2 className="text-lg font-bold">Recent Activity</h2>
+
         <p className="text-xs md:text-sm text-gray-600">
           Latest events from your MVPs
         </p>
@@ -27,6 +28,7 @@ export default async function ActivityFeed({ userId }: { userId: string }) {
 
               <div>
                 <p className="text-xs md:text-sm">{activity.description}</p>
+
                 <p className="text-xs text-gray-500 mt-0.5 md:mt-1">
                   {formatDistanceToNow(new Date(activity.timestamp), {
                     addSuffix: true,
@@ -71,9 +73,8 @@ function getActivityIconStyles(type: string) {
   }
 }
 
-// Mock function - replace with actual implementation
 async function getUserActivities(userId: string) {
-  // In a real app, fetch from API or database
+  // TODO: Replace with actual API call to fetch user activities
   return [
     {
       id: "act-1",

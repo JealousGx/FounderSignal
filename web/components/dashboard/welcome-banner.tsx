@@ -13,10 +13,12 @@ export default async function WelcomeBanner() {
           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
             Welcome back, {firstName}
           </h1>
+
           <p className="text-sm md:text-base text-gray-600 mt-1">
             Here&apos;s what&apos;s happening with your validation projects
           </p>
         </div>
+
         <div className="hidden md:block">
           <Link
             href="/submit"
@@ -31,8 +33,7 @@ export default async function WelcomeBanner() {
   );
 }
 
-// Mock function - replace with actual implementation
 async function getUserDetails(userId: string) {
-  // In a real app, fetch from API or database
+  // TODO: Replace with actual API call to fetch user details
   return { firstName: "Alex" };
 }

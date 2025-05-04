@@ -12,6 +12,7 @@ export default async function MetricsOverview({ userId }: { userId: string }) {
         icon={<Users className="h-5 w-5 md:h-6 md:w-6" />}
         color="blue"
       />
+
       <MetricCard
         title="Avg. Conversion"
         value={`${metrics.avgConversion}%`}
@@ -19,6 +20,7 @@ export default async function MetricsOverview({ userId }: { userId: string }) {
         icon={<TrendingUp className="h-5 w-5 md:h-6 md:w-6" />}
         color="green"
       />
+
       <MetricCard
         title="Ideas Validated"
         value={metrics.ideasValidated}
@@ -26,10 +28,11 @@ export default async function MetricsOverview({ userId }: { userId: string }) {
         icon={<CheckCircle className="h-5 w-5 md:h-6 md:w-6" />}
         color="purple"
       />
+
       <MetricCard
         title="Avg. Time"
         value={metrics.timeToValidate}
-        change={0} // No change indicator for this metric
+        change={0}
         icon={<Clock className="h-5 w-5 md:h-6 md:w-6" />}
         color="amber"
       />
@@ -67,6 +70,7 @@ function MetricCard({ title, value, change, icon, color }: MetricCardProps) {
           <p className="text-xs md:text-sm font-medium text-gray-600">
             {title}
           </p>
+
           <p className="text-xl md:text-2xl font-bold mt-1 md:mt-2">{value}</p>
 
           {change !== 0 && (
@@ -79,6 +83,7 @@ function MetricCard({ title, value, change, icon, color }: MetricCardProps) {
                 {change > 0 ? "+" : ""}
                 {change}%
               </span>
+
               <span className="w-max text-xs text-gray-500 ml-1 hidden md:inline">
                 vs last period
               </span>
@@ -96,9 +101,8 @@ function MetricCard({ title, value, change, icon, color }: MetricCardProps) {
   );
 }
 
-// Mock function - replace with actual implementation
 async function getUserMetrics(userId: string) {
-  // In a real app, fetch from API or database
+  // TODO: Replace with actual API call to fetch user metrics
   return {
     totalSignups: 842,
     signupsChange: 12.5,
