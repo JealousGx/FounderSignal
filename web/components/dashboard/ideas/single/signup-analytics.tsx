@@ -14,7 +14,6 @@ interface SignupAnalyticsProps {
   idea: Idea;
 }
 
-// Simplify the SignupAnalytics component
 export default function SignupAnalytics({ idea }: SignupAnalyticsProps) {
   return (
     <Card>

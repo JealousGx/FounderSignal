@@ -91,7 +91,7 @@ function RecommendationCard({ report }: { report: Report }) {
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-base">
-              Recommendation for {report.ideaTitle}
+              Recommendation for {report.idea?.title}
             </CardTitle>
             <CardDescription>
               {new Date(report.date).toLocaleDateString()}

@@ -1,15 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { AudienceStats } from "@/types/audience";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface AudienceOverviewProps {
-  stats: {
-    totalSubscribers: number;
-    newSubscribers: number;
-    newSubscribersChange: number;
-    averageConversionRate: number;
-    conversionRateChange: number;
-    totalIdeas: number;
-  };
+  stats: AudienceStats;
 }
 
 export default function AudienceOverview({ stats }: AudienceOverviewProps) {
@@ -56,8 +50,10 @@ function MetricCard({ label, valueFormatted, change }: MetricCardProps) {
     <Card>
       <CardContent className="p-4 md:p-6">
         <p className="text-sm text-muted-foreground">{label}</p>
+
         <div className="flex items-baseline mt-1 gap-2">
           <h3 className="text-2xl font-bold">{valueFormatted}</h3>
+
           {change !== undefined && Math.abs(change) > 0 && (
             <div
               className={`flex items-center text-xs font-medium ${

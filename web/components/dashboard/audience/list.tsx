@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,21 +24,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  ChevronDown,
-  Search,
-  MoreHorizontal,
-  Mail,
-  Tag,
-  CheckCircle,
-  XCircle,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { ChevronDown, Search, MoreHorizontal, Mail, Tag } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { AudienceMember } from "@/types/audience";
+import { Pagination } from "@/components/ui/pagination";
 
 interface AudienceListProps {
-  members: any[];
+  members: AudienceMember[];
 }
 
 export default function AudienceList({ members }: AudienceListProps) {
@@ -50,8 +41,8 @@ export default function AudienceList({ members }: AudienceListProps) {
   const filteredMembers = members.filter(
     (member) =>
       member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (member.ideaTitle &&
-        member.ideaTitle.toLowerCase().includes(searchQuery.toLowerCase()))
+      (member.idea?.title &&
+        member.idea?.title.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
@@ -109,7 +100,6 @@ export default function AudienceList({ members }: AudienceListProps) {
                 <TableHead>Email</TableHead>
                 <TableHead>Signed Up For</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -137,26 +127,10 @@ export default function AudienceList({ members }: AudienceListProps) {
                     <TableCell>
                       <div className="flex items-center">
                         <Tag className="h-4 w-4 mr-2 text-muted-foreground" />
-                        {member.ideaTitle}
+                        {member.idea?.title}
                       </div>
                     </TableCell>
-                    <TableCell>{formatDate(member.signupDate)}</TableCell>
-                    <TableCell>
-                      {member.confirmed ? (
-                        <Badge className="bg-green-100 text-green-800 border-green-200 flex w-fit items-center">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Confirmed
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="bg-amber-50 text-amber-800 border-amber-200 flex w-fit items-center"
-                        >
-                          <XCircle className="h-3 w-3 mr-1" />
-                          Pending
-                        </Badge>
-                      )}
-                    </TableCell>
+                    <TableCell>{formatDate(member.signupTime)}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -181,34 +155,11 @@ export default function AudienceList({ members }: AudienceListProps) {
           </Table>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center md:justify-end space-x-2 py-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="sr-only">Previous Page</span>
-            </Button>
-            <div className="text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-              <span className="sr-only">Next Page</span>
-            </Button>
-          </div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </CardContent>
     </Card>
   );

@@ -44,7 +44,7 @@ export default function ReportHeader({ report }: ReportHeaderProps) {
               </div>
             </div>
 
-            <h2 className="text-2xl font-bold">{report.ideaTitle}</h2>
+            <h2 className="text-2xl font-bold">{report.idea?.title}</h2>
           </div>
 
           <div className="flex flex-wrap gap-2">

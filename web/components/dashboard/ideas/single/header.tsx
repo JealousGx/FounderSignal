@@ -1,11 +1,9 @@
 import { Link } from "@/components/ui/link";
+import { Idea } from "@/types/idea";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 interface IdeaHeaderProps {
-  idea: {
-    id: string;
-    title: string;
-  };
+  idea: Idea;
 }
 
 export default function IdeaHeader({ idea }: IdeaHeaderProps) {

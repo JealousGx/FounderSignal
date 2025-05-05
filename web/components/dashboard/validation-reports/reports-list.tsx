@@ -40,7 +40,7 @@ export default function ReportsList({ reports }: ReportsListProps) {
 
   const filteredReports = reports.filter(
     (report) =>
-      report.ideaTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.idea?.title!.toLowerCase().includes(searchQuery.toLowerCase()) ||
       report.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -129,7 +129,7 @@ export default function ReportsList({ reports }: ReportsListProps) {
                         href={`/dashboard/reports/${report.id}`}
                         className="text-blue-600 hover:underline"
                       >
-                        {report.ideaTitle}
+                        {report.idea?.title}
                       </Link>
                     </TableCell>
 

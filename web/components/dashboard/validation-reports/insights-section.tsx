@@ -36,25 +36,14 @@ interface InsightsSectionProps {
   reports: Report[];
 }
 
-interface Insight {
-  id: string;
-  ideaId: string;
-  ideaTitle: string;
-  conversionRate: number;
-  signups: number;
-  validated: boolean;
-  date: string;
-  type: string;
-}
-
 export default function InsightsSection({ reports }: InsightsSectionProps) {
   // Process reports data for charts
   const conversionData = reports
     .map((report) => ({
-      name: formatShortTitle(report.ideaTitle),
+      name: formatShortTitle(report.idea?.title as string),
       value: report.conversionRate,
       id: report.ideaId,
-      fullTitle: report.ideaTitle,
+      fullTitle: report.idea?.title,
     }))
     .sort((a, b) => b.value - a.value);
 
@@ -257,7 +246,8 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                         </h3>
 
                         <p className="text-muted-foreground text-sm">
-                          From {insight.ideaTitle} • {formatDate(insight.date)}
+                          From {insight.idea?.title} •{" "}
+                          {formatDate(insight.date)}
                         </p>
                       </div>
 
@@ -300,7 +290,7 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
   );
 }
 
-function getInsightIcon(insight: Insight) {
+function getInsightIcon(insight: Partial<Report>) {
   const icons = {
     "high-conversion": <MousePointerClick className="h-4 w-4" />,
     "user-milestone": <Users className="h-4 w-4" />,
@@ -314,7 +304,7 @@ function getInsightIcon(insight: Insight) {
   );
 }
 
-function getInsightIconColor(insight: Insight) {
+function getInsightIconColor(insight: Partial<Report>) {
   const colors = {
     "high-conversion": "bg-blue-50 text-blue-600",
     "user-milestone": "bg-green-50 text-green-600",
@@ -327,7 +317,7 @@ function getInsightIconColor(insight: Insight) {
   );
 }
 
-function getInsightBadgeColor(insight: Insight) {
+function getInsightBadgeColor(insight: Partial<Report>) {
   const colors = {
     Weekly: "bg-blue-50 text-blue-600 border-blue-200",
     Monthly: "bg-purple-50 text-purple-600 border-purple-200",
@@ -341,17 +331,18 @@ function getInsightBadgeColor(insight: Insight) {
   );
 }
 
-function getInsightType(insight: Insight) {
-  if (insight.conversionRate > 50) return "high-conversion";
+function getInsightType(insight: Partial<Report>) {
+  if (insight.conversionRate && insight.conversionRate > 50)
+    return "high-conversion";
 
-  if (insight.signups > 100) return "user-milestone";
+  if (insight.signups && insight.signups > 100) return "user-milestone";
 
   if (insight.validated) return "validation-complete";
 
   return "general";
 }
 
-function getInsightTitle(insight: Insight) {
+function getInsightTitle(insight: Partial<Report>) {
   const type = getInsightType(insight);
 
   switch (type) {
@@ -362,11 +353,11 @@ function getInsightTitle(insight: Insight) {
     case "validation-complete":
       return "Validation criteria successfully met";
     default:
-      return `${insight.type} report for ${insight.ideaTitle}`;
+      return `${insight.type} report for ${insight.idea?.title}`;
   }
 }
 
-function generateInsightDescription(insight: Insight) {
+function generateInsightDescription(insight: Partial<Report>) {
   const type = getInsightType(insight);
 
   switch (type) {
@@ -374,7 +365,7 @@ function generateInsightDescription(insight: Insight) {
       return `Your landing page is performing exceptionally well with a conversion rate of ${
         insight.conversionRate
       }%. This is ${
-        insight.conversionRate - 10
+        (insight.conversionRate || 0) - 10
       }% higher than the average for similar products.`;
     case "user-milestone":
       return `You've reached ${insight.signups} signups, which is a significant milestone in your validation journey. This indicates strong initial interest in your idea.`;
