@@ -34,12 +34,15 @@ export default function TimelineData({ report }: TimelineDataProps) {
     <Card>
       <CardHeader>
         <CardTitle>Timeline Analysis</CardTitle>
+
         <CardDescription>Performance data over time</CardDescription>
       </CardHeader>
+
       <CardContent>
         <Tabs defaultValue="daily">
           <TabsList className="mb-4">
             <TabsTrigger value="daily">Daily</TabsTrigger>
+
             <TabsTrigger value="weekly">Weekly</TabsTrigger>
           </TabsList>
 
@@ -57,14 +60,18 @@ export default function TimelineData({ report }: TimelineDataProps) {
                   barSize={20}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
+
                   <XAxis
                     dataKey="date"
                     angle={-45}
                     textAnchor="end"
                     height={60}
                   />
+
                   <YAxis />
+
                   <Tooltip />
+
                   <Bar dataKey="signups" name="Signups" fill="#82ca9d" />
                 </BarChart>
               </ResponsiveContainer>
@@ -85,9 +92,13 @@ export default function TimelineData({ report }: TimelineDataProps) {
                   barSize={40}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
+
                   <XAxis dataKey="week" />
+
                   <YAxis />
+
                   <Tooltip />
+
                   <Bar dataKey="signups" name="Signups" fill="#8884d8" />
                 </BarChart>
               </ResponsiveContainer>

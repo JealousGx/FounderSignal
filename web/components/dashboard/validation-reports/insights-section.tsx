@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   BarChart,
@@ -30,7 +29,7 @@ import {
   MousePointerClick,
   Target,
 } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { Report } from "@/types/report";
 
 interface InsightsSectionProps {
@@ -84,12 +83,14 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                   <TrendingUp className="h-5 w-5" />
                   Top Converting Ideas
                 </CardTitle>
+
                 <CardDescription>
                   Conversion rates across your ideas
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
+
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
@@ -103,12 +104,14 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                   }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
+
                   <XAxis
                     dataKey="name"
                     angle={-45}
                     textAnchor="end"
                     height={70}
                   />
+
                   <YAxis
                     label={{
                       value: "Conversion Rate (%)",
@@ -117,12 +120,14 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                       style: { textAnchor: "middle" },
                     }}
                   />
+
                   <Tooltip
                     formatter={(value) => [`${value}%`, "Conversion Rate"]}
                     labelFormatter={(label, data) =>
                       data[0]?.payload?.fullTitle || label
                     }
                   />
+
                   <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]}>
                     {conversionData.map((entry, index) => (
                       <Cell
@@ -145,12 +150,14 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                   <Target className="h-5 w-5" />
                   Validation Outcomes
                 </CardTitle>
+
                 <CardDescription>
                   Success rate of your validation projects
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
+
           <CardContent className="flex flex-col items-center">
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -200,7 +207,9 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                       />
                     ))}
                   </Pie>
+
                   <Legend />
+
                   <Tooltip formatter={(value) => [`${value} reports`, ""]} />
                 </PieChart>
               </ResponsiveContainer>
@@ -218,10 +227,12 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
       <Card>
         <CardHeader>
           <CardTitle>Recent Key Insights</CardTitle>
+
           <CardDescription>
             Important findings from your latest validation reports
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           <div className="space-y-6">
             {recentInsights.map((insight) => (
@@ -244,10 +255,12 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                         <h3 className="font-medium text-base mb-1">
                           {getInsightTitle(insight)}
                         </h3>
+
                         <p className="text-muted-foreground text-sm">
                           From {insight.ideaTitle} • {formatDate(insight.date)}
                         </p>
                       </div>
+
                       <Badge
                         variant="outline"
                         className={getInsightBadgeColor(insight)}
@@ -261,12 +274,14 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                     </p>
 
                     <div className="mt-4">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/dashboard/reports/${insight.id}`}>
-                          View full report
-                          <ArrowRight className="ml-1 h-4 w-4" />
-                        </Link>
-                      </Button>
+                      <Link
+                        href={`/dashboard/reports/${insight.id}`}
+                        variant="outline"
+                        size="sm"
+                      >
+                        View full report
+                        <ArrowRight className="ml-1 h-4 w-4" />
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -285,7 +300,6 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
   );
 }
 
-// Helper functions for insights formatting
 function getInsightIcon(insight: Insight) {
   const icons = {
     "high-conversion": <MousePointerClick className="h-4 w-4" />,
@@ -329,8 +343,11 @@ function getInsightBadgeColor(insight: Insight) {
 
 function getInsightType(insight: Insight) {
   if (insight.conversionRate > 50) return "high-conversion";
+
   if (insight.signups > 100) return "user-milestone";
+
   if (insight.validated) return "validation-complete";
+
   return "general";
 }
 

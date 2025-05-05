@@ -38,8 +38,10 @@ export default function PerformanceOverview({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Validation Success</CardTitle>
+
           <CardDescription>Overall validation rate</CardDescription>
         </CardHeader>
+
         <CardContent className="pt-0">
           <div className="h-36 flex items-center justify-center">
             <div className="w-28 h-28">
@@ -51,6 +53,7 @@ export default function PerformanceOverview({
               />
             </div>
           </div>
+
           <p className="text-xs text-muted-foreground text-center mt-2">
             Based on {reports.length} total reports
           </p>
@@ -117,13 +120,16 @@ function MetricCard({
         <div className="flex justify-between">
           <div>
             <CardTitle className="text-sm font-medium">{title}</CardTitle>
+
             <CardDescription>{description}</CardDescription>
           </div>
           <div className={`rounded-full p-2.5 ${colors[color]}`}>{icon}</div>
         </div>
       </CardHeader>
+
       <CardContent className="pt-0">
         <div className="text-2xl font-bold">{value}</div>
+
         {trend > 0 && (
           <p className="text-xs flex items-center text-green-600 font-medium mt-1">
             <ArrowUpRight className="h-3 w-3 mr-1" />

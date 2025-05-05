@@ -44,8 +44,10 @@ export default function ConversionMetrics({ report }: ConversionMetricsProps) {
     <Card>
       <CardHeader>
         <CardTitle>Conversion Metrics</CardTitle>
+
         <CardDescription>From page views to successful signups</CardDescription>
       </CardHeader>
+
       <CardContent>
         <div className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -54,11 +56,13 @@ export default function ConversionMetrics({ report }: ConversionMetricsProps) {
               value={report.views}
               description="People who visited the landing page"
             />
+
             <MetricCard
               title="Total Signups"
               value={report.signups}
               description="People who signed up"
             />
+
             <MetricCard
               title="Conversion Rate"
               value={`${report.conversionRate}%`}
@@ -68,6 +72,7 @@ export default function ConversionMetrics({ report }: ConversionMetricsProps) {
 
           <div>
             <h4 className="font-medium text-sm mb-3">Conversion Funnel</h4>
+
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
@@ -80,9 +85,13 @@ export default function ConversionMetrics({ report }: ConversionMetricsProps) {
                   }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
+
                   <XAxis dataKey="name" />
+
                   <YAxis />
+
                   <Tooltip />
+
                   <Area
                     type="monotone"
                     dataKey="value"
@@ -98,24 +107,30 @@ export default function ConversionMetrics({ report }: ConversionMetricsProps) {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Views to Engaged</span>
+
                 <span className="font-medium">{viewToEngagedRate}%</span>
               </div>
+
               <Progress value={viewToEngagedRate} className="h-2" />
             </div>
 
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Engaged to Signup</span>
+
                 <span className="font-medium">{engagedToSignupRate}%</span>
               </div>
+
               <Progress value={engagedToSignupRate} className="h-2" />
             </div>
 
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Overall Conversion</span>
+
                 <span className="font-medium">{overallConversionRate}%</span>
               </div>
+
               <Progress value={overallConversionRate} className="h-2" />
             </div>
           </div>
@@ -135,7 +150,9 @@ function MetricCard({ title, value, description }: MetricCardProps) {
   return (
     <div className="bg-muted/50 rounded-md p-4">
       <h3 className="font-medium text-sm">{title}</h3>
+
       <p className="text-2xl font-bold mt-2 mb-1">{value}</p>
+
       <p className="text-xs text-muted-foreground">{description}</p>
     </div>
   );

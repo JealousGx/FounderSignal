@@ -31,8 +31,10 @@ export default function ReportOverview({ report }: ReportOverviewProps) {
     <Card>
       <CardHeader>
         <CardTitle>Performance Overview</CardTitle>
+
         <CardDescription>Signup and view metrics over time</CardDescription>
       </CardHeader>
+
       <CardContent>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
@@ -46,11 +48,17 @@ export default function ReportOverview({ report }: ReportOverviewProps) {
               }}
             >
               <CartesianGrid strokeDasharray="3 3" />
+
               <XAxis dataKey="date" />
+
               <YAxis yAxisId="left" />
+
               <YAxis yAxisId="right" orientation="right" />
+
               <Tooltip />
+
               <Legend />
+
               <Line
                 yAxisId="left"
                 type="monotone"
@@ -60,6 +68,7 @@ export default function ReportOverview({ report }: ReportOverviewProps) {
                 activeDot={{ r: 8 }}
                 strokeWidth={2}
               />
+
               <Line
                 yAxisId="right"
                 type="monotone"
@@ -71,6 +80,7 @@ export default function ReportOverview({ report }: ReportOverviewProps) {
             </LineChart>
           </ResponsiveContainer>
         </div>
+
         <div className="mt-4 text-sm text-muted-foreground">
           <p>
             This report shows a total of {report.views} page views and{" "}

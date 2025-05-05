@@ -26,6 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Link as CustomLink } from "@/components/ui/link";
 import { ChevronDown, Search, Download, ExternalLink } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Report } from "@/types/report";
@@ -49,13 +50,16 @@ export default function ReportsList({ reports }: ReportsListProps) {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <CardTitle>All Validation Reports</CardTitle>
+
             <CardDescription>
               View and analyze your validation data
             </CardDescription>
           </div>
+
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+
               <Input
                 type="search"
                 placeholder="Search reports..."
@@ -64,6 +68,7 @@ export default function ReportsList({ reports }: ReportsListProps) {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
@@ -73,27 +78,37 @@ export default function ReportsList({ reports }: ReportsListProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem>Newest first</DropdownMenuItem>
+
                 <DropdownMenuItem>Oldest first</DropdownMenuItem>
+
                 <DropdownMenuItem>Highest conversion</DropdownMenuItem>
+
                 <DropdownMenuItem>Name (A-Z)</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
       </CardHeader>
+
       <CardContent>
         <div className="border rounded-md overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Report</TableHead>
+
                 <TableHead>Date</TableHead>
+
                 <TableHead>Type</TableHead>
+
                 <TableHead>Status</TableHead>
+
                 <TableHead>Conversion</TableHead>
+
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {filteredReports.length === 0 ? (
                 <TableRow>
@@ -117,24 +132,34 @@ export default function ReportsList({ reports }: ReportsListProps) {
                         {report.ideaTitle}
                       </Link>
                     </TableCell>
+
                     <TableCell>{formatDate(report.date)}</TableCell>
+
                     <TableCell>
                       <ReportTypeBadge type={report.type} />
                     </TableCell>
+
                     <TableCell>
                       <ValidatedBadge validated={report.validated} />
                     </TableCell>
+
                     <TableCell>{report.conversionRate}%</TableCell>
+
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/reports/${report.id}`}>
-                            <ExternalLink className="h-4 w-4" />
-                            <span className="sr-only">View Report</span>
-                          </Link>
-                        </Button>
+                        <CustomLink
+                          variant="ghost"
+                          size="sm"
+                          href={`/dashboard/reports/${report.id}`}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+
+                          <span className="sr-only">View Report</span>
+                        </CustomLink>
+
                         <Button variant="ghost" size="sm">
                           <Download className="h-4 w-4" />
+
                           <span className="sr-only">Download Report</span>
                         </Button>
                       </div>

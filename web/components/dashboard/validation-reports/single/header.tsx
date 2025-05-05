@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { CalendarIcon, FileDown, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,21 +36,27 @@ export default function ReportHeader({ report }: ReportHeaderProps) {
               <Badge variant="outline" className={getBadgeColor()}>
                 {report.type} Report
               </Badge>
+
               <div className="flex items-center text-sm text-muted-foreground">
                 <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+
                 {formatDate(report.date)}
               </div>
             </div>
+
             <h2 className="text-2xl font-bold">{report.ideaTitle}</h2>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/dashboard/ideas/${report.ideaId}`}>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                View Idea
-              </Link>
-            </Button>
+            <Link
+              href={`/dashboard/ideas/${report.ideaId}`}
+              variant="outline"
+              size="sm"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View Idea
+            </Link>
+
             <Button variant="outline" size="sm">
               <FileDown className="h-4 w-4 mr-2" />
               Download Report

@@ -13,7 +13,7 @@ import {
   CheckSquare,
   PlusCircle,
 } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { Report } from "@/types/report";
 
 interface ActionItemsProps {
@@ -31,10 +31,12 @@ export default function ActionItems({ report }: ActionItemsProps) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle>Next Steps</CardTitle>
+
         <CardDescription>
           Recommended actions based on this report
         </CardDescription>
       </CardHeader>
+
       <CardContent className="pt-0">
         {insights.length > 0 && (
           <div className="mb-4">
@@ -42,10 +44,12 @@ export default function ActionItems({ report }: ActionItemsProps) {
               <Lightbulb className="h-4 w-4 mr-1 text-amber-500" />
               Key Insights
             </h4>
+
             <ul className="space-y-2 text-sm">
               {insights.map((insight, index) => (
                 <li key={index} className="flex gap-2 items-start">
                   <ArrowUpRight className="h-4 w-4 text-blue-600 mt-0.5" />
+
                   <span>{insight}</span>
                 </li>
               ))}
@@ -58,19 +62,19 @@ export default function ActionItems({ report }: ActionItemsProps) {
             <CheckSquare className="h-4 w-4 mr-1 text-green-600" />
             Suggested Actions
           </h4>
+
           <ul className="space-y-3">
             {actionItems.map((item, index) => (
               <li key={index}>
-                <Button
+                <Link
+                  href={item.link}
                   variant="outline"
                   className="w-full justify-start text-left h-auto py-3 font-normal"
-                  asChild
                 >
-                  <Link href={item.link}>
-                    <span>{item.text}</span>
-                    <ChevronRight className="h-4 w-4 ml-auto" />
-                  </Link>
-                </Button>
+                  <span>{item.text}</span>
+
+                  <ChevronRight className="h-4 w-4 ml-auto" />
+                </Link>
               </li>
             ))}
             <li>
@@ -79,6 +83,7 @@ export default function ActionItems({ report }: ActionItemsProps) {
                 className="w-full justify-start text-left text-muted-foreground"
               >
                 <PlusCircle className="h-4 w-4 mr-2" />
+
                 <span>Create custom action</span>
               </Button>
             </li>

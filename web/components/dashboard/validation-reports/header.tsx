@@ -13,10 +13,12 @@ export default function PageHeader({ reportsCount }: PageHeaderProps) {
           <FileText className="h-6 w-6" />
           Validation Reports
         </h1>
+
         <p className="text-muted-foreground">
           {reportsCount} reports across your validation projects
         </p>
       </div>
+
       <div className="flex gap-2">
         <Button variant="outline">
           <Download className="mr-2 h-4 w-4" />

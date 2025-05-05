@@ -3,48 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  Sparkles,
-  FileText,
-  Users,
-  Settings,
-  LogOut,
-  Plus,
-} from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@clerk/nextjs";
+import { NavItems } from "./navi-items";
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
-
-  const navItems = [
-    {
-      name: "Dashboard",
-      href: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      name: "My Ideas",
-      href: "/dashboard/ideas",
-      icon: Sparkles,
-    },
-    {
-      name: "Validation Reports",
-      href: "/dashboard/reports",
-      icon: FileText,
-    },
-    {
-      name: "Audience",
-      href: "/dashboard/audience",
-      icon: Users,
-    },
-    {
-      name: "Settings",
-      href: "/dashboard/settings",
-      icon: Settings,
-    },
-  ];
 
   return (
     <div className="hidden md:flex h-screen sticky top-0 flex-col w-64 bg-white border-r border-gray-200 py-4">
@@ -65,7 +30,7 @@ export default function DashboardSidebar() {
 
       <div className="flex-1 overflow-y-auto">
         <nav className="space-y-1 px-3">
-          {navItems.map((item) => (
+          {NavItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}

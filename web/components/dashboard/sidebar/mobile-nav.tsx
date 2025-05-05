@@ -4,16 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  Sparkles,
-  FileText,
-  Users,
-  Settings,
-  Menu,
-  X,
-  Plus,
-} from "lucide-react";
+import { Menu, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -21,38 +12,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { NavItems } from "./navi-items";
 
 export default function MobileDashboardNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-
-  const navItems = [
-    {
-      name: "Dashboard",
-      href: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      name: "My Ideas",
-      href: "/dashboard/ideas",
-      icon: Sparkles,
-    },
-    {
-      name: "Validation Reports",
-      href: "/dashboard/reports",
-      icon: FileText,
-    },
-    {
-      name: "Audience",
-      href: "/dashboard/audience",
-      icon: Users,
-    },
-    {
-      name: "Settings",
-      href: "/dashboard/settings",
-      icon: Settings,
-    },
-  ];
 
   return (
     <div className="flex items-center justify-between">
@@ -91,7 +55,7 @@ export default function MobileDashboardNav() {
               </div>
 
               <nav className="space-y-1 px-2 py-3 flex-1">
-                {navItems.map((item) => (
+                {NavItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
