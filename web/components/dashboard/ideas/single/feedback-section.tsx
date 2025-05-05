@@ -55,7 +55,7 @@ export default function FeedbackSection({ ideaId }: FeedbackSectionProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>User Feedback</CardTitle>
+        <CardTitle>Feedback & Comments</CardTitle>
         <CardDescription>
           Comments and suggestions from early supporters
         </CardDescription>

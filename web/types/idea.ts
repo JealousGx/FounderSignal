@@ -5,6 +5,7 @@ export interface Idea {
   status: "Active" | "Paused" | "Completed" | "Draft";
   stage: "Validation" | "MVP" | "Ideation";
   signups: number;
+  targetSignups: number;
   views: number;
   engagementRate: number;
   createdAt: string;

@@ -24,7 +24,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Idea } from "@/types/idea";
 
@@ -42,13 +41,6 @@ const formSchema = z.object({
   ctaButtonText: z.string().min(2, {
     message: "Button text must be at least 2 characters.",
   }),
-  signupTitle: z.string().min(3, {
-    message: "Signup title must be at least 3 characters.",
-  }),
-  signupDescription: z.string(),
-  emailPlaceholder: z.string(),
-  enableFeatures: z.boolean(),
-  enableFAQ: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -71,11 +63,6 @@ export default function LandingPageForm({ idea }: LandingPageFormProps) {
       ctaText:
         "Join thousands of eco-conscious individuals making a difference today.",
       ctaButtonText: "Get Early Access",
-      signupTitle: "Join the Waitlist",
-      signupDescription: "Be the first to know when we launch.",
-      emailPlaceholder: "Enter your email",
-      enableFeatures: true,
-      enableFAQ: false,
     },
   });
 
@@ -198,110 +185,6 @@ export default function LandingPageForm({ idea }: LandingPageFormProps) {
                     </FormItem>
                   )}
                 />
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-4">Signup Form</h3>
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="signupTitle"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Signup Form Title</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Title for your signup form"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="signupDescription"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Signup Form Description</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Description text for your signup form"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="emailPlaceholder"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Input Placeholder</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Placeholder for the email input field"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-4">Page Sections</h3>
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="enableFeatures"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between">
-                        <div className="space-y-0">
-                          <FormLabel>Features Section</FormLabel>
-                          <FormDescription>
-                            Show a section highlighting the features of your
-                            product
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="enableFAQ"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between">
-                        <div className="space-y-0">
-                          <FormLabel>FAQ Section</FormLabel>
-                          <FormDescription>
-                            Show frequently asked questions about your product
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
               </div>
 
               <div className="flex justify-end">
