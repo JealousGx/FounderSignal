@@ -11,8 +11,6 @@ export interface Report {
   conversionRate: number;
   validated: boolean;
   sentiment: number;
-  engagedUsers?: number;
-  engagementRate?: number;
   createdAt: string;
   updatedAt: string;
 }

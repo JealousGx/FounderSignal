@@ -2,14 +2,7 @@ import { Idea } from "./idea";
 
 export interface AudienceStats {
   totalMembers: number;
-  growth: number;
-  engagementRate: number;
   conversionRate: number;
-  segments: {
-    name: string;
-    count: number;
-    percentage: number;
-  }[];
   totalSubscribers: number;
   newSubscribers: number;
   newSubscribersChange: number;
