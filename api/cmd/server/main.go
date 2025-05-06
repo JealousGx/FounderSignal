@@ -1,14 +1,25 @@
 package main
 
 import (
-	"github.com/gofiber/fiber/v2"
+	ideas "foundersignal/internal/handlers/ideas"
+	"foundersignal/pkg/database"
+	"log"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-  app := fiber.New()
-  app.Get("/health", func(c *fiber.Ctx) error {
-    return c.SendString("Backend is alive!")
-  })
+  if err := database.Connect(); err != nil {
+    log.Fatalf("Failed to connect to database: %v", err)
+  }
 
-  app.Listen(":8080")
+  router := gin.Default()
+  router.GET("/health", func(c *gin.Context) {
+    c.JSON(200, gin.H{
+      "status": "ok",
+    })
+  });
+  router.GET("/ideas", ideas.GetIdeas)
+
+  router.Run(":8080")
 }
