@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func CORS() gin.HandlerFunc {
@@ -50,7 +51,7 @@ func ErrorHandler() gin.HandlerFunc {
 }
 
 func Logger() gin.HandlerFunc {
-	logger := zap.NewProduction()
+	logger, _ := zap.NewProduction()
 	defer logger.Sync()
 
 	return func(c *gin.Context) {

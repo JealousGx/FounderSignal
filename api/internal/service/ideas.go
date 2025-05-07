@@ -6,17 +6,17 @@ import (
 	"foundersignal/internal/repository"
 )
 
-type IdeasService struct {
+type ideaService struct {
 	repo repository.IdeaRepository
 }
 
-func NewIdeasService(repo repository.IdeaRepository) *IdeasService {
-	return &IdeasService{
+func NewIdeasService(repo repository.IdeaRepository) *ideaService {
+	return &ideaService{
 		repo: repo,
 	}
 }
 
-func (s *IdeasService) Create(ctx context.Context, idea *domain.Idea) error {
+func (s *ideaService) Create(ctx context.Context, idea *domain.Idea) error {
 	if err := validateIdea(idea); err != nil {
 		return err
 	}
@@ -24,7 +24,7 @@ func (s *IdeasService) Create(ctx context.Context, idea *domain.Idea) error {
 	return s.repo.Create(ctx, idea)
 }
 
-func (s *IdeasService) GetByID(ctx context.Context, id string) (*domain.Idea, error) {
+func (s *ideaService) GetByID(ctx context.Context, id string) (*domain.Idea, error) {
 	idea, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (s *IdeasService) GetByID(ctx context.Context, id string) (*domain.Idea, er
 	return idea, nil
 }
 
-func (s *IdeasService) GetAll(ctx context.Context) ([]*domain.Idea, error) {
+func (s *ideaService) GetAll(ctx context.Context) ([]*domain.Idea, error) {
 	ideas, err := s.repo.GetAll(ctx)
 	if err != nil {
 		return nil, err

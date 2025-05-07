@@ -1,27 +1,15 @@
 package http
 
 import (
-	"foundersignal/internal/repository"
 	"foundersignal/internal/service"
-
-	"gorm.io/gorm"
 )
 
 type Handlers struct {
-	Idea *IdeasHandler
+	Idea *IdeaHandler
 }
 
-func NewHandlers(
-	db *gorm.DB,
-) *Handlers {
+func NewHandlers(services *service.Services) *Handlers {
 	return &Handlers{
-		Idea: getIdeasHandlers(db),
+		Idea: NewIdeaHandler(services.Idea),
 	}
-}
-
-func getIdeasHandlers(db *gorm.DB) *IdeasHandler {
-	ideaRepo := repository.NewIdeasRepo(db)
-	ideaService := service.NewIdeasService(ideaRepo)
-
-	return NewIdeasHandler(ideaService)
 }

@@ -8,17 +8,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type IdeasHandler struct {
-	service *service.IdeasService
+type IdeaHandler struct {
+	service service.IdeaService
 }
 
-func NewIdeasHandler(s *service.IdeasService) *IdeasHandler {
-	return &IdeasHandler{
+func NewIdeaHandler(s service.IdeaService) *IdeaHandler {
+	return &IdeaHandler{
 		service: s,
 	}
 }
 
-func (h *IdeasHandler) Create(c *gin.Context) {
+func (h *IdeaHandler) Create(c *gin.Context) {
 	var idea domain.Idea
 
 	if err := c.ShouldBindJSON(&idea); err != nil {
@@ -34,7 +34,7 @@ func (h *IdeasHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, idea)
 }
 
-func (h *IdeasHandler) GetByID(c *gin.Context) {
+func (h *IdeaHandler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 
 	idea, err := h.service.GetByID(c.Request.Context(), id)
@@ -46,7 +46,7 @@ func (h *IdeasHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, idea)
 }
 
-func (h *IdeasHandler) GetAll(c *gin.Context) {
+func (h *IdeaHandler) GetAll(c *gin.Context) {
 	ideas, err := h.service.GetAll(c.Request.Context())
 
 	if err != nil {

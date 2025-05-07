@@ -2,6 +2,8 @@ package main
 
 import (
 	cfg "foundersignal/cmd/server/config"
+	"foundersignal/internal/repository"
+	"foundersignal/internal/service"
 	"foundersignal/internal/transport/http"
 	"foundersignal/pkg/database"
 	"log"
@@ -23,7 +25,9 @@ func main() {
 
 	db := database.GetDB()
 
-	handlers := http.NewHandlers(db)
+	repos := repository.NewRepositories(db)
+	services := service.NewServices(repos)
+	handlers := http.NewHandlers(services)
 
 	http.RegisterRoutes(router, handlers)
 
