@@ -13,15 +13,14 @@ var (
 
 type Idea struct {
 	Base
-	UserID         string `gorm:"not null" json:"userId"`
+	UserID         string `gorm:"not null;index" json:"userId"`
 	Title          string `gorm:"not null" json:"title"`
 	Description    string `gorm:"type:text;not null" json:"description"`
 	TargetAudience string `gorm:"not null" json:"targetAudience"`
-	Status         string `gorm:"not null;default:'Draft'" json:"status"`   // Active, Paused, Completed, Draft
-	Stage          string `gorm:"not null;default:'Ideation'" json:"stage"` // Validation, MVP, Ideation
+	Status         string `gorm:"not null;default:'Draft';index" json:"status"`   // Active, Paused, Completed, Draft
+	Stage          string `gorm:"not null;default:'Ideation';index" json:"stage"` // Validation, MVP, Ideation
 	TargetSignups  int    `gorm:"default:100" json:"targetSignups"`
 	ImageURL       string `json:"imageUrl"`
-	IsPublic       bool   `gorm:"default:true" json:"isPublic"`
 
 	// Virtual fields (not stored in DB but computed)
 	Signups        int     `gorm:"-" json:"signups"`
@@ -37,7 +36,7 @@ type Idea struct {
 // MVPSimulator represents the mock landing page for an idea
 type MVPSimulator struct {
 	Base
-	IdeaID      uuid.UUID `gorm:"type:uuid;not null" json:"ideaId"`
+	IdeaID      uuid.UUID `gorm:"type:uuid;not null;index" json:"ideaId"`
 	Headline    string    `json:"headline"`
 	Subheadline string    `json:"subheadline"`
 	CTAText     string    `json:"ctaText"`
@@ -51,9 +50,9 @@ type MVPSimulator struct {
 // Signal represents user interaction events with an MVP
 type Signal struct {
 	Base
-	IdeaID    uuid.UUID              `gorm:"type:uuid;not null" json:"ideaId"`
-	UserID    string                 `json:"userId,omitempty"`          // Can be null for anonymous users
-	EventType string                 `gorm:"not null" json:"eventType"` // click, scroll, pageview, etc.
+	IdeaID    uuid.UUID              `gorm:"type:uuid;not null;index" json:"ideaId"`
+	UserID    string                 `json:"userId,omitempty"`                // Can be null for anonymous users
+	EventType string                 `gorm:"not null;index" json:"eventType"` // click, scroll, pageview, etc.
 	IPAddress string                 `json:"-"`
 	UserAgent string                 `json:"-"`
 	Metadata  map[string]interface{} `gorm:"type:jsonb" json:"metadata"`
@@ -65,10 +64,10 @@ type Signal struct {
 // Feedback represents user feedback on an idea
 type Feedback struct {
 	Base
-	IdeaID   uuid.UUID  `gorm:"type:uuid;not null" json:"ideaId"`
+	IdeaID   uuid.UUID  `gorm:"type:uuid;not null;index" json:"ideaId"`
 	UserID   string     `json:"userId,omitempty"` // Can be null for anonymous feedback
 	Comment  string     `gorm:"type:text" json:"comment"`
-	ParentID *uuid.UUID `gorm:"type:uuid;null" json:"parentId,omitempty"` // For nested replies
+	ParentID *uuid.UUID `gorm:"type:uuid;null;index" json:"parentId,omitempty"` // For nested replies
 	Likes    int        `gorm:"default:0" json:"likes"`
 	Dislikes int        `gorm:"default:0" json:"dislikes"`
 
@@ -82,7 +81,7 @@ type Feedback struct {
 type FeedbackReaction struct {
 	Base
 	FeedbackID   uuid.UUID `gorm:"type:uuid;not null" json:"feedbackId"`
-	UserID       string    `gorm:"not null" json:"userId"`
+	UserID       string    `gorm:"not null;index" json:"userId"`
 	ReactionType string    `gorm:"not null" json:"reactionType"` // "like" or "dislike"
 
 	// Relationship
