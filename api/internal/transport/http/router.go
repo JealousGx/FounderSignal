@@ -1,7 +1,7 @@
 package http
 
 import (
-	"foundersignal/cmd/server/config"
+	"foundersignal/cmd/config"
 
 	"github.com/gin-gonic/gin"
 )

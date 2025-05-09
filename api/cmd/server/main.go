@@ -1,7 +1,7 @@
 package main
 
 import (
-	cfg "foundersignal/cmd/server/config"
+	cfg "foundersignal/cmd/config"
 	"foundersignal/internal/repository"
 	"foundersignal/internal/service"
 	"foundersignal/internal/transport/http"
