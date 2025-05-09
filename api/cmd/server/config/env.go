@@ -11,6 +11,8 @@ type Config struct {
 	Server domain.Server
 
 	DB domain.DBConfig
+
+	CLERK_JWKS_URL string
 }
 
 var Envs = initConfig()
@@ -31,6 +33,8 @@ func initConfig() Config {
 			Host: getEnv("DBHost", "localhost"),
 			Port: getEnv("DBPort", "5432"),
 		},
+
+		CLERK_JWKS_URL: getEnv("CLERK_JWKS_URL", "https://clerk.YOUR_INSTANCE.clerk.accounts.dev/.well-known/jwks.json"),
 	}
 }
 

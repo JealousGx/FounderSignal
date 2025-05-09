@@ -1,12 +1,34 @@
 package http
 
 import (
+	"crypto/rsa"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 )
+
+const (
+	jwksCacheDuration = 1 * time.Hour
+	userIDContextKey  = "userId"
+)
+
+type ClerkAuth struct {
+	jwksURL string
+	cache   struct {
+		keys map[string]*rsa.PublicKey
+		exp  time.Time
+		mu   sync.RWMutex
+	}
+}
 
 func CORS() gin.HandlerFunc {
 	return cors.New(cors.Config{
@@ -19,24 +41,142 @@ func CORS() gin.HandlerFunc {
 	})
 }
 
-func AuthRequired(frontendHash string) gin.HandlerFunc {
+// a ClerkAuth middleware to verify JWT tokens from Clerk
+// basically, can be implemented for any other auth provider (or custom auth).
+// just need to verify the session
+// and extract userId from the token and set it in the context
+func NewClerkAuth(jwksURL string) *ClerkAuth {
+	return &ClerkAuth{
+		jwksURL: jwksURL,
+		cache: struct {
+			keys map[string]*rsa.PublicKey
+			exp  time.Time
+			mu   sync.RWMutex
+		}{
+			keys: make(map[string]*rsa.PublicKey),
+			exp:  time.Now(),
+		},
+	}
+}
+
+func (a *ClerkAuth) Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.GetHeader("Authorization")
-
-		if token == "" {
-			c.JSON(401, gin.H{"error": "Authorization header is required"})
-			c.Abort()
+		tokenString, err := extractBearerToken(c)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 
-		if token != frontendHash {
-			c.JSON(403, gin.H{"error": "Invalid token"})
-			c.Abort()
+		userID, err := a.verifyToken(tokenString)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 
+		c.Set(userIDContextKey, userID)
 		c.Next()
 	}
+}
+
+func (a *ClerkAuth) verifyToken(tokenString string) (string, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		kid, ok := token.Header["kid"].(string)
+		if !ok {
+			return nil, errors.New("kid header not found")
+		}
+
+		return a.getPublicKey(kid)
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("invalid token: %w", err)
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return "", errors.New("invalid token claims")
+	}
+
+	userID, ok := claims["sub"].(string)
+	if !ok {
+		return "", errors.New("user ID not found in token")
+	}
+
+	return userID, nil
+}
+
+func (a *ClerkAuth) getPublicKey(kid string) (*rsa.PublicKey, error) {
+	// Check cache first with read lock
+	a.cache.mu.RLock()
+	if key, found := a.cache.keys[kid]; found && time.Now().Before(a.cache.exp) {
+		a.cache.mu.RUnlock()
+		return key, nil
+	}
+	a.cache.mu.RUnlock()
+
+	// Cache miss, fetch fresh
+	a.cache.mu.Lock()
+	defer a.cache.mu.Unlock()
+
+	// Double check in case another goroutine updated it
+	if key, found := a.cache.keys[kid]; found && time.Now().Before(a.cache.exp) {
+		return key, nil
+	}
+
+	resp, err := http.Get(a.jwksURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch JWKS: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var jwks struct {
+		Keys []struct {
+			Kid string   `json:"kid"`
+			Kty string   `json:"kty"`
+			Alg string   `json:"alg"`
+			Use string   `json:"use"`
+			N   string   `json:"n"`
+			E   string   `json:"e"`
+			X5c []string `json:"x5c"`
+		} `json:"keys"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
+		return nil, fmt.Errorf("failed to decode JWKS: %w", err)
+	}
+
+	for _, key := range jwks.Keys {
+		if key.Kid == kid {
+			publicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(key.X5c[0]))
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse public key: %w", err)
+			}
+
+			a.cache.keys[kid] = publicKey
+			a.cache.exp = time.Now().Add(jwksCacheDuration)
+			return publicKey, nil
+		}
+	}
+
+	return nil, errors.New("no matching key found in JWKS")
+}
+
+func extractBearerToken(c *gin.Context) (string, error) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		return "", errors.New("authorization header is required")
+	}
+
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenString == authHeader {
+		return "", errors.New("invalid authorization format")
+	}
+
+	return tokenString, nil
 }
 
 func ErrorHandler() gin.HandlerFunc {

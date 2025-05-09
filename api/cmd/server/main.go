@@ -17,6 +17,8 @@ func main() {
 	}
 
 	router := gin.Default()
+	router.Use(http.CORS(), http.ErrorHandler(), http.Logger())
+
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status": "ok",
@@ -29,7 +31,7 @@ func main() {
 	services := service.NewServices(repos)
 	handlers := http.NewHandlers(services)
 
-	http.RegisterRoutes(router, handlers)
+	http.RegisterRoutes(router, handlers, cfg.Envs)
 
 	router.Run(":" + cfg.Envs.Server.Port)
 }
