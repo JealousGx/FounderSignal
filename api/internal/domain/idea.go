@@ -28,9 +28,10 @@ type Idea struct {
 	EngagementRate float64 `gorm:"-" json:"engagementRate"`
 
 	// Relationships
-	MVPSimulator *MVPSimulator `gorm:"foreignKey:IdeaID" json:"mvpSimulator,omitempty"`
-	Signals      []Signal      `gorm:"foreignKey:IdeaID" json:"-"`
-	Feedback     []Feedback    `gorm:"foreignKey:IdeaID" json:"-"`
+	MVPSimulator    *MVPSimulator    `gorm:"foreignKey:IdeaID" json:"mvpSimulator,omitempty"`
+	Signals         []Signal         `gorm:"foreignKey:IdeaID" json:"-"`
+	Feedback        []Feedback       `gorm:"foreignKey:IdeaID" json:"-"`
+	AudienceMembers []AudienceMember `gorm:"foreignKey:IdeaID" json:"-"`
 }
 
 // MVPSimulator represents the mock landing page for an idea
