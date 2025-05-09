@@ -9,19 +9,19 @@ import (
 var (
 	ErrInvalidIdeaTitle       = errors.New("invalid idea title")
 	ErrInvalidIdeaDescription = errors.New("invalid idea description")
-	ErrInvalidIdeaTags        = errors.New("invalid idea tags")
 )
 
 type Idea struct {
 	Base
-	UserID        string `gorm:"not null" json:"userId"`
-	Title         string `gorm:"not null" json:"title"`
-	Description   string `gorm:"type:text;not null" json:"description"`
-	Status        string `gorm:"not null;default:'Draft'" json:"status"`   // Active, Paused, Completed, Draft
-	Stage         string `gorm:"not null;default:'Ideation'" json:"stage"` // Validation, MVP, Ideation
-	TargetSignups int    `gorm:"default:100" json:"targetSignups"`
-	ImageURL      string `json:"imageUrl"`
-	IsPublic      bool   `gorm:"default:false" json:"isPublic"`
+	UserID         string `gorm:"not null" json:"userId"`
+	Title          string `gorm:"not null" json:"title"`
+	Description    string `gorm:"type:text;not null" json:"description"`
+	TargetAudience string `gorm:"not null" json:"targetAudience"`
+	Status         string `gorm:"not null;default:'Draft'" json:"status"`   // Active, Paused, Completed, Draft
+	Stage          string `gorm:"not null;default:'Ideation'" json:"stage"` // Validation, MVP, Ideation
+	TargetSignups  int    `gorm:"default:100" json:"targetSignups"`
+	ImageURL       string `json:"imageUrl"`
+	IsPublic       bool   `gorm:"default:true" json:"isPublic"`
 
 	// Virtual fields (not stored in DB but computed)
 	Signups        int     `gorm:"-" json:"signups"`
