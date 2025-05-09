@@ -54,6 +54,8 @@ type Signal struct {
 	IdeaID    uuid.UUID              `gorm:"type:uuid;not null" json:"ideaId"`
 	UserID    string                 `json:"userId,omitempty"`          // Can be null for anonymous users
 	EventType string                 `gorm:"not null" json:"eventType"` // click, scroll, pageview, etc.
+	IPAddress string                 `json:"-"`
+	UserAgent string                 `json:"-"`
 	Metadata  map[string]interface{} `gorm:"type:jsonb" json:"metadata"`
 
 	// Relationships
