@@ -9,21 +9,18 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  //   const { userId } = await auth();
+  const { userId } = await auth();
 
-  //   // Redirect unauthenticated users to sign in
-  //   if (!userId) {
-  //     redirect("/sign-in");
-  //   }
+  if (!userId) {
+    redirect("/");
+  }
 
   return (
     <div className="min-h-screen flex">
-      {/* Sidebar navigation */}
       <div className="hidden md:block">
         <DashboardSidebar />
       </div>
 
-      {/* Main content area */}
       <div className="flex-1 flex flex-col w-full">
         <div className="md:hidden px-4 py-3 border-b border-gray-200 bg-white">
           <MobileDashboardNav />

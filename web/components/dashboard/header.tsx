@@ -1,9 +1,8 @@
-"use client";
-
-import { UserProfile } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import { Bell, Menu, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "../ui/skeleton";
 
 export default function DashboardHeader() {
   return (
@@ -29,7 +28,7 @@ export default function DashboardHeader() {
           <Bell className="h-5 w-5" />
         </Button>
 
-        <UserProfile />
+        <UserButton fallback={<Skeleton className="h-7 w-7 rounded-full" />} />
       </div>
     </header>
   );
