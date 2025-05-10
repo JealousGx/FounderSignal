@@ -4,7 +4,7 @@ export const formSchema = z.object({
   title: z
     .string()
     .trim()
-    .min(10, { message: "Title must be at least 10 characters long." }),
+    .min(6, { message: "Title must be at least 10 characters long." }),
   description: z
     .string()
     .trim()
