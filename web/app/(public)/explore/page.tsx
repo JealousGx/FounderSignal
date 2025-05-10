@@ -2,12 +2,10 @@ import React from "react";
 import Ideas from "./ideas";
 import { getIdeas } from "./get-ideas";
 
-const DEFAULT_PAGE_SIZE = 2;
+const DEFAULT_PAGE_SIZE = 6;
 
 export default async function ExplorePage() {
   const initialData = await getIdeas(DEFAULT_PAGE_SIZE, 0);
-
-  console.log("Initial data:", initialData);
 
   if (!initialData || initialData.totalCount === 0) {
     return (

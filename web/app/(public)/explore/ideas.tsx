@@ -35,7 +35,6 @@ export default function Ideas({
   );
 
   useEffect(() => {
-    // Calculate total pages whenever totalItems or itemsPerPage changes
     setTotalPages(Math.ceil(totalItems / itemsPerPage));
   }, [totalItems, itemsPerPage]);
 
@@ -44,7 +43,6 @@ export default function Ideas({
 
     setIsLoading(true);
     try {
-      // Calculate offset based on page number and page size
       const offset = (page - 1) * pageSize;
       const result = await getIdeas(pageSize, offset);
 
