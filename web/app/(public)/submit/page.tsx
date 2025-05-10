@@ -1,28 +1,81 @@
-import React from "react";
+"use client";
+
+import React, { useActionState, useEffect, useRef } from "react";
 import { AlertCircle } from "lucide-react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
-import { submitIdea } from "@/lib/api";
-import { redirect } from "next/navigation";
+import { toast } from "sonner";
+import { formSchema } from "./schema";
+import { submitIdea, SubmitIdeaState } from "./action";
+import { useRouter } from "next/navigation";
 
 export default function SubmitPage() {
-  const submit = async (formData: FormData) => {
-    "use server";
+  const [state, formAction, isPending] = useActionState<
+    SubmitIdeaState | null,
+    FormData
+  >(submitIdea, null);
 
-    console.log("Submitting form data:", formData);
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
 
-    await submitIdea({
-      title: formData.get("title") as string,
-      description: formData.get("description") as string,
-      targetAudience: formData.get("targetAudience") as string,
-      cta: formData.get("cta") as string,
-    });
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      targetAudience: "",
+      cta: "Join waitlist",
+    },
+  });
 
-    redirect("/dashboard");
-  };
+  useEffect(() => {
+    if (state?.error) {
+      toast.error(state.error);
+      if (state.fieldErrors) {
+        for (const [fieldName, message] of Object.entries(state.fieldErrors)) {
+          if (message) {
+            form.setError(fieldName as keyof z.infer<typeof formSchema>, {
+              type: "server",
+              message,
+            });
+          }
+        }
+      }
+    }
+    if (state?.message && !state.error) {
+      toast.success(state.message);
+      form.reset();
+
+      if (formRef.current) {
+        formRef.current.reset();
+      }
+
+      if (state.ideaId) {
+        const timer = setTimeout(
+          () => router.push(`/idea/${state.ideaId}`),
+          1000
+        );
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [state, form, router]);
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
@@ -45,97 +98,121 @@ export default function SubmitPage() {
       </div>
 
       <div className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100">
-        <form className="space-y-6" action={submit}>
-          <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Startup Name / Idea Title
-            </label>
-            <Input
-              id="title"
+        <Form {...form}>
+          <form
+            ref={formRef}
+            className="space-y-8"
+            action={formAction}
+            noValidate
+          >
+            <FormField
+              control={form.control}
               name="title"
-              placeholder="AI-powered dog walker app"
-              required
-              className="w-full"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              A clear, memorable name for your concept
-            </p>
-          </div>
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="block text-sm font-medium text-gray-700 mb-1">
+                    Startup Name / Idea Title
+                  </FormLabel>
 
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Description
-            </label>
-            <Textarea
-              id="description"
+                  <FormControl>
+                    <Input placeholder="AI-powered dog walker app" {...field} />
+                  </FormControl>
+
+                  <FormDescription className="text-xs text-gray-500 mt-1">
+                    A clear, memorable name for your concept
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="description"
-              placeholder="An app that connects dog owners with AI-powered robots that can walk dogs safely when owners are busy."
-              required
-              className="min-h-[100px]"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Briefly explain what your product or service does and the main
-              problem it solves
-            </p>
-          </div>
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </FormLabel>
 
-          <div>
-            <label
-              htmlFor="targetAudience"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Target Audience
-            </label>
-            <Input
-              id="targetAudience"
+                  <FormControl>
+                    <Textarea
+                      className="min-h-[100px]"
+                      placeholder="An app that connects dog owners with AI-powered robots that can walk dogs safely when owners are busy."
+                      {...field}
+                    />
+                  </FormControl>
+
+                  <FormDescription className="text-xs text-gray-500 mt-1">
+                    Briefly explain what your product or service does and the
+                    main problem it solves
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="targetAudience"
-              placeholder="Dog owners in urban areas with busy work schedules"
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Who is your ideal customer?
-            </p>
-          </div>
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="block text-sm font-medium text-gray-700 mb-1">
+                    Target Audience
+                  </FormLabel>
 
-          <div>
-            <label
-              htmlFor="cta"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Call to Action
-            </label>
-            <Input
-              id="cta"
+                  <FormControl>
+                    <Textarea
+                      placeholder="Dog owners in urban areas with busy work schedules"
+                      {...field}
+                    />
+                  </FormControl>
+
+                  <FormDescription className="text-xs text-gray-500 mt-1">
+                    Who is your ideal customer?
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="cta"
-              placeholder="Join waitlist"
-              defaultValue="Join waitlist"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="block text-sm font-medium text-gray-700 mb-1">
+                    Call to Action
+                  </FormLabel>
+
+                  <FormControl>
+                    <Input placeholder="Join waitlist" {...field} />
+                  </FormControl>
+
+                  <FormDescription className="text-xs text-gray-500 mt-1">
+                    The text visitors will see on your signup button
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              The text visitors will see on your signup button
-            </p>
-          </div>
 
-          <div className="flex items-start p-3 bg-primary/10 rounded-lg">
-            <AlertCircle className="text-primary/80 mr-3 h-5 w-5 mt-0.5" />
+            <div className="flex items-start p-3 bg-primary/10 rounded-lg">
+              <AlertCircle className="text-primary/80 mr-3 h-5 w-5 mt-0.5" />
 
-            <p className="text-sm text-primary">
-              Your page will be created within minutes. It will appear in your
-              dashboard once it&apos;s ready.
-            </p>
-          </div>
+              <p className="text-sm text-primary">
+                Your page will be created within minutes. It will appear in your
+                dashboard once it&apos;s ready.
+              </p>
+            </div>
 
-          <div className="pt-4">
-            <Button type="submit" className="w-full">
-              Create My Validation Page
-            </Button>
-          </div>
-        </form>
+            <div className="pt-4">
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? "Creating..." : "Create My Validation Page"}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </div>
 
       <div className="mt-8 text-center text-sm text-gray-500">

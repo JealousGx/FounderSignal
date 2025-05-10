@@ -1,21 +1,34 @@
 import { AudienceMember, AudienceStats } from "@/types/audience";
 import { Idea } from "@/types/idea";
 import { Report } from "@/types/report";
+import { auth } from "@clerk/nextjs/server";
 
-export async function submitIdea(data: {
-  title: string;
-  description: string;
-  targetAudience: string;
-  cta: string;
-}) {
-  const res = await fetch("http://localhost:8080/api/ideas", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+export async function customFetch(path: string, options: RequestInit = {}) {
+  "use server";
+
+  const { getToken } = await auth();
+  const token = await getToken();
+
+  const url = `${process.env.NEXT_PUBLIC_API_URL}${path}`;
+
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
   });
-
-  return await res.json();
 }
+
+export const api = {
+  get: (path: string) => customFetch(path, { method: "GET" }),
+  post: (path: string, body?: BodyInit | null) =>
+    customFetch(path, { method: "POST", body }),
+  put: (path: string, body?: BodyInit | null) =>
+    customFetch(path, { method: "PUT", body }),
+  del: (path: string) => customFetch(path, { method: "DELETE" }),
+};
 
 export async function getIdeas() {
   const res = await fetch("http://localhost:8080/api/ideas", {
