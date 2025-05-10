@@ -1,34 +1,15 @@
-import React, { cache } from "react";
-import Link from "next/link";
-import { ArrowRight, TrendingUp, Users, Clock } from "lucide-react";
+import React from "react";
+import Ideas from "./ideas";
+import { getIdeas } from "./get-ideas";
 
-import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
-import { Idea } from "@/types/idea";
-
-const getIdeas = cache(async (): Promise<Idea[] | null> => {
-  return api
-    .get("/ideas")
-    .then((res) => res.json())
-    .catch((error) => {
-      console.error("Error fetching ideas:", error);
-
-      return null;
-    });
-});
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+const DEFAULT_PAGE_SIZE = 2;
 
 export default async function ExplorePage() {
-  const ideas = await getIdeas();
+  const initialData = await getIdeas(DEFAULT_PAGE_SIZE, 0);
 
-  if (!ideas || ideas.length === 0) {
+  console.log("Initial data:", initialData);
+
+  if (!initialData || initialData.totalCount === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-12 md:px-6">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
@@ -66,59 +47,11 @@ export default async function ExplorePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-        {ideas.map((idea) => (
-          <Link
-            key={idea.id}
-            href={`/explore/${idea.id}`}
-            className="group flex flex-col h-full bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200"
-          >
-            <div className="p-6 flex flex-col flex-grow">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xl font-bold group-hover:text-primary transition-colors">
-                  {idea.title}
-                </h2>
-                <div className="bg-green-50 text-green-700 text-sm font-medium rounded-full px-2.5 py-0.5 flex items-center">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  {idea.engagementRate}%
-                </div>
-              </div>
-
-              <p className="text-gray-600 mb-4 line-clamp-3">
-                {idea.description}
-              </p>
-
-              <div className="mt-auto pt-4 border-t border-gray-100">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center text-gray-500">
-                    <Users className="w-4 h-4 mr-1" />
-                    <span>{idea.targetAudience.split(" ")[0]}</span>
-                  </div>
-                  <div className="flex items-center text-gray-500">
-                    <Clock className="w-4 h-4 mr-1" />
-                    <span>{formatDate(idea.createdAt)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">
-                {idea.views} views
-              </span>
-              <span className="text-sm font-medium text-primary flex items-center group-hover:underline">
-                View details <ArrowRight className="ml-1 w-4 h-4" />
-              </span>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      <div className="flex justify-center">
-        <Button variant="outline" className="px-6 py-3 bg-white cursor-pointer">
-          Load More Ideas
-        </Button>
-      </div>
+      <Ideas
+        initialIdeas={initialData.ideas || []}
+        initialTotalCount={initialData.totalCount || 0}
+        defaultItemsPerPage={DEFAULT_PAGE_SIZE}
+      />
     </div>
   );
 }
