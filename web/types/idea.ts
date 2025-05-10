@@ -5,6 +5,7 @@ export interface Idea {
   userId: string;
   title: string;
   description: string;
+  targetAudience: string;
   status: "Active" | "Paused" | "Completed" | "Draft";
   stage: "Validation" | "MVP" | "Ideation";
   signups: number;

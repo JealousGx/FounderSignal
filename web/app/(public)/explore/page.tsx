@@ -1,68 +1,21 @@
-import React from "react";
+import React, { cache } from "react";
 import Link from "next/link";
 import { ArrowRight, TrendingUp, Users, Clock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { Idea } from "@/types/idea";
 
-async function getIdeas() {
-  // const res = await fetch('http://localhost:8080/api/ideas');
-  // const data = await res.json();
+const getIdeas = cache(async (): Promise<Idea[] | null> => {
+  return api
+    .get("/ideas")
+    .then((res) => res.json())
+    .catch((error) => {
+      console.error("Error fetching ideas:", error);
 
-  // Mock data for now
-  return [
-    {
-      id: "idea-1",
-      title: "EcoTrack",
-      description:
-        "An app that helps consumers track their carbon footprint across daily activities and purchases with personalized recommendations.",
-      targetAudience: "Environmentally conscious consumers aged 25-45",
-      createdAt: "2023-09-15T14:32:00Z",
-      engagementRate: 72,
-      views: 458,
-    },
-    {
-      id: "idea-2",
-      title: "SkillSwap",
-      description:
-        "Peer-to-peer platform where professionals can exchange skills and knowledge without monetary transactions.",
-      targetAudience: "Professionals looking to expand their skill set",
-      createdAt: "2023-10-03T09:15:00Z",
-      engagementRate: 64,
-      views: 312,
-    },
-    {
-      id: "idea-3",
-      title: "NutriScan",
-      description:
-        "Mobile app that scans food items and provides personalized nutritional advice based on user's dietary goals and restrictions.",
-      targetAudience:
-        "Health-conscious individuals and those with dietary restrictions",
-      createdAt: "2023-10-18T11:45:00Z",
-      engagementRate: 81,
-      views: 594,
-    },
-    {
-      id: "idea-4",
-      title: "RemoteTeamOS",
-      description:
-        "All-in-one platform for remote teams that combines project management, async communication, and team culture building.",
-      targetAudience: "Startups and companies with distributed teams",
-      createdAt: "2023-09-28T16:20:00Z",
-      engagementRate: 68,
-      views: 427,
-    },
-    {
-      id: "idea-5",
-      title: "ElderTech",
-      description:
-        "Simplified technology solutions designed specifically for seniors, including hardware and software with accessibility features.",
-      targetAudience: "Adults 65+ and their caregivers",
-      createdAt: "2023-10-10T13:10:00Z",
-      engagementRate: 59,
-      views: 286,
-    },
-  ];
-}
+      return null;
+    });
+});
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString("en-US", {
@@ -74,6 +27,21 @@ function formatDate(dateString: string) {
 
 export default async function ExplorePage() {
   const ideas = await getIdeas();
+
+  if (!ideas || ideas.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-12 md:px-6">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+          No Ideas Found
+        </h1>
+
+        <p className="text-xl text-gray-600 max-w-3xl mt-4">
+          There are no startup ideas available at the moment. Please check back
+          later.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12 md:px-6">
