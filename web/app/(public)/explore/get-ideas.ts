@@ -1,9 +1,10 @@
 "use server";
 
+import { cache } from "react";
 import { api } from "@/lib/api";
 import { Idea } from "@/types/idea";
 
-export async function getIdeas(limit: number, offset: number) {
+export const getIdeas = cache(async (limit: number, offset: number) => {
   try {
     const response = await api.get(`/ideas?limit=${limit}&offset=${offset}`);
 
@@ -27,4 +28,4 @@ export async function getIdeas(limit: number, offset: number) {
     console.error("Error in fetchMoreIdeasAction:", error);
     return null;
   }
-}
+});
