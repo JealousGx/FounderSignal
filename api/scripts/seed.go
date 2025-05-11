@@ -134,25 +134,38 @@ var (
 	}
 
 	imageURLs = []string{
-		"https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZGFzaGJvYXJkfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",              // Dashboard
-		"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8Y29sbGFib3JhdGlvbnxlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",     // Collaboration
-		"https://images.unsplash.com/photo-1581091226809-5003d25190c2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fGFpJTIwdGVjaG5vbG9neXxlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60", // AI
-		"https://images.unsplash.com/photo-1499750310107-5fef28a66643?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YmxvZ2dpbmd8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60",         // Blogging/Content
-		"https://images.unsplash.com/photo-1507034589631-9433cc6bc453?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Zml0bmVzc3xlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",             // Fitness
-		"https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8ZWNvbW1lcmNlfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",           // Ecommerce
-		"https://images.unsplash.com/photo-1531545514256-b1400bc00f31?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGxlYXJuaW5nfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",           // Learning
-		"https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGVkdWNhdGlvbnxlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",         // Education
-		"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGJ1c2luZXNzfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",              // Business
-		"https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fHN0dWRlbnRzfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",           // Students
+		"https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZGFzaGJvYXJkfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
+		"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8Y29sbGFib3JhdGlvbnxlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",
+		"https://images.unsplash.com/photo-1581091226809-5003d25190c2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fGFpJTIwdGVjaG5vbG9neXxlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",
+		"https://images.unsplash.com/photo-1499750310107-5fef28a66643?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YmxvZ2dpbmd8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60",
+		"https://images.unsplash.com/photo-1507034589631-9433cc6bc453?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Zml0bmVzc3xlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",
+		"https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8ZWNvbW1lcmNlfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
+		"https://images.unsplash.com/photo-1531545514256-b1400bc00f31?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGxlYXJuaW5nfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
+		"https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGVkdWNhdGlvbnxlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",
+		"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGJ1c2luZXNzfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
+		"https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fHN0dWRlbnRzfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
 		"", // Intentionally blank for some ideas
 		"",
-		"https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dGVjaG5vbG9neXxlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60", // Technology
-		"https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8c2Fhc3xlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",         // SaaS
+		"https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dGVjaG5vbG9neXxlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",
+		"https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8c2Fhc3xlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",
 		"",
-		"https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8cmVtb3RlJTIwd29ya3xlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",    // Remote Work
-		"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8aGVhbHRoJTIwdGVjaHxlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60", // Health Tech
+		"https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8cmVtb3RlJTIwd29ya3xlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",
+		"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8aGVhbHRoJTIwdGVjaHxlbnwwfHwwfHx8MA&auto=format&fit=crop&w=800&q=60",
 		"",
 	}
+
+	feedbackComments = []string{
+		"This looks incredibly promising! When can I try it?", "I'm not sure I understand the main benefit here.",
+		"Great concept, but how will it differentiate from existing solutions?", "I've been looking for something like this!",
+		"The UI in the mockups looks clean and intuitive.", "What's the pricing model going to be?",
+		"This could be a game-changer for [specific industry/group].", "I have some concerns about [specific aspect, e.g., privacy/scalability].",
+		"Love the idea! Have you considered integrating [another feature]?", "This is a brilliant solution to a common problem.",
+		"I'm excited to see how this develops.", "Could you elaborate more on the technology stack?",
+		"This has huge potential. Keep up the great work!", "I'd definitely use this if it solves [my specific problem].",
+		"Interesting, but the market for this might be quite niche.", "The name is catchy!",
+	}
+
+	reactionTypes = []string{"like", "dislike"}
 )
 
 func main() {
@@ -160,7 +173,6 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	// Initialize database connection
 	err := database.Connect(cfg.Envs.DB)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -178,7 +190,7 @@ func main() {
 		log.Fatalf("Failed to seed ideas: %v", err)
 	}
 
-	fmt.Println("Successfully seeded ideas into the database!")
+	fmt.Println("Successfully seeded ideas, feedback, and reactions into the database!")
 }
 
 func seedIdeas(ctx context.Context, db *gorm.DB, count int) error {
@@ -189,11 +201,17 @@ func seedIdeas(ctx context.Context, db *gorm.DB, count int) error {
 		descIdx := rand.Intn(len(descriptions))
 		audienceIdx := rand.Intn(len(targetAudiences))
 
+		ideaCreatedAt := randomDateWithinLastTwoYears()
+		ideaID := uuid.New()
+
+		numIdeaReactions := randomInt(0, 30) // Max 30 reactions per idea
+		generatedIdeaReactions, ideaLikes, ideaDislikes := generateIdeaReactions(ideaID, ideaCreatedAt, numIdeaReactions)
+
 		idea := &domain.Idea{
 			Base: domain.Base{
-				ID:        uuid.New(),
-				CreatedAt: randomDateWithinLastTwoYears(),
-				UpdatedAt: randomRecentTime(time.Now(), 30),
+				ID:        ideaID,
+				CreatedAt: ideaCreatedAt,
+				UpdatedAt: randomRecentTime(ideaCreatedAt, 30),
 			},
 			UserID:         ideaOwnerUserID,
 			Title:          titles[titleIdx],
@@ -203,14 +221,13 @@ func seedIdeas(ctx context.Context, db *gorm.DB, count int) error {
 			Stage:          randomElement(stages, "Ideation", 70),
 			TargetSignups:  randomInt(20, 500),
 			ImageURL:       randomElement(imageURLs, "", 65),
-			Likes:          randomInt(0, 150),
-			Dislikes:       randomInt(0, 25),
+			Likes:          ideaLikes,
+			Dislikes:       ideaDislikes,
 		}
 
 		views := randomInt(0, 1000)
 		signups := 0
 		if views > 50 {
-
 			signupRate := (rand.Float64() * 0.115) + 0.005
 			signups = int(float64(views) * signupRate)
 			if signups > views {
@@ -230,6 +247,9 @@ func seedIdeas(ctx context.Context, db *gorm.DB, count int) error {
 			HTMLContent: generateHTMLContent(idea.Title, idea.Description, randomElement(ctaButtons, "Sign Up", 100)),
 		}
 
+		numFeedbacks := randomInt(0, 10)
+		generatedFeedbacks, generatedFeedbackReactions := generateFeedbacksAndTheirReactions(idea.ID, idea.CreatedAt, numFeedbacks)
+
 		err := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			if err := tx.Create(idea).Error; err != nil {
 				return fmt.Errorf("failed to create idea: %w", err)
@@ -238,6 +258,12 @@ func seedIdeas(ctx context.Context, db *gorm.DB, count int) error {
 			mvp.IdeaID = idea.ID
 			if err := tx.Create(mvp).Error; err != nil {
 				return fmt.Errorf("failed to create MVP simulator: %w", err)
+			}
+
+			if len(generatedIdeaReactions) > 0 {
+				if err := tx.CreateInBatches(generatedIdeaReactions, 50).Error; err != nil {
+					return fmt.Errorf("failed to create idea reactions: %w", err)
+				}
 			}
 
 			if views > 0 {
@@ -253,6 +279,19 @@ func seedIdeas(ctx context.Context, db *gorm.DB, count int) error {
 					return fmt.Errorf("failed to create audience members: %w", err)
 				}
 			}
+
+			if len(generatedFeedbacks) > 0 {
+				if err := tx.CreateInBatches(generatedFeedbacks, 50).Error; err != nil {
+					return fmt.Errorf("failed to create feedbacks: %w", err)
+				}
+			}
+
+			if len(generatedFeedbackReactions) > 0 {
+				if err := tx.CreateInBatches(generatedFeedbackReactions, 100).Error; err != nil {
+					return fmt.Errorf("failed to create feedback reactions: %w", err)
+				}
+			}
+
 			return nil
 		})
 
@@ -261,10 +300,140 @@ func seedIdeas(ctx context.Context, db *gorm.DB, count int) error {
 		}
 
 		if (i+1)%10 == 0 {
-			fmt.Printf("Created %d ideas (last: '%s')\n", i+1, idea.Title)
+			fmt.Printf("Created %d ideas (last: '%s') with related data\n", i+1, idea.Title)
 		}
 	}
 	return nil
+}
+
+func generateIdeaReactions(ideaID uuid.UUID, ideaCreatedAt time.Time, count int) ([]domain.IdeaReaction, int, int) {
+	reactions := make([]domain.IdeaReaction, 0, count)
+	likes := 0
+	dislikes := 0
+	reactedUserIDs := make(map[string]bool)
+
+	for i := 0; i < count; i++ {
+		userID := ideaOwnerUserID
+		if reactedUserIDs[userID] {
+			continue
+		}
+
+		reactionType := randomElement(reactionTypes, "like", 80)
+		if reactionType == "like" {
+			likes++
+		} else {
+			dislikes++
+		}
+
+		reactionTime := randomTimeBetween(ideaCreatedAt, time.Now())
+		reactions = append(reactions, domain.IdeaReaction{
+			Base: domain.Base{
+				ID:        uuid.New(),
+				CreatedAt: reactionTime,
+				UpdatedAt: reactionTime,
+			},
+			IdeaID:       ideaID,
+			UserID:       userID,
+			ReactionType: reactionType,
+		})
+		reactedUserIDs[userID] = true
+	}
+	return reactions, likes, dislikes
+}
+
+func generateFeedbacksAndTheirReactions(ideaID uuid.UUID, ideaCreatedAt time.Time, maxTopLevelFeedbacks int) ([]domain.Feedback, []domain.FeedbackReaction) {
+	allFeedbacks := make([]domain.Feedback, 0)
+	allFeedbackReactions := make([]domain.FeedbackReaction, 0)
+
+	numTopLevel := randomInt(0, maxTopLevelFeedbacks)
+
+	for i := 0; i < numTopLevel; i++ {
+		feedbackCreatedAt := randomTimeBetween(ideaCreatedAt, time.Now())
+		feedbackID := uuid.New()
+		commenterID := ideaOwnerUserID
+
+		numFeedbackReactions := randomInt(0, 15)
+		currentFeedbackReactions, fbLikes, fbDislikes := generateSingleFeedbackReactions(feedbackID, feedbackCreatedAt, numFeedbackReactions)
+		allFeedbackReactions = append(allFeedbackReactions, currentFeedbackReactions...)
+
+		feedback := domain.Feedback{
+			Base: domain.Base{
+				ID:        feedbackID,
+				CreatedAt: feedbackCreatedAt,
+				UpdatedAt: randomRecentTime(feedbackCreatedAt, 10),
+			},
+			IdeaID:   ideaID,
+			UserID:   commenterID,
+			Comment:  randomElement(feedbackComments, "Great idea!", 100),
+			Likes:    fbLikes,
+			Dislikes: fbDislikes,
+		}
+		allFeedbacks = append(allFeedbacks, feedback)
+
+		if rand.Intn(100) < 30 {
+			numReplies := randomInt(0, 3)
+			for j := 0; j < numReplies; j++ {
+				replyCreatedAt := randomTimeBetween(feedbackCreatedAt, time.Now())
+				replyID := uuid.New()
+				replyCommenterID := ideaOwnerUserID
+
+				numReplyReactions := randomInt(0, 5)
+				currentReplyReactions, replyLikes, replyDislikes := generateSingleFeedbackReactions(replyID, replyCreatedAt, numReplyReactions)
+				allFeedbackReactions = append(allFeedbackReactions, currentReplyReactions...)
+
+				parentID := feedback.ID
+				reply := domain.Feedback{
+					Base: domain.Base{
+						ID:        replyID,
+						CreatedAt: replyCreatedAt,
+						UpdatedAt: randomRecentTime(replyCreatedAt, 5),
+					},
+					IdeaID:   ideaID,
+					UserID:   replyCommenterID,
+					Comment:  "Reply: " + randomElement(feedbackComments, "Interesting point.", 100),
+					ParentID: &parentID,
+					Likes:    replyLikes,
+					Dislikes: replyDislikes,
+				}
+				allFeedbacks = append(allFeedbacks, reply)
+			}
+		}
+	}
+	return allFeedbacks, allFeedbackReactions
+}
+
+func generateSingleFeedbackReactions(feedbackID uuid.UUID, feedbackCreatedAt time.Time, count int) ([]domain.FeedbackReaction, int, int) {
+	reactions := make([]domain.FeedbackReaction, 0, count)
+	likes := 0
+	dislikes := 0
+	reactedUserIDs := make(map[string]bool)
+
+	for i := 0; i < count; i++ {
+		userID := ideaOwnerUserID
+		if reactedUserIDs[userID] {
+			continue
+		}
+
+		reactionType := randomElement(reactionTypes, "like", 85)
+		if reactionType == "like" {
+			likes++
+		} else {
+			dislikes++
+		}
+		reactionTime := randomTimeBetween(feedbackCreatedAt, time.Now())
+		reactions = append(reactions, domain.FeedbackReaction{
+			Base: domain.Base{
+				ID:        uuid.New(),
+				CreatedAt: reactionTime,
+				UpdatedAt: reactionTime,
+			},
+			FeedbackID:   feedbackID,
+			UserID:       userID,
+			ReactionType: reactionType,
+		})
+		reactedUserIDs[userID] = true
+	}
+	return reactions, likes, dislikes
 }
 
 func generateViewSignals(ideaID uuid.UUID, count int, ideaCreatedAt time.Time) []domain.Signal {
@@ -273,7 +442,7 @@ func generateViewSignals(ideaID uuid.UUID, count int, ideaCreatedAt time.Time) [
 		var userID string
 
 		roll := rand.Intn(100)
-		if roll < 80 {
+		if roll < 70 {
 			userID = "user_" + uuid.New().String()[:18]
 		} else if roll < 90 {
 			userID = ideaOwnerUserID
@@ -322,6 +491,9 @@ func generateSubheadline(description string, minWords, maxWords int) string {
 	}
 
 	numWords := randomInt(minWords, maxWords)
+	if numWords <= 0 {
+		numWords = randomInt(1, maxWords)
+	}
 	if len(words) <= numWords {
 		return description
 	}
@@ -370,21 +542,32 @@ func generateHTMLContent(title, description, ctaButtonText string) string {
                 <p>&copy; %d %s. All rights reserved.</p>
             </footer>
         </div>
-    `, title, generateSubheadline(description, 15, 30), ctaButtonText, featuresHTML, time.Now().Year(), title)
+    `, title, generateSubheadline(description, 15, 30), ctaButtonText, featuresHTML, time.Now().Year(), strings.Split(title, " ")[0])
 }
 
 func randomDateWithinLastTwoYears() time.Time {
 	now := time.Now()
 	daysAgo := rand.Intn(365 * 2)
-	return now.AddDate(0, 0, -daysAgo).Add(time.Duration(rand.Intn(24*60)) * time.Minute)
+	hoursAgo := rand.Intn(24)
+	minutesAgo := rand.Intn(60)
+	return now.AddDate(0, 0, -daysAgo).Add(-time.Duration(hoursAgo) * time.Hour).Add(-time.Duration(minutesAgo) * time.Minute)
 }
 
 func randomRecentTime(baseTime time.Time, maxDaysAgo int) time.Time {
 	if maxDaysAgo <= 0 {
 		return baseTime
 	}
-	minutesAgo := rand.Intn(maxDaysAgo * 24 * 60)
-	return baseTime.Add(-time.Duration(minutesAgo) * time.Minute)
+	now := time.Now()
+	if baseTime.After(now) {
+		baseTime = now.AddDate(0, 0, -1)
+	}
+
+	maxDuration := now.Sub(baseTime)
+	if maxDuration <= 0 {
+		return baseTime
+	}
+
+	return randomTimeBetween(baseTime, time.Now())
 }
 
 func randomTimeBetween(start, end time.Time) time.Time {
@@ -403,6 +586,13 @@ func randomElement(items []string, defaultVal string, probabilityPercent int) st
 	if len(items) == 0 {
 		return defaultVal
 	}
+	if probabilityPercent < 0 {
+		probabilityPercent = 0
+	}
+	if probabilityPercent > 100 {
+		probabilityPercent = 100
+	}
+
 	if rand.Intn(100) < probabilityPercent {
 		return items[rand.Intn(len(items))]
 	}
@@ -413,6 +603,13 @@ func randomOptionalElement(items []string, probabilityPercent int) string {
 	if len(items) == 0 {
 		return ""
 	}
+	if probabilityPercent < 0 {
+		probabilityPercent = 0
+	}
+	if probabilityPercent > 100 {
+		probabilityPercent = 100
+	}
+
 	if rand.Intn(100) < probabilityPercent {
 		return items[rand.Intn(len(items))]
 	}
@@ -431,7 +628,7 @@ func randomInt(min, max int) int {
 
 func generateRandomIP() string {
 	return fmt.Sprintf("%d.%d.%d.%d",
-		rand.Intn(255)+1, rand.Intn(256), rand.Intn(256), rand.Intn(255)+1)
+		rand.Intn(254)+1, rand.Intn(256), rand.Intn(256), rand.Intn(254)+1)
 }
 
 var userAgentPool = []string{
@@ -445,11 +642,17 @@ var userAgentPool = []string{
 }
 
 func generateRandomUserAgent() string {
+	if len(userAgentPool) == 0 {
+		return ""
+	}
 	return userAgentPool[rand.Intn(len(userAgentPool))]
 }
 
 var trafficSourcePool = []string{"direct", "google", "facebook", "twitter", "linkedin", "email", "referral", "organic_search", "paid_search", "social_media_ad"}
 
 func randomTrafficSource() string {
+	if len(trafficSourcePool) == 0 {
+		return "direct"
+	}
 	return trafficSourcePool[rand.Intn(len(trafficSourcePool))]
 }
