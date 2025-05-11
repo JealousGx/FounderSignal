@@ -1,21 +1,17 @@
 #!/bin/bash
+set -e # Exit immediately if a command exits with a non-zero status.
 
 echo "Resetting database..."
 
 # Connect to Docker PostgreSQL container (using template1 as the connection db)
-docker exec -it postgres-db psql -U admin -d template1 <<EOF
--- Terminate all connections to the target database
-REVOKE CONNECT ON DATABASE postgres FROM public;
+docker exec -i postgres-db psql -U admin -d template1 <<EOF
+\set ON_ERROR_STOP on
 
-SELECT pg_terminate_backend(pg_stat_activity.pid)
-FROM pg_stat_activity
-WHERE pg_stat_activity.datname = 'postgres';
-
--- Drop and recreate the database
-DROP DATABASE IF EXISTS postgres;
+-- Drop and recreate the database (FORCE option for PostgreSQL 13+)
+DROP DATABASE IF EXISTS postgres WITH (FORCE);
 CREATE DATABASE postgres WITH OWNER admin;
 
--- Reassign privileges
+-- Grant privileges
 GRANT ALL PRIVILEGES ON DATABASE postgres TO admin;
 EOF
 
