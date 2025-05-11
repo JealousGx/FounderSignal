@@ -6,6 +6,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
@@ -16,7 +17,9 @@ func Connect(dbConfig domain.DBConfig) error {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=%s", dbConfig.Host, dbConfig.User, dbConfig.Pass, dbConfig.Name, dbConfig.SSL)
 
 	var err error
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: &QueryLogger{logger.Default.LogMode(logger.Info)},
+	})
 	if err != nil {
 		return err
 	}
