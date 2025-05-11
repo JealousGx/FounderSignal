@@ -117,8 +117,8 @@ var (
 		"Houseplant owners, from beginners to experienced gardeners", "Students, young professionals, and entrepreneurs seeking guidance",
 	}
 
-	statuses = []string{"active", "paused", "completed", "draft"}
-	stages   = []string{"Ideation", "Validation", "MVP", "Launched", "Pivoting"}
+	statuses = []string{"active", "paused", "completed", "draft", "archived"}
+	stages   = []string{"ideation", "validation", "mvp", "launched", "pivoting"}
 
 	ctaButtons = []string{
 		"Get Started", "Join Now", "Sign Up Free", "Learn More", "Explore Features",
