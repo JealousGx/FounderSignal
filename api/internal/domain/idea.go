@@ -34,10 +34,10 @@ type Idea struct {
 
 	// Relationships
 	MVPSimulator    *MVPSimulator    `gorm:"foreignKey:IdeaID" json:"mvpSimulator,omitempty"`
-	Signals         []Signal         `gorm:"foreignKey:IdeaID" json:"-"`
-	Feedback        []Feedback       `gorm:"foreignKey:IdeaID" json:"-"`
-	AudienceMembers []AudienceMember `gorm:"foreignKey:IdeaID" json:"-"`
-	Reactions       []IdeaReaction   `gorm:"foreignKey:IdeaID" json:"-"`
+	Signals         []Signal         `gorm:"foreignKey:IdeaID" json:"signals,omitempty"`
+	Feedback        []Feedback       `gorm:"foreignKey:IdeaID" json:"comments,omitempty"`
+	AudienceMembers []AudienceMember `gorm:"foreignKey:IdeaID" json:"audience,omitempty"`
+	Reactions       []IdeaReaction   `gorm:"foreignKey:IdeaID" json:"reactions,omitempty"`
 }
 
 // MVPSimulator represents the mock landing page for an idea
