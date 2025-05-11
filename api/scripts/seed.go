@@ -218,7 +218,7 @@ func seedIdeas(ctx context.Context, db *gorm.DB, count int) error {
 			Description:    descriptions[descIdx],
 			TargetAudience: targetAudiences[audienceIdx],
 			Status:         randomElement(statuses, "active", 75),
-			Stage:          randomElement(stages, "Ideation", 70),
+			Stage:          randomElement(stages, "ideation", 70),
 			TargetSignups:  randomInt(20, 500),
 			ImageURL:       randomElement(imageURLs, "", 65),
 			Likes:          ideaLikes,
