@@ -19,7 +19,7 @@ import { CommentsSection } from "./comments-section";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { Idea } from "@/types/idea";
-import { Comment } from "@/types/Comment";
+import { Comment } from "@/types/comment";
 import { getUser } from "@/lib/auth";
 
 type IdeaExtended = Idea & {

@@ -88,7 +88,7 @@ export default function Ideas({
                 <div className="bg-green-50 text-green-700 text-sm font-medium rounded-full px-2.5 py-0.5 flex items-center">
                   <TrendingUp className="w-3 h-3 mr-1" />
                   {typeof idea.engagementRate === "number"
-                    ? idea.engagementRate.toFixed(1)
+                    ? idea.engagementRate.toFixed(2)
                     : "N/A"}
                   %
                 </div>
