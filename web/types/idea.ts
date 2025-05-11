@@ -11,7 +11,11 @@ export interface Idea {
   signups: number;
   targetSignups: number;
   views: number;
+  likes: number;
+  dislikes: number;
   engagementRate: number;
+  likedByUser: boolean;
+  dislikedByUser: boolean;
   createdAt: string;
   updatedAt: string;
   imageUrl: string;

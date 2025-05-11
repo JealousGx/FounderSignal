@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "img.clerk.com",
+        port: "",
+      },
+      {
+        protocol: "https",
         hostname: "randomuser.me",
         port: "",
         pathname: "/api/portraits/**",

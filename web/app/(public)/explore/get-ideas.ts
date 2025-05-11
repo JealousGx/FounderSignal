@@ -25,7 +25,7 @@ export const getIdeas = cache(async (limit: number, offset: number) => {
       totalCount: data.total || 0,
     };
   } catch (error) {
-    console.error("Error in fetchMoreIdeasAction:", error);
+    console.error("Error in getIdeas:", error);
     return null;
   }
 });

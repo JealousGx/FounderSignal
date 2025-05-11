@@ -1,4 +1,4 @@
-import React from "react";
+import React, { cache } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -14,117 +14,72 @@ import {
 } from "lucide-react";
 
 import { Link as CustomLink } from "@/components/ui/link";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getName } from "@/lib/utils";
 import { CommentsSection } from "./comments-section";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { Idea } from "@/types/idea";
+import { Comment } from "@/types/Comment";
+import { getUser } from "@/lib/auth";
 
-async function getIdeaById(id: string) {
-  // const res = await fetch(`http://localhost:8080/api/ideas/${id}`);
-  // const data = await res.json();
-
-  // Mock data based on the ID
-  const mockIdeas = {
-    "idea-1": {
-      id: "idea-1",
-      title: "EcoTrack",
-      description:
-        "An app that helps consumers track their carbon footprint across daily activities and purchases with personalized recommendations for reducing environmental impact. The platform would integrate with common shopping apps and transportation services to automatically calculate emissions.",
-      targetAudience: "Environmentally conscious consumers aged 25-45",
-      createdAt: "2023-09-15T14:32:00Z",
-      engagementRate: 72,
-      views: 458,
-      likes: 124,
-      dislikes: 5,
-      likedByUser: false,
-      dislikedByUser: false,
-      commentsCount: 24,
-      founder: {
-        name: "Alex Rivera",
-        image: "https://randomuser.me/api/portraits/men/32.jpg",
-      },
-      stats: {
-        signups: 183,
-        conversionRate: 40,
-        avgTimeOnPage: "2m 47s",
-        bounceRate: "28%",
-      },
-      feedbackHighlights: [
-        "Love the idea of automatic carbon tracking",
-        "Would pay for premium features like detailed reports",
-        "Interested in community challenges and comparisons",
-      ],
-    },
-    "idea-2": {
-      id: "idea-2",
-      title: "SkillSwap",
-      description:
-        "Peer-to-peer platform where professionals can exchange skills and knowledge without monetary transactions. The marketplace uses a credit system where teaching others earns you credits to learn new skills yourself.",
-      targetAudience: "Professionals looking to expand their skill set",
-      createdAt: "2023-10-03T09:15:00Z",
-      engagementRate: 64,
-      views: 312,
-      likes: 89,
-      dislikes: 3,
-      likedByUser: true,
-      dislikedByUser: false,
-      commentsCount: 12,
-      founder: {
-        name: "Maya Johnson",
-        image: "https://randomuser.me/api/portraits/women/44.jpg",
-      },
-      stats: {
-        signups: 127,
-        conversionRate: 31,
-        avgTimeOnPage: "3m 12s",
-        bounceRate: "33%",
-      },
-      feedbackHighlights: [
-        "Credit system makes a lot of sense",
-        "Would like geographic filtering for in-person skill exchanges",
-        "Need verification system for expertise levels",
-      ],
-    },
-    // Add other ideas here
+type IdeaExtended = Idea & {
+  founder: {
+    name: string;
+    image: string;
   };
+  stats: {
+    signups: number;
+    conversionRate: number;
+    avgTimeOnPage: string;
+    bounceRate: number;
+  };
+  comments: Comment[];
+  feedbackHighlights: string[];
+};
 
-  return mockIdeas[id as keyof typeof mockIdeas] || null;
-}
+const getIdea = cache(async (id: string) => {
+  try {
+    const response = await api.get(`/ideas/${id}`);
+
+    if (!response.ok) {
+      console.error(
+        "API error fetching more idea:",
+        response.status,
+        response.statusText
+      );
+
+      return null;
+    }
+
+    const jsonRes = await response.json();
+
+    return {
+      idea: jsonRes.idea as IdeaExtended,
+      relatedIdeas: jsonRes.relatedIdeas as Partial<Idea>[],
+    };
+  } catch (error) {
+    console.error("Error in getIdea:", error);
+    return null;
+  }
+});
 
 export default async function IdeaPage({ params }: { params: { id: string } }) {
   const { id: ideaId } = await params;
-  const idea = await getIdeaById(ideaId);
+  const res = await getIdea(ideaId);
 
-  // Mock related ideas data
-  const relatedIdeas = [
-    {
-      id: "idea-3",
-      title: "NutriScan",
-      description:
-        "Mobile app that scans food items and provides personalized nutritional advice",
-      engagementRate: 81,
-      thumbnail: "https://randomuser.me/api/portraits/women/68.jpg",
-    },
-    {
-      id: "idea-4",
-      title: "RemoteTeamOS",
-      description:
-        "All-in-one platform for remote teams with project management tools",
-      engagementRate: 68,
-      thumbnail: "https://randomuser.me/api/portraits/men/45.jpg",
-    },
-    {
-      id: "idea-5",
-      title: "ElderTech",
-      description:
-        "Simplified technology solutions designed specifically for seniors",
-      engagementRate: 59,
-      thumbnail: "https://randomuser.me/api/portraits/women/22.jpg",
-    },
-  ];
-
-  if (!idea) {
+  if (!res || !res.idea) {
     notFound();
   }
+
+  const idea = res.idea;
+  const relatedIdeas = res.relatedIdeas;
+
+  const user = await getUser(idea.userId);
+
+  idea.founder = {
+    name: getName(user),
+    image: user.imageUrl,
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12 md:px-6">
@@ -138,7 +93,7 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Main column - Idea details */}
-        <div className="lg:w-2/3">
+        <div className={relatedIdeas.length === 0 ? "lg:w-full" : "lg:w-2/3"}>
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-8">
             <div className="p-6 md:p-8 border-b border-gray-100">
               <div className="flex items-center justify-between mb-6">
@@ -222,32 +177,40 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-600 text-sm mb-1">Conversion</p>
                   <p className="text-2xl font-bold">
-                    {idea.stats.conversionRate}%
+                    {idea.stats.conversionRate.toFixed(2)}%
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-4">
+                {/* <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-600 text-sm mb-1">Avg. Time</p>
                   <p className="text-2xl font-bold">
                     {idea.stats.avgTimeOnPage}
                   </p>
-                </div>
+                </div> */}
 
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-600 text-sm mb-1">Bounce Rate</p>
-                  <p className="text-2xl font-bold">{idea.stats.bounceRate}</p>
+                  <p className="text-2xl font-bold">
+                    {idea.stats.bounceRate.toFixed(2)}%
+                  </p>
                 </div>
               </div>
 
-              <h3 className="text-lg font-bold mb-3">Feedback Highlights</h3>
-              <div className="space-y-2 mb-6">
-                {idea.feedbackHighlights.map((feedback, index) => (
-                  <div key={index} className="flex items-start">
-                    <Check className="text-green-500 w-5 h-5 mr-2 mt-0.5" />
-                    <p className="text-gray-700">{feedback}</p>
+              {idea.feedbackHighlights?.length > 0 && (
+                <>
+                  <h3 className="text-lg font-bold mb-3">
+                    Feedback Highlights
+                  </h3>
+                  <div className="space-y-2 mb-6">
+                    {idea.feedbackHighlights.map((feedback, index) => (
+                      <div key={index} className="flex items-start">
+                        <Check className="text-green-500 w-5 h-5 mr-2 mt-0.5" />
+                        <p className="text-gray-700">{feedback}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </>
+              )}
 
               <div className="mt-8 pt-6 border-t border-gray-100">
                 <div className="flex items-center justify-between">
@@ -281,7 +244,7 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
             </div>
           </div>
 
-          <CommentsSection ideaId={idea.id} />
+          <CommentsSection comments={idea.comments} />
 
           {/* CTA for visitors */}
           <div className="bg-blue-50 rounded-xl p-6 text-center">
@@ -295,58 +258,64 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
         </div>
 
         {/* Sidebar column - Related ideas */}
-        <div className="lg:w-1/3">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden sticky top-8">
-            <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold">Related Ideas</h2>
-              <p className="text-gray-600 text-sm mt-1">
-                Similar concepts that might interest you
-              </p>
-            </div>
+        {relatedIdeas.length > 0 && (
+          <div className="lg:w-1/3">
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden sticky top-8">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-xl font-bold">Related Ideas</h2>
+                <p className="text-gray-600 text-sm mt-1">
+                  Similar concepts that might interest you
+                </p>
+              </div>
 
-            <div className="divide-y divide-gray-100">
-              {relatedIdeas.map((relatedIdea) => (
-                <Link
-                  key={relatedIdea.id}
-                  href={`/explore/${relatedIdea.id}`}
-                  className="block p-4 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex gap-3">
-                    <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
-                      <Image
-                        src={relatedIdea.thumbnail}
-                        alt={relatedIdea.title}
-                        width={48}
-                        height={48}
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start mb-1">
-                        <h3 className="font-medium">{relatedIdea.title}</h3>
-                        <span className="text-xs text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full">
-                          {relatedIdea.engagementRate}%
-                        </span>
+              <div className="divide-y divide-gray-100">
+                {relatedIdeas.map((relatedIdea) => (
+                  <Link
+                    key={relatedIdea.id}
+                    href={`/explore/${relatedIdea.id}`}
+                    className="block p-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex gap-3">
+                      <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                        {relatedIdea.imageUrl ? (
+                          <Image
+                            src={relatedIdea.imageUrl}
+                            alt={relatedIdea.title!}
+                            width={48}
+                            height={48}
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 animate-pulse"></div>
+                        )}
                       </div>
-                      <p className="text-gray-600 text-sm line-clamp-2">
-                        {relatedIdea.description}
-                      </p>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-1">
+                          <h3 className="font-medium">{relatedIdea.title}</h3>
+                          <span className="text-xs text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full">
+                            {relatedIdea.engagementRate}%
+                          </span>
+                        </div>
+                        <p className="text-gray-600 text-sm line-clamp-2">
+                          {relatedIdea.description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
 
-            <div className="p-4 bg-gray-50 text-center">
-              <Link
-                href="/explore"
-                className="text-sm text-primary font-medium hover:underline"
-              >
-                View all ideas
-              </Link>
+              <div className="p-4 bg-gray-50 text-center">
+                <Link
+                  href="/explore"
+                  className="text-sm text-primary font-medium hover:underline"
+                >
+                  View all ideas
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
