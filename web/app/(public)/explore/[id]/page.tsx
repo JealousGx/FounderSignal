@@ -3,6 +3,7 @@ import {
   Calendar,
   Check,
   Eye,
+  Pencil,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import { api } from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import { formatDate, getName } from "@/lib/utils";
 import { Idea } from "@/types/idea";
+import { auth } from "@clerk/nextjs/server";
 import { ReactionButtons } from "./reaction-btns";
 
 type IdeaExtended = Idea & {
@@ -76,12 +78,15 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
   const idea = res.idea;
   const relatedIdeas = res.relatedIdeas;
 
-  const user = await getUser(idea.userId);
+  const currUser = await auth();
+  const founder = await getUser(idea.userId);
 
   idea.founder = {
-    name: getName(user),
-    image: user.imageUrl,
+    name: getName(founder),
+    image: founder.imageUrl,
   };
+
+  const isCreator = currUser.userId === idea.userId;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12 md:px-6">
@@ -109,20 +114,33 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex justify-between mb-6">
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
                   {idea.title}
                 </h1>
 
-                <CustomLink
-                  href={`/mvp/${idea.id}`}
-                  target="_blank"
-                  variant="outline"
-                  className="bg-transparent border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors"
-                >
-                  <Eye className="w-4 h-4" />
-                  View Live MVP
-                </CustomLink>
+                <div className="flex gap-2">
+                  <CustomLink
+                    href={`/mvp/${idea.id}`}
+                    target="_blank"
+                    variant="outline"
+                    className="bg-transparent border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors"
+                  >
+                    <Eye className="w-4 h-4 mr-1.5" />
+                    View Live MVP
+                  </CustomLink>
+
+                  {isCreator && (
+                    <CustomLink
+                      href={`/dashboard/ideas/${idea.id}/edit`}
+                      size="icon"
+                      variant="outline"
+                      className="bg-transparent border-gray-400 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </CustomLink>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-4 mb-6">
