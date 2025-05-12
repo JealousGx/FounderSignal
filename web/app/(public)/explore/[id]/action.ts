@@ -55,8 +55,6 @@ export const submit = async (
     path += `/${commentId}`;
   }
 
-  console.log("Payload:", payload);
-
   try {
     const response = await api.post(path, JSON.stringify(payload));
     const responseData = await response.json();
@@ -74,8 +72,6 @@ export const submit = async (
             : "Failed to submit comment. Please try again."),
       };
     }
-
-    console.log("Response:", responseData);
 
     revalidateTag(`comments-${ideaId}`);
 

@@ -84,14 +84,18 @@ export const CommentsSection = async ({ ideaId }: { ideaId: string }) => {
 };
 
 const getAllUserIds = (commentList: Comment[]): string[] => {
-  let ids: string[] = [];
+  const ids = new Set<string>();
+
   commentList.forEach((comment) => {
-    ids.push(comment.userId);
+    ids.add(comment.userId);
+
     if (comment.replies && comment.replies.length > 0) {
-      ids = ids.concat(getAllUserIds(comment.replies));
+      const replyIds = getAllUserIds(comment.replies);
+      replyIds.forEach((id) => ids.add(id));
     }
   });
-  return ids;
+
+  return Array.from(ids);
 };
 
 const mapComments = (

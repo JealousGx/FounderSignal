@@ -117,6 +117,7 @@ interface ReplyFormProps {
   ideaId: string;
   userId: string;
   commentId: string;
+  initialMention?: string;
   onReplyAdded?: () => void;
   onCancel?: () => void;
 }
@@ -125,6 +126,7 @@ export const ReplyForm = ({
   ideaId,
   userId,
   commentId,
+  initialMention,
   onReplyAdded,
   onCancel,
 }: ReplyFormProps) => {
@@ -139,15 +141,20 @@ export const ReplyForm = ({
   const form = useForm<ReplyFormValues>({
     resolver: zodResolver(messageSchema),
     defaultValues: {
-      content: "",
+      content: initialMention || "",
     },
   });
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.focus();
+
+      if (initialMention) {
+        const length = initialMention.length;
+        textareaRef.current.setSelectionRange(length, length);
+      }
     }
-  }, []);
+  }, [initialMention]);
 
   useEffect(() => {
     if (state?.error) {

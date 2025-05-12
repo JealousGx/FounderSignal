@@ -114,6 +114,7 @@ export const CommentItem = ({
                   commentId={comment.id}
                   onCancel={handleReplyCancel}
                   onReplyAdded={handleReplyAdded}
+                  initialMention={`@${comment.author.name} `}
                 />
               )}
             </div>
