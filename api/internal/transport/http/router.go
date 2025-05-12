@@ -10,9 +10,9 @@ func RegisterRoutes(router *gin.Engine, h *Handlers, envs config.Config) {
 	api := router.Group("/api/v1")
 
 	authMiddleware := NewClerkAuth(envs.CLERK_JWKS_URL)
+	api.Use(authMiddleware.Middleware())
 
 	protectedRouter := api.Group("/dashboard")
-	protectedRouter.Use(authMiddleware.Middleware())
 
 	registerPublicRoutes(api, h)
 	registerProtectedRoutes(protectedRouter, h)
@@ -22,11 +22,18 @@ func registerProtectedRoutes(router *gin.RouterGroup, h *Handlers) {
 	// ideas routes
 	ideasRouter := router.Group("/ideas")
 	ideasRouter.POST("/", h.Idea.Create)
+	ideasRouter.POST("/:ideaId/feedback", h.Feedback.Create)
+	ideasRouter.POST("/:ideaId/feedback/:feedbackId", h.Feedback.Create)
+	ideasRouter.PUT("/:ideaId/feedback/:feedbackId/reaction", h.Reaction.FeedbackReaction)
+	ideasRouter.PUT("/:ideaId/reaction", h.Reaction.IdeaReaction)
 }
 
 func registerPublicRoutes(router *gin.RouterGroup, h *Handlers) {
 	// ideas routes
 	ideasRouter := router.Group("/ideas")
-	ideasRouter.GET("/", h.Idea.GetAll)
-	ideasRouter.GET("/:id", h.Idea.GetByID)
+	ideasRouter.GET("/", h.Idea.GetIdeas)
+	ideasRouter.GET("/:ideaId", h.Idea.GetByID)
+	ideasRouter.GET("/:ideaId/feedback", h.Feedback.GetByIdea)
+	ideasRouter.GET("/:ideaId/mvp", h.MVP.GetByIdea)
+
 }

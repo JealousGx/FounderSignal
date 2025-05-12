@@ -2,9 +2,11 @@ package http
 
 import (
 	"crypto/rsa"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strings"
 	"sync"
@@ -61,6 +63,8 @@ func NewClerkAuth(jwksURL string) *ClerkAuth {
 
 func (a *ClerkAuth) Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		isProtectedPath := strings.Contains(c.Request.URL.Path, "/dashboard/")
+
 		tokenString, err := extractBearerToken(c)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -68,7 +72,7 @@ func (a *ClerkAuth) Middleware() gin.HandlerFunc {
 		}
 
 		userID, err := a.verifyToken(tokenString)
-		if err != nil {
+		if err != nil && isProtectedPath {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
@@ -133,6 +137,10 @@ func (a *ClerkAuth) getPublicKey(kid string) (*rsa.PublicKey, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("JWKS endpoint returned status %d", resp.StatusCode)
+	}
+
 	var jwks struct {
 		Keys []struct {
 			Kid string   `json:"kid"`
@@ -151,18 +159,53 @@ func (a *ClerkAuth) getPublicKey(kid string) (*rsa.PublicKey, error) {
 
 	for _, key := range jwks.Keys {
 		if key.Kid == kid {
-			publicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(key.X5c[0]))
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse public key: %w", err)
+			// Try x5c first, fall back to N/E if not available
+			if len(key.X5c) > 0 {
+				publicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(key.X5c[0]))
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse public key from x5c: %w", err)
+				}
+				a.cache.keys[kid] = publicKey
+				a.cache.exp = time.Now().Add(jwksCacheDuration)
+				return publicKey, nil
 			}
 
-			a.cache.keys[kid] = publicKey
-			a.cache.exp = time.Now().Add(jwksCacheDuration)
-			return publicKey, nil
+			// Fallback to RSA modulus/exponent if x5c is empty
+			if key.N != "" && key.E != "" {
+				publicKey, err := parseRSAPublicKeyFromExponent(key.N, key.E)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse public key from N/E: %w", err)
+				}
+				a.cache.keys[kid] = publicKey
+				a.cache.exp = time.Now().Add(jwksCacheDuration)
+				return publicKey, nil
+			}
+
+			return nil, errors.New("key found but no valid public key material (x5c or N/E)")
 		}
 	}
 
-	return nil, errors.New("no matching key found in JWKS")
+	return nil, fmt.Errorf("no matching key found for kid: %s", kid)
+}
+
+func parseRSAPublicKeyFromExponent(nStr, eStr string) (*rsa.PublicKey, error) {
+	nBytes, err := base64.RawURLEncoding.DecodeString(nStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode modulus: %w", err)
+	}
+
+	eBytes, err := base64.RawURLEncoding.DecodeString(eStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode exponent: %w", err)
+	}
+
+	n := new(big.Int).SetBytes(nBytes)
+	e := int(new(big.Int).SetBytes(eBytes).Int64())
+
+	return &rsa.PublicKey{
+		N: n,
+		E: e,
+	}, nil
 }
 
 func extractBearerToken(c *gin.Context) (string, error) {

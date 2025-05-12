@@ -2,88 +2,37 @@ package http
 
 import (
 	"foundersignal/internal/domain"
-	"foundersignal/internal/dto"
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/service"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-type IdeaHandler struct {
+type IdeaHandler interface {
+	Create(c *gin.Context)
+	GetIdeas(c *gin.Context)
+	GetByID(c *gin.Context)
+}
+
+type ideaHandler struct {
 	service service.IdeaService
 }
 
-func NewIdeaHandler(s service.IdeaService) *IdeaHandler {
-	return &IdeaHandler{
+func NewIdeaHandler(s service.IdeaService) *ideaHandler {
+	return &ideaHandler{
 		service: s,
 	}
 }
 
-func (h *IdeaHandler) Create(c *gin.Context) {
-	var idea domain.Idea
+func (h *ideaHandler) Create(c *gin.Context) {
+	var idea request.CreateIdea
 
 	if err := c.ShouldBindJSON(&idea); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	dto := dto.ToCreateIdeaRequest(&idea)
-
-	createdIdeaId, err := h.service.Create(c.Request.Context(), dto)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"id": createdIdeaId})
-}
-
-func (h *IdeaHandler) GetByID(c *gin.Context) {
-	idStr := c.Param("id")
-
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid idea id"})
-		return
-	}
-
-	idea, err := h.service.GetByID(c.Request.Context(), id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, idea)
-}
-
-func (h *IdeaHandler) GetAll(c *gin.Context) {
-	isDashboard := isDashboardRequest(c)
-
-	ideas, err := h.service.GetAll(c.Request.Context(), isDashboard)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, ideas)
-}
-
-func (h *IdeaHandler) UpdateMVP(c *gin.Context) {
-	ideaId, err := uuid.Parse(c.Param("ideaId"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid idea ID format"})
-		return
-	}
-	mvpIdStr := c.Param("mvpId")
-
-	mvpId, err := uuid.Parse(mvpIdStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid mvp id"})
 		return
 	}
 
@@ -93,19 +42,97 @@ func (h *IdeaHandler) UpdateMVP(c *gin.Context) {
 		return
 	}
 
-	var req *request.UpdateMVP
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	createdIdeaId, err := h.service.Create(c.Request.Context(), userId.(string), &idea)
 
-	if err := h.service.UpdateMVP(c.Request.Context(), mvpId, ideaId, userId.(string), req); err != nil {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "MVP updated successfully"})
+	c.JSON(http.StatusCreated, gin.H{"id": createdIdeaId})
 }
+
+func (h *ideaHandler) GetIdeas(c *gin.Context) {
+	limit := 2
+	if l := c.Query("limit"); l != "" {
+		if n, err := strconv.Atoi(l); err == nil && n > 0 {
+			limit = n
+		}
+	}
+
+	offset := 0
+	if l := c.Query("offset"); l != "" {
+		if n, err := strconv.Atoi(l); err == nil && n > 0 {
+			offset = n
+		}
+	}
+
+	ideas, err := h.service.GetIdeas(c.Request.Context(), domain.QueryParams{
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, ideas)
+}
+
+func (h *ideaHandler) GetByID(c *gin.Context) {
+	ideaId := c.Param("ideaId")
+	if ideaId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Idea ID is required"})
+		return
+	}
+
+	userId, _ := c.Get("userId")
+	var userIdStr string
+	if userId != nil {
+		userIdStr = userId.(string)
+	}
+
+	idea, err := h.service.GetByID(c.Request.Context(), uuid.MustParse(ideaId), userIdStr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, idea)
+}
+
+// func (h *IdeaHandler) GetTopIdeas(c *gin.Context) {
+// 	userId, exists := c.Get("userId")
+// 	if !exists {
+// 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+// 		return
+// 	}
+
+// 	limit := 7
+// 	if l := c.Query("limit"); l != "" {
+// 		if n, err := strconv.Atoi(l); err == nil && n > 0 {
+// 			limit = n
+// 		}
+// 	}
+
+// 	offset := 0
+// 	if l := c.Query("offset"); l != "" {
+// 		if n, err := strconv.Atoi(l); err == nil && n > 0 {
+// 			offset = n
+// 		}
+// 	}
+
+// 	ideas, err := h.service.GetTopIdeas(c.Request.Context(), userId.(string), domain.QueryParams{
+// 		Limit:  limit,
+// 		Offset: offset,
+// 	})
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, ideas)
+// }
 
 func isDashboardRequest(c *gin.Context) bool {
 	return strings.HasPrefix(c.Request.URL.Path, "/api/v1/dashboard")

@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"foundersignal/internal/domain"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -10,12 +12,19 @@ import (
 
 type IdeaRepository interface {
 	CreateWithMVP(ctx context.Context, idea *domain.Idea, mvp *domain.MVPSimulator) (uuid.UUID, error)
-	GetAll(ctx context.Context, isDashboard bool) ([]*domain.Idea, error)
-	GetWithMVP(ctx context.Context, id uuid.UUID) (*domain.Idea, error)
-	UpdateMVP(ctx context.Context, mvpId uuid.UUID, mvp *domain.MVPSimulator) error
+	GetIdeas(ctx context.Context, queryParams domain.QueryParams, spec IdeaQuerySpec) ([]*domain.Idea, int64, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Idea, []*domain.Idea, error)
+	// GetWithMVP(ctx context.Context, id uuid.UUID) (*domain.Idea, error)
+	// UpdateMVP(ctx context.Context, mvpId uuid.UUID, mvp *domain.MVPSimulator) error
+	// GetTopIdeas(ctx context.Context, userId string, days int, queryParams domain.QueryParams) ([]*response.IdeaWithActivity, error)
 
 	// utils
 	VerifyIdeaOwner(ctx context.Context, ideaID uuid.UUID, userID string) (bool, error)
+}
+
+type IdeaQuerySpec struct {
+	Status     domain.IdeaStatus
+	WithCounts bool
 }
 
 type ideaRepository struct {
@@ -30,7 +39,7 @@ func NewIdeasRepo(db *gorm.DB) *ideaRepository {
 func (r *ideaRepository) CreateWithMVP(ctx context.Context, idea *domain.Idea, mvp *domain.MVPSimulator) (uuid.UUID, error) {
 	var ideaID uuid.UUID
 
-	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err := r.db.Model(&domain.Feedback{}).WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(idea).Error; err != nil {
 			return err
 		}
@@ -52,36 +61,121 @@ func (r *ideaRepository) CreateWithMVP(ctx context.Context, idea *domain.Idea, m
 	return idea.ID, nil
 }
 
-func (r *ideaRepository) GetAll(ctx context.Context, isDashboard bool) ([]*domain.Idea, error) {
+func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryParams, spec IdeaQuerySpec) ([]*domain.Idea, int64, error) {
+	query := r.db.WithContext(ctx).Model(&domain.Idea{}).Where("status = ?", spec.Status)
+
+	var totalCount int64
+	if err := query.Count(&totalCount).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if spec.WithCounts {
+		query = r.withCounts(query)
+	}
+
+	query = r.paginateAndOrder(query, queryParams.Limit, queryParams.Offset, queryParams.Order)
+
+	if queryParams.Limit > 0 {
+		query = query.Limit(queryParams.Limit)
+	}
+
+	if queryParams.Offset > 0 {
+		query = query.Offset(queryParams.Offset)
+	}
+
+	if queryParams.Order != "" {
+		query = query.Order(queryParams.Order)
+	} else {
+		query = query.Order("created_at DESC")
+	}
+
 	var ideas []*domain.Idea
-	query := r.db.WithContext(ctx).Model(&domain.Idea{})
-
-	if isDashboard {
-		query = query.Preload("MVPSimulator").Preload("Signals").Preload("Feedback")
-	}
-
 	if err := query.Find(&ideas).Error; err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return ideas, nil
+	return ideas, totalCount, nil
 }
 
-func (r *ideaRepository) GetWithMVP(ctx context.Context, id uuid.UUID) (*domain.Idea, error) {
-	var idea domain.Idea
-	err := r.db.WithContext(ctx).
-		Preload("MVPSimulator").
-		First(&idea, "id = ?", id).Error
+func (r *ideaRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Idea, []*domain.Idea, error) {
+	query := r.db.WithContext(ctx).Model(&domain.Idea{}).Where("id = ?", id).
+		Preload("Feedback", func(db *gorm.DB) *gorm.DB {
+			return db.Preload("Reactions")
+		}).
+		Preload("Reactions")
 
-	return &idea, err
+	query = r.withCounts(query)
+
+	idea := &domain.Idea{}
+	if err := query.Find(idea).Error; err != nil {
+		fmt.Println("Error finding idea:", err)
+		return nil, nil, err
+	}
+
+	if idea.Status != string(domain.IdeaStatusActive) {
+		return nil, nil, gorm.ErrRecordNotFound
+	}
+
+	relatedIdeas := r.getRelatedIdeas(ctx, *idea)
+
+	return idea, relatedIdeas, nil
 }
 
-func (r *ideaRepository) UpdateMVP(ctx context.Context, mvpId uuid.UUID, mvp *domain.MVPSimulator) error {
-	return r.db.WithContext(ctx).
-		Model(&domain.MVPSimulator{}).
-		Where("id = ?", mvpId).
-		Updates(mvp).Error
-}
+// func (r *ideaRepository) GetWithMVP(ctx context.Context, id uuid.UUID) (*domain.Idea, error) {
+// 	var idea domain.Idea
+// 	err := r.db.WithContext(ctx).
+// 		Preload("MVPSimulator").
+// 		First(&idea, "id = ?", id).Error
+
+// 	return &idea, err
+// }
+
+// func (r *ideaRepository) UpdateMVP(ctx context.Context, mvpId uuid.UUID, mvp *domain.MVPSimulator) error {
+// 	return r.db.WithContext(ctx).
+// 		Model(&domain.MVPSimulator{}).
+// 		Where("id = ?", mvpId).
+// 		Updates(mvp).Error
+// }
+
+// GetTopIdeas retrieves ideas ranked by views and signups within a specified number of days.
+// Note: This query intentionally uses JOINs and database-level aggregation for performance
+// in fetching and ranking top ideas, rather than fetching all data and processing in the service layer.
+// func (r *ideaRepository) GetTopIdeas(ctx context.Context, userId string, days int, queryParams domain.QueryParams) ([]*response.IdeaWithActivity, error) {
+// 	var ideas []*response.IdeaWithActivity
+// 	since := time.Now().AddDate(0, 0, -days)
+
+// 	// Subquery for signups
+// 	signupsSub := r.db.
+// 		Select("idea_id, COUNT(*) as signups, MAX(signup_time) as latest_signup").
+// 		Table("audience_members").
+// 		Where("signup_time >= ?", since).
+// 		Group("idea_id")
+
+// 	// Subquery for views
+// 	viewsSub := r.db.
+// 		Select("idea_id, COUNT(*) as views, MAX(created_at) as latest_view").
+// 		Table("signals").
+// 		Where("event_type = ? AND created_at >= ?", domain.EventTypePageView, since).
+// 		Group("idea_id")
+
+// 	// Join subqueries to ideas and order by counts
+// 	err := r.db.WithContext(ctx).
+// 		Table("ideas").
+// 		Select("ideas.*, COALESCE(s.signups, 0) as signups, COALESCE(v.views, 0) as views").
+// 		Joins("LEFT JOIN (?) as s ON ideas.id = s.idea_id", signupsSub).
+// 		Joins("LEFT JOIN (?) as v ON ideas.id = v.idea_id", viewsSub).
+// 		Where("ideas.user_id = ?", userId).
+// 		Order("views DESC, signups DESC").
+// 		Limit(queryParams.Limit).
+// 		Offset(queryParams.Offset).
+// 		Scan(&ideas).Error
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return ideas, nil
+// }
 
 func (r *ideaRepository) VerifyIdeaOwner(ctx context.Context, ideaID uuid.UUID, userID string) (bool, error) {
 	var idea domain.Idea
@@ -98,4 +192,126 @@ func (r *ideaRepository) VerifyIdeaOwner(ctx context.Context, ideaID uuid.UUID, 
 	}
 
 	return idea.UserID == userID, nil
+}
+
+func (r *ideaRepository) paginateAndOrder(query *gorm.DB, limit, offset int, order string) *gorm.DB {
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+	if order != "" {
+		query = query.Order(order)
+	} else {
+		query = query.Order("created_at DESC")
+	}
+	return query
+}
+
+func (r *ideaRepository) getRelatedIdeas(ctx context.Context, idea domain.Idea) []*domain.Idea {
+	var relatedIdeas []*domain.Idea
+	tokens := simpleTokenizer(idea.TargetAudience)
+
+	if len(tokens) > 0 {
+		var scoreClauses []string
+		var whereClauses []string
+		var queryArgs []interface{}
+
+		for _, token := range tokens {
+			likePattern := "%" + token + "%"
+			scoreClauses = append(scoreClauses, "(CASE WHEN LOWER(target_audience) LIKE ? THEN 1 ELSE 0 END)")
+			whereClauses = append(whereClauses, "LOWER(target_audience) LIKE ?")
+			queryArgs = append(queryArgs, likePattern)
+		}
+
+		for _, token := range tokens {
+			likePattern := "%" + token + "%"
+			queryArgs = append(queryArgs, likePattern)
+		}
+
+		matchScoreSQL := strings.Join(scoreClauses, " + ")
+		whereSQL := strings.Join(whereClauses, " OR ")
+
+		relatedIdeasQuery := r.db.WithContext(ctx).Model(&domain.Idea{})
+		relatedIdeasQuery = r.withCounts(relatedIdeasQuery)
+
+		currentSelect := "ideas.*, COALESCE(v.view_count, 0) as views, COALESCE(s.signup_count, 0) as signups"
+		finalSelect := fmt.Sprintf("%s, (%s) as match_score", currentSelect, matchScoreSQL)
+
+		relatedIdeasQuery = relatedIdeasQuery.
+			Select(finalSelect, queryArgs[:len(tokens)]...).
+			Where("ideas.id != ? AND ideas.status = ?", idea.ID, domain.IdeaStatusActive).
+			Where(whereSQL, queryArgs[len(tokens):]...).
+			Order("match_score DESC, COALESCE(s.signup_count, 0) DESC").
+			Limit(3)
+
+		if err := relatedIdeasQuery.Find(&relatedIdeas).Error; err != nil {
+			fmt.Println("Error finding related ideas with tokenization:", err)
+			relatedIdeas = nil
+		}
+	} else {
+		fallbackQuery := r.db.WithContext(ctx).Model(&domain.Idea{})
+		fallbackQuery = r.withCounts(fallbackQuery)
+		fallbackQuery = fallbackQuery.
+			Where("id != ? AND status = ?", idea.ID, domain.IdeaStatusActive).
+			Where("target_audience LIKE ?", "%"+idea.TargetAudience+"%").
+			Order("views DESC").
+			Limit(3)
+
+		if err := fallbackQuery.Find(&relatedIdeas).Error; err != nil {
+			fmt.Println("Error finding related ideas (fallback):", err)
+			relatedIdeas = nil
+		}
+	}
+
+	return relatedIdeas
+}
+
+// func WithMVPSimulator(fields ...string) QueryOption {
+// 	return func(db *gorm.DB) *gorm.DB {
+// 		if len(fields) > 0 {
+// 			return db.Preload("MVPSimulator", selectFields(fields))
+// 		}
+
+// 		return db.Preload("MVPSimulator")
+// 	}
+// }
+
+// func WithFeedback(fields ...string) QueryOption {
+// 	return func(db *gorm.DB) *gorm.DB {
+// 		if len(fields) > 0 {
+// 			return db.Preload("Feedback", selectFields(fields))
+// 		}
+
+// 		return db.Preload("Feedback")
+// 	}
+// }
+
+func (r *ideaRepository) withCounts(query *gorm.DB) *gorm.DB {
+	views := r.db.Model(&domain.Signal{}).
+		Select("idea_id, COUNT(*) as view_count").
+		Where("event_type = ?", domain.EventTypePageView).
+		Group("idea_id")
+
+	signups := r.db.Model(&domain.AudienceMember{}).
+		Select("idea_id, COUNT(DISTINCT user_id) as signup_count").
+		Group("idea_id")
+
+	return query.
+		Select("ideas.*, COALESCE(v.view_count, 0) as views, COALESCE(s.signup_count, 0) as signups").
+		Joins("LEFT JOIN (?) as v ON ideas.id = v.idea_id", views).
+		Joins("LEFT JOIN (?) as s ON ideas.id = s.idea_id", signups)
+}
+
+func simpleTokenizer(text string) []string {
+	words := strings.Fields(strings.ToLower(text))
+	var tokens []string
+	for _, word := range words {
+		cleanedWord := strings.Trim(word, ".,!?;:")
+		if cleanedWord != "" {
+			tokens = append(tokens, cleanedWord)
+		}
+	}
+	return tokens
 }

@@ -1,0 +1,90 @@
+package repository
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"foundersignal/internal/domain"
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+)
+
+type ReactionRepository interface {
+	AddFeedbackReaction(ctx context.Context, reaction *domain.FeedbackReaction) error
+	RemoveFeedbackReaction(ctx context.Context, fbId uuid.UUID, userId string) error
+	AddIdeaReaction(ctx context.Context, reaction *domain.IdeaReaction) error
+	RemoveIdeaReaction(ctx context.Context, ideaId uuid.UUID, userId string) error
+}
+
+type reactionRepository struct {
+	db *gorm.DB
+}
+
+func NewReactionRepo(db *gorm.DB) *reactionRepository {
+	return &reactionRepository{db: db}
+}
+
+func (r *reactionRepository) AddFeedbackReaction(ctx context.Context, reaction *domain.FeedbackReaction) error {
+
+	ideaJSON, jsonErr := json.MarshalIndent(reaction, "", "  ") // Marshal to JSON with indentation
+	if jsonErr != nil {
+		fmt.Println("Error marshalling idea to JSON:", jsonErr)
+	} else {
+		fmt.Println("Found idea (JSON):", string(ideaJSON))
+	}
+
+	err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "feedback_id"}, {Name: "user_id"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"reaction_type": reaction.ReactionType,
+			"updated_at":    time.Now(),
+			"deleted_at":    nil,
+		}),
+	}).Create(reaction).Error
+	if err != nil {
+		fmt.Println("Error creating feedback reaction:", err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *reactionRepository) RemoveFeedbackReaction(ctx context.Context, fbId uuid.UUID, userId string) error {
+	if err := r.db.WithContext(ctx).
+		Where("feedback_id = ? AND user_id = ?", fbId, userId).
+		Delete(&domain.FeedbackReaction{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *reactionRepository) AddIdeaReaction(ctx context.Context, reaction *domain.IdeaReaction) error {
+	err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "idea_id"}, {Name: "user_id"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"reaction_type": reaction.ReactionType,
+			"updated_at":    time.Now(),
+			"deleted_at":    nil,
+		}),
+	}).Create(reaction).Error
+	if err != nil {
+		fmt.Println("Error creating feedback reaction:", err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *reactionRepository) RemoveIdeaReaction(ctx context.Context, ideaId uuid.UUID, userId string) error {
+	if err := r.db.WithContext(ctx).
+		Where("idea_id = ? AND user_id = ?", ideaId, userId).
+		Delete(&domain.IdeaReaction{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
