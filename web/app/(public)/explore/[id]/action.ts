@@ -2,6 +2,7 @@
 
 import { api } from "@/lib/api";
 import { auth } from "@clerk/nextjs/server";
+import { revalidateTag } from "next/cache";
 import { ReplyFormValues, messageSchema } from "./schema";
 
 type FieldError = Partial<Record<keyof ReplyFormValues, string>>;
@@ -75,6 +76,8 @@ export const submit = async (
     }
 
     console.log("Response:", responseData);
+
+    revalidateTag(`comments-${ideaId}`);
 
     return {
       message: commentId

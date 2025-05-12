@@ -1,17 +1,44 @@
-import { Button } from "@/components/ui/button";
-import { Link } from "@/components/ui/link";
-import { Textarea } from "@/components/ui/textarea";
+import { auth, User } from "@clerk/nextjs/server";
+
+import { AddCommentButton } from "./add-comment-button";
+import { AddCommentForm } from "./add-comment-form";
+import { CommentExtended, CommentItem } from "./comment";
+
+import { api } from "@/lib/api";
 import { getUsers } from "@/lib/auth";
 import { getName } from "@/lib/utils";
 import { Comment } from "@/types/comment";
-import { auth, User } from "@clerk/nextjs/server";
-import { CommentExtended, CommentItem } from "./comment";
 
-export const CommentsSection = async ({
-  comments,
-}: {
-  comments: Comment[];
-}) => {
+const getComments = async (ideaId: string) => {
+  try {
+    const response = await api.get(`/ideas/${ideaId}/feedback`, {
+      cache: "force-cache",
+      next: {
+        revalidate: 3600,
+        tags: [`comments-${ideaId}`],
+      },
+    });
+
+    if (!response.ok) {
+      console.error(
+        "API error fetching comments:",
+        response.status,
+        response.statusText
+      );
+
+      return null;
+    }
+
+    const data = await response.json();
+    return (data.comments || []) as Comment[];
+  } catch (error) {
+    console.error("Error in getComments:", error);
+    return null;
+  }
+};
+
+export const CommentsSection = async ({ ideaId }: { ideaId: string }) => {
+  const comments = await getComments(ideaId);
   const { userId } = await auth();
 
   const allUserIds = getAllUserIds(comments || []);
@@ -27,23 +54,19 @@ export const CommentsSection = async ({
             Comments ({comments?.length || 0})
           </h2>
 
-          {userId && (
-            <Link
-              href="#comment-form"
-              variant="ghost"
-              size="sm"
-              className="text-primary font-medium"
-            >
-              Add comment
-            </Link>
-          )}
+          {userId && <AddCommentButton />}
         </div>
       </div>
 
       {_comments?.length > 0 ? (
         <div className="divide-y divide-gray-100">
           {_comments.map((comment) => (
-            <CommentItem key={comment.id} comment={comment} userId={userId} />
+            <CommentItem
+              key={comment.id}
+              ideaId={ideaId}
+              comment={comment}
+              userId={userId}
+            />
           ))}
         </div>
       ) : (
@@ -55,24 +78,7 @@ export const CommentsSection = async ({
       )}
 
       {/* Comment form */}
-      {userId && (
-        <div className="p-4 md:p-6 bg-gray-50">
-          <h3 className="text-md font-medium mb-4">Leave a comment</h3>
-
-          <form className="space-y-4" id="comment-form">
-            <Textarea
-              className="w-full border border-gray-300 rounded-lg p-3 min-h-[100px]"
-              placeholder="Share your thoughts on this idea..."
-            ></Textarea>
-
-            <div className="flex justify-end">
-              <Button type="submit" className="flex justify-end w-max">
-                Post comment
-              </Button>
-            </div>
-          </form>
-        </div>
-      )}
+      {userId && <AddCommentForm ideaId={ideaId} userId={userId} />}
     </div>
   );
 };

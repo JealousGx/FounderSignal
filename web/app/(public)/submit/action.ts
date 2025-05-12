@@ -1,9 +1,10 @@
 "use server";
 
+import { api } from "@/lib/api";
 import { auth } from "@clerk/nextjs/server";
+import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { formSchema } from "./schema";
-import { api } from "@/lib/api";
 
 type FieldError = Partial<Record<keyof z.infer<typeof formSchema>, string>>;
 
@@ -60,6 +61,8 @@ export const submitIdea = async (
         error: responseData.error || "Failed to submit idea. Please try again.",
       };
     }
+
+    revalidateTag("ideas");
 
     return {
       message: `Idea "${idea.title}" submitted successfully!`,

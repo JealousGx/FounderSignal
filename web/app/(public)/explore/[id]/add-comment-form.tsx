@@ -1,8 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -19,18 +18,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { submit, SubmitState } from "./action";
 import { messageSchema, ReplyFormValues } from "./schema";
 
-function getIdeaIdFromUrl() {
-  if (typeof window === "undefined") return "";
-
-  const url = window.location.href;
-  const urlPath = url.split("#")[0];
-  return urlPath.split("/").pop() || "";
-}
-
-export const AddCommentForm = ({ userId }: { userId: string }) => {
-  const router = useRouter();
-  const [ideaId] = useState(() => getIdeaIdFromUrl());
-
+export const AddCommentForm = ({
+  userId,
+  ideaId,
+}: {
+  ideaId: string;
+  userId: string;
+}) => {
   const [state, formAction, isPending] = useActionState<
     SubmitState | null,
     FormData
@@ -61,13 +55,12 @@ export const AddCommentForm = ({ userId }: { userId: string }) => {
     }
     if (state?.message && !state.error) {
       form.reset();
-      router.refresh();
 
       if (formRef.current) {
         formRef.current.reset();
       }
     }
-  }, [state, form, router]);
+  }, [state, form]);
 
   const handleAction = async (formData: FormData) => {
     formData.append("userId", userId);
@@ -121,6 +114,7 @@ export const AddCommentForm = ({ userId }: { userId: string }) => {
 };
 
 interface ReplyFormProps {
+  ideaId: string;
   userId: string;
   commentId: string;
   onReplyAdded?: () => void;
@@ -128,14 +122,12 @@ interface ReplyFormProps {
 }
 
 export const ReplyForm = ({
+  ideaId,
   userId,
   commentId,
   onReplyAdded,
   onCancel,
 }: ReplyFormProps) => {
-  const router = useRouter();
-  const [ideaId] = useState(() => getIdeaIdFromUrl());
-
   const [state, formAction, isPending] = useActionState<
     SubmitState | null,
     FormData
@@ -172,7 +164,6 @@ export const ReplyForm = ({
       }
     }
     if (state?.message && !state.error) {
-      router.refresh();
       onReplyAdded?.();
       onCancel?.();
 
@@ -182,7 +173,7 @@ export const ReplyForm = ({
         formRef.current.reset();
       }
     }
-  }, [state, form, onReplyAdded, onCancel, router]);
+  }, [state, form, onReplyAdded, onCancel]);
 
   const handleAction = async (formData: FormData) => {
     formData.append("userId", userId);

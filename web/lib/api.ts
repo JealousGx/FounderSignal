@@ -22,7 +22,8 @@ export async function customFetch(path: string, options: RequestInit = {}) {
 }
 
 export const api = {
-  get: (path: string) => customFetch(path, { method: "GET" }),
+  get: (path: string, options?: RequestInit) =>
+    customFetch(path, { method: "GET", ...options }),
   post: (path: string, body?: BodyInit | null) =>
     customFetch(path, { method: "POST", body }),
   put: (path: string, body?: BodyInit | null) =>

@@ -21,11 +21,13 @@ export type CommentExtended = Omit<Comment, "replies"> & {
 };
 
 export const CommentItem = ({
+  ideaId,
   comment,
   userId,
 }: {
   comment: CommentExtended;
   userId: string | null;
+  ideaId: string;
 }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
 
@@ -107,6 +109,7 @@ export const CommentItem = ({
 
               {showReplyForm && userId && (
                 <ReplyForm
+                  ideaId={ideaId}
                   userId={userId}
                   commentId={comment.id}
                   onCancel={handleReplyCancel}
@@ -117,7 +120,11 @@ export const CommentItem = ({
           )}
 
           {comment.replies && comment.replies.length > 0 && (
-            <CollapsibleReplies replies={comment.replies} userId={userId} />
+            <CollapsibleReplies
+              ideaId={ideaId}
+              replies={comment.replies}
+              userId={userId}
+            />
           )}
         </div>
       </div>
@@ -128,9 +135,11 @@ export const CommentItem = ({
 export const CollapsibleReplies = ({
   replies,
   userId,
+  ideaId,
 }: {
   replies: CommentExtended[];
   userId: string | null;
+  ideaId: string;
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -140,7 +149,12 @@ export const CollapsibleReplies = ({
   return (
     <div className="mt-4 pl-4 border-l border-gray-200">
       {visibleReplies.map((reply) => (
-        <CommentItem key={reply.id} comment={reply} userId={userId} />
+        <CommentItem
+          key={reply.id}
+          ideaId={ideaId}
+          comment={reply}
+          userId={userId}
+        />
       ))}
 
       {replies.length > 1 && (

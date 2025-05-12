@@ -1,26 +1,26 @@
-import React, { cache } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { notFound } from "next/navigation";
 import {
   ArrowLeft,
-  Users,
   Calendar,
-  Eye,
-  TrendingUp,
   Check,
-  ThumbsUp,
+  Eye,
   ThumbsDown,
+  ThumbsUp,
+  TrendingUp,
+  Users,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { cache, Suspense } from "react";
 
-import { Link as CustomLink } from "@/components/ui/link";
-import { formatDate, getName } from "@/lib/utils";
-import { CommentsSection } from "./comments-section";
 import { Button } from "@/components/ui/button";
+import { Link as CustomLink } from "@/components/ui/link";
+import { CommentsSection } from "./comments-section";
+
 import { api } from "@/lib/api";
-import { Idea } from "@/types/idea";
-import { Comment } from "@/types/comment";
 import { getUser } from "@/lib/auth";
+import { formatDate, getName } from "@/lib/utils";
+import { Idea } from "@/types/idea";
 
 type IdeaExtended = Idea & {
   founder: {
@@ -33,13 +33,17 @@ type IdeaExtended = Idea & {
     avgTimeOnPage: string;
     bounceRate: number;
   };
-  comments: Comment[];
   feedbackHighlights: string[];
 };
 
 const getIdea = cache(async (id: string) => {
   try {
-    const response = await api.get(`/ideas/${id}`);
+    const response = await api.get(`/ideas/${id}`, {
+      next: {
+        revalidate: 3600,
+        tags: [`idea-${id}`],
+      },
+    });
 
     if (!response.ok) {
       console.error(
@@ -244,7 +248,17 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
             </div>
           </div>
 
-          <CommentsSection comments={idea.comments} />
+          <Suspense
+            fallback={
+              <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-8">
+                <div className="p-4 md:p-6 w-full text-center">
+                  <p className="text-gray-500">Loading comments...</p>
+                </div>
+              </div>
+            }
+          >
+            <CommentsSection ideaId={idea.id} />
+          </Suspense>
 
           {/* CTA for visitors */}
           <div className="bg-blue-50 rounded-xl p-6 text-center">
