@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 var (
@@ -25,7 +26,6 @@ type Idea struct {
 	Likes          int    `gorm:"default:0" json:"likes"`
 	Dislikes       int    `gorm:"default:0" json:"dislikes"`
 
-	// Virtual fields (not stored in DB but computed)
 	Signups        int     `json:"signups"`
 	Views          int     `json:"views"`
 	EngagementRate float64 `json:"engagementRate"`
@@ -38,6 +38,25 @@ type Idea struct {
 	Feedback        []Feedback       `gorm:"foreignKey:IdeaID" json:"comments,omitempty"`
 	AudienceMembers []AudienceMember `gorm:"foreignKey:IdeaID" json:"audience,omitempty"`
 	Reactions       []IdeaReaction   `gorm:"foreignKey:IdeaID" json:"reactions,omitempty"`
+}
+
+func (i *Idea) AfterFind(tx *gorm.DB) (err error) {
+
+	var likesCount int
+	var dislikesCount int
+
+	if i.Reactions != nil {
+		for _, reaction := range i.Reactions {
+			if reaction.ReactionType == "like" {
+				likesCount++
+			} else if reaction.ReactionType == "dislike" {
+				dislikesCount++
+			}
+		}
+	}
+	i.Likes = likesCount
+	i.Dislikes = dislikesCount
+	return nil
 }
 
 // MVPSimulator represents the mock landing page for an idea
@@ -81,14 +100,35 @@ type Feedback struct {
 	Idea      Idea               `gorm:"foreignKey:IdeaID" json:"-"`
 	Parent    *Feedback          `gorm:"foreignKey:ParentID" json:"-"`
 	Replies   []Feedback         `gorm:"foreignKey:ParentID" json:"replies,omitempty"`
-	Reactions []FeedbackReaction `gorm:"foreignKey:FeedbackID" json:"-"`
+	Reactions []FeedbackReaction `gorm:"foreignKey:FeedbackID"`
+}
+
+func (f *Feedback) AfterFind(tx *gorm.DB) (err error) {
+	// This hook calculates Likes and Dislikes based on the f.Reactions slice.
+	// It assumes that f.Reactions are preloaded when Feedback is fetched.
+	// If f.Reactions is not preloaded, Likes and Dislikes will reflect
+	// the values from the database columns (or 0 if calculated from an empty slice).
+
+	var likesCount int
+	var dislikesCount int
+
+	for _, reaction := range f.Reactions {
+		if reaction.ReactionType == "like" {
+			likesCount++
+		} else if reaction.ReactionType == "dislike" {
+			dislikesCount++
+		}
+	}
+	f.Likes = likesCount
+	f.Dislikes = dislikesCount
+	return nil
 }
 
 // FeedbackReaction tracks individual user reactions (likes/dislikes) to feedback
 type FeedbackReaction struct {
 	Base
-	FeedbackID   uuid.UUID `gorm:"type:uuid;not null" json:"feedbackId"`
-	UserID       string    `gorm:"index" json:"userId"`
+	FeedbackID   uuid.UUID `gorm:"type:uuid;not null;index:idx_feedback_user_reaction,unique" json:"feedbackId"`
+	UserID       string    `gorm:"index:idx_feedback_user_reaction,unique" json:"userId"`
 	ReactionType string    `gorm:"not null" json:"reactionType"` // "like" or "dislike"
 
 	// Relationship
