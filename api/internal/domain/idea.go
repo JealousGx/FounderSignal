@@ -20,7 +20,7 @@ type Idea struct {
 	Description    string `gorm:"type:text;not null" json:"description"`
 	TargetAudience string `gorm:"not null" json:"targetAudience"`
 	Status         string `gorm:"not null;default:'active';index" json:"status"`  // Active, Paused, Completed, Draft
-	Stage          string `gorm:"not null;default:'Ideation';index" json:"stage"` // Validation, MVP, Ideation
+	Stage          string `gorm:"not null;default:'ideation';index" json:"stage"` // Validation, MVP, Ideation
 	TargetSignups  int    `gorm:"default:100" json:"targetSignups"`
 	ImageURL       string `json:"imageUrl"`
 	Likes          int    `gorm:"default:0" json:"likes"`
@@ -41,7 +41,6 @@ type Idea struct {
 }
 
 func (i *Idea) AfterFind(tx *gorm.DB) (err error) {
-
 	var likesCount int
 	var dislikesCount int
 

@@ -26,7 +26,7 @@ func ToIdeasListResponse(ideas []*domain.Idea, count int64) *response.IdeaListRe
 	}
 
 	for _, idea := range ideas {
-		engagementRate := calculateEngagementRate(idea)
+		engagementRate := calculateEngagementRate(idea.Views, idea.Signups)
 
 		publicIdeas.Ideas = append(publicIdeas.Ideas, response.IdeaList{
 			ID:             idea.ID,
@@ -52,7 +52,7 @@ func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUser
 		return nil
 	}
 
-	engagementRate := calculateEngagementRate(idea)
+	engagementRate := calculateEngagementRate(idea.Views, idea.Signups)
 
 	// Determine LikedByUser / DislikedByUser for the idea
 	var likedByUser, dislikedByUser bool
@@ -80,24 +80,6 @@ func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUser
 		}
 	}
 
-	// Calculate Stats
-	var conversionRate float64
-	if idea.Views > 0 {
-		conversionRate = (float64(idea.Signups) / float64(idea.Views)) * 100.0
-	}
-	var bounceRate float64
-	bouncedSessions := idea.Views - idea.Signups
-	if idea.Views > 0 {
-		bounceRate = (float64(bouncedSessions) / float64(idea.Views)) * 100.0
-	}
-
-	stats := response.PublicIdeaStats{
-		Signups:        idea.Signups,
-		ConversionRate: conversionRate,
-		// AvgTimeOnPage:  "N/A", // Placeholder for average time on page
-		BounceRate: bounceRate,
-	}
-
 	resIdea := &response.PublicIdea{
 		ID:                 idea.ID,
 		UserID:             idea.UserID,
@@ -111,7 +93,7 @@ func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUser
 		Dislikes:           idea.Dislikes,
 		LikedByUser:        likedByUser,
 		DislikedByUser:     dislikedByUser,
-		Stats:              stats,
+		Stats:              calculateIdeaStats(idea.Signals, idea.Signups),
 		FeedbackHighlights: feedbackHighlights,
 	}
 
@@ -122,7 +104,7 @@ func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUser
 			ID:             relatedIdea.ID,
 			Title:          relatedIdea.Title,
 			Description:    relatedIdea.Description,
-			EngagementRate: calculateEngagementRate(relatedIdea),
+			EngagementRate: calculateEngagementRate(relatedIdea.Views, relatedIdea.Signups),
 			ImageUrl:       relatedIdea.ImageURL,
 		})
 	}

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"foundersignal/internal/domain"
 	"foundersignal/internal/dto"
@@ -9,8 +10,10 @@ import (
 	"foundersignal/internal/dto/response"
 	"foundersignal/internal/repository"
 	"foundersignal/pkg/validator"
+	"log"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 type IdeaService interface {
@@ -20,6 +23,7 @@ type IdeaService interface {
 	GetByID(ctx context.Context, id uuid.UUID, userId string) (*response.PublicIdeaResponse, error)
 	// UpdateMVP(ctx context.Context, mvpId, ideaId uuid.UUID, userId string, req *request.UpdateMVP) error
 	// GetTopIdeas(ctx context.Context, userId string, queryParams domain.QueryParams) ([]response.PrivateTopIdeaList, error)
+	RecordSignal(ctx context.Context, ideaID uuid.UUID, userID string, eventType string, ipAddress string, userAgent string, metadata map[string]interface{}) error
 }
 
 type ideaService struct {
@@ -54,7 +58,6 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		Headline:    idea.Title,
 		Subheadline: idea.Description,
 		CTAButton:   req.CTAButton,
-		HTMLContent: generateLandingPage(*req),
 	}
 
 	return s.repo.CreateWithMVP(ctx, idea, mvp)
@@ -182,18 +185,158 @@ func (s *ideaService) GetIdeas(ctx context.Context, queryParams domain.QueryPara
 // 	return result, nil
 // }
 
-func generateLandingPage(req request.CreateIdea) string {
-	// This is a simple HTML template for the MVP landing page.
-	// Use AI to generate a more complex and engaging design.
+// func (s *ideaService) GetMVPByIdeaID(ctx context.Context, ideaID uuid.UUID) (*response.MVP, error) {
+// 	// Fetch the idea along with its MVPSimulator details
+// 	idea, err := s.repo.GetByIDWithRelations(ctx, ideaID, []string{"MVPSimulator"})
+// 	if err != nil {
+// 		if errors.Is(err, gorm.ErrRecordNotFound) {
+// 			return nil, domain.ErrIdeaNotFound
+// 		}
+// 		return nil, fmt.Errorf("failed to get idea for MVP: %w", err)
+// 	}
 
+// 	if idea == nil {
+// 		return nil, domain.ErrIdeaNotFound
+// 	}
+
+// 	htmlContent := generateLandingPageContent(idea, idea.MVPSimulator)
+
+// 	return &response.MVP{
+// 		IdeaID:      ideaID.String(),
+// 		HTMLContent: htmlContent,
+// 	}, nil
+// }
+
+func (s *ideaService) RecordSignal(ctx context.Context, ideaID uuid.UUID, userID string, eventType string, ipAddress string, userAgent string, metadata map[string]interface{}) error {
+	signal := &domain.Signal{
+		IdeaID:    ideaID,
+		UserID:    userID,
+		EventType: eventType,
+		IPAddress: ipAddress,
+		UserAgent: userAgent,
+	}
+
+	if metadata != nil {
+		metaJSON, err := json.Marshal(metadata)
+		if err != nil {
+			return fmt.Errorf("failed to marshal metadata: %w", err)
+		}
+		signal.Metadata = datatypes.JSON(metaJSON)
+	}
+
+	err := s.signalRepo.Create(ctx, signal)
+	if err != nil {
+		return fmt.Errorf("failed to create signal: %w", err)
+	}
+
+	// If the event is a CTA click and we have a UserID, create/update AudienceMember
+	if eventType == "cta_click" && userID != "" {
+		_, err := s.audienceRepo.Upsert(ctx, ideaID, userID)
+		if err != nil {
+			// Log this error but don't necessarily fail the whole signal recording
+			log.Printf("WARN: Failed to upsert audience member for idea %s, user %s after CTA click: %v", ideaID, userID, err)
+		}
+	}
+
+	return nil
+}
+
+func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
 	return fmt.Sprintf(`
-		<div class="mvp">
-			<h1>%s</h1>
-			<p>%s</p>
-			<button onclick="trackCta()">%s</button>
-		</div>`,
-		req.Title,
-		req.Description,
-		req.CTAButton,
-	)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>%s</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; text-align: center; min-height: 100vh; box-sizing: border-box; background-color: #f4f7f6; color: #333; }
+        .mvp-container { max-width: 600px; margin: auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-bottom: 15px; }
+        p { color: #555; line-height: 1.6; margin-bottom: 25px; }
+        button { background-color: #3498db; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s ease; }
+        button:hover { background-color: #2980b9; }
+        .spacer { height: 1000px; } /* For scroll testing */
+    </style>
+</head>
+<body>
+    <div class="mvp-container">
+        <h1>%s</h1>
+        <p>%s</p>
+        <button id="ctaButton">%s</button>
+    </div>
+    <div class="spacer"></div>
+
+    <script>
+        (function() {
+            const ideaId = "%s";
+            const postTrackEvent = (eventType, metadata) => {
+                if (window.parent && window.parent.postMessage) {
+                    window.parent.postMessage({ type: 'founderSignalTrack', eventType: eventType, ideaId: ideaId, metadata: metadata }, '*');
+                }
+            };
+
+            // 1. Track Page View
+            postTrackEvent('pageview', { path: window.location.pathname, title: document.title });
+
+            // 2. Track CTA Click
+            const ctaButton = document.getElementById('ctaButton');
+            if (ctaButton) {
+                ctaButton.addEventListener('click', function() {
+                    postTrackEvent('cta_click', { buttonText: ctaButton.innerText, ctaElementId: ctaButton.id });
+                    alert('Thanks for your interest!'); // Optional: client-side feedback
+                });
+            }
+
+            // 3. Track Scroll Depth
+            let scrollReached = { 25: false, 50: false, 75: false, 100: false };
+            let scrollTimeout;
+            function handleScroll() {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    const docElem = document.documentElement;
+                    const scrollHeight = docElem.scrollHeight - docElem.clientHeight;
+                    if (scrollHeight === 0) { // Content not scrollable or fully visible
+                        if (!scrollReached[100]) {
+                            postTrackEvent('scroll_depth', { percentage: 100 });
+                            scrollReached[100] = true;
+                        }
+                        return;
+                    }
+                    const scrollTop = window.pageYOffset || docElem.scrollTop;
+                    const currentPercentage = Math.min(100, Math.round((scrollTop / scrollHeight) * 100));
+
+                    [25, 50, 75, 100].forEach(depth => {
+                        if (currentPercentage >= depth && !scrollReached[depth]) {
+                            postTrackEvent('scroll_depth', { percentage: depth });
+                            scrollReached[depth] = true;
+                        }
+                    });
+                }, 150); // Debounce scroll events
+            }
+            // Initial check in case content is not scrollable but covers depths
+            handleScroll(); 
+            window.addEventListener('scroll', handleScroll, { passive: true });
+
+            // 4. Track Time on Page
+            const startTime = Date.now();
+            const sendTimeOnPage = () => {
+                const durationSeconds = Math.round((Date.now() - startTime) / 1000);
+                postTrackEvent('time_on_page', { duration_seconds: durationSeconds });
+            };
+            
+            // More reliable way to send data on page unload
+            window.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    sendTimeOnPage();
+                }
+            });
+            // As a fallback, though 'pagehide' or 'beforeunload' can be unreliable for async.
+            // The postMessage should be synchronous enough.
+            window.addEventListener('pagehide', sendTimeOnPage);
+
+        })();
+    </script>
+</body>
+</html>`, mvpDetails.Headline, mvpDetails.Headline, mvpDetails.Subheadline, mvpDetails.CTAButton, mvpDetails.IdeaID.String())
 }

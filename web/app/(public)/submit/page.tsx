@@ -1,15 +1,13 @@
 "use client";
 
-import React, { useActionState, useEffect, useRef } from "react";
 import { AlertCircle } from "lucide-react";
+import { useActionState, useEffect, useRef } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -19,11 +17,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
-import { toast } from "sonner";
-import { formSchema } from "./schema";
-import { submitIdea, SubmitIdeaState } from "./action";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { submitIdea, SubmitIdeaState } from "./action";
+import { formSchema } from "./schema";
 
 export default function SubmitPage() {
   const [state, formAction, isPending] = useActionState<
@@ -40,7 +40,7 @@ export default function SubmitPage() {
       title: "",
       description: "",
       targetAudience: "",
-      cta: "Join waitlist",
+      ctaButtonText: "Join waitlist",
     },
   });
 
@@ -178,7 +178,7 @@ export default function SubmitPage() {
 
             <FormField
               control={form.control}
-              name="cta"
+              name="ctaButtonText"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="block text-sm font-medium text-gray-700 mb-1">

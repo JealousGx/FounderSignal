@@ -39,8 +39,9 @@ func NewIdeasRepo(db *gorm.DB) *ideaRepository {
 func (r *ideaRepository) CreateWithMVP(ctx context.Context, idea *domain.Idea, mvp *domain.MVPSimulator) (uuid.UUID, error) {
 	var ideaID uuid.UUID
 
-	err := r.db.Model(&domain.Feedback{}).WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(idea).Error; err != nil {
+			fmt.Println("Validation error:", err)
 			return err
 		}
 
@@ -102,7 +103,8 @@ func (r *ideaRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Ide
 		Preload("Feedback", func(db *gorm.DB) *gorm.DB {
 			return db.Preload("Reactions")
 		}).
-		Preload("Reactions")
+		Preload("Reactions").
+		Preload("Signals")
 
 	query = r.withCounts(query)
 

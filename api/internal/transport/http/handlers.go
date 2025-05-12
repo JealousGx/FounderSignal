@@ -9,6 +9,7 @@ type Handlers struct {
 	Feedback FeedbackHandler
 	Reaction ReactionHandler
 	MVP      MVPHandler
+	Signal   SignalHandler
 }
 
 func NewHandlers(services *service.Services) *Handlers {
@@ -17,5 +18,6 @@ func NewHandlers(services *service.Services) *Handlers {
 		Feedback: NewFeedbackHandler(services.Feedback),
 		Reaction: NewReactionHandler(services.Reaction),
 		MVP:      NewMVPHandler(services.MVP),
+		Signal:   NewSignalHandler(services.Idea),
 	}
 }

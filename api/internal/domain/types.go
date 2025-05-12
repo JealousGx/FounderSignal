@@ -24,9 +24,10 @@ type EventType string
 
 // Event type constants for tracking user interactions
 const (
-	EventTypePageView EventType = "pageview"
-	EventTypeSignup   EventType = "signup"
-	EventTypeClick    EventType = "click"
+	EventTypePageView   EventType = "pageview"
+	EventTypeClick      EventType = "cta_click"
+	EventTypeScroll     EventType = "scroll_depth"
+	EventTypeTimeOnPage EventType = "time_on_page"
 )
 
 type IdeaStatus string

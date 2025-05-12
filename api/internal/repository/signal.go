@@ -10,6 +10,7 @@ import (
 )
 
 type SignalRepository interface {
+	Create(ctx context.Context, signal *domain.Signal) error
 	GetByIdeaId(ctx context.Context, ideaId uuid.UUID, userId *string, eventType *domain.EventType) ([]*domain.Signal, error)
 	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID, eventType *domain.EventType, start, end *time.Time, fields []string) (int64, error)
 }
@@ -20,6 +21,10 @@ type signalRepository struct {
 
 func NewSignalRepo(db *gorm.DB) *signalRepository {
 	return &signalRepository{db: db}
+}
+
+func (r *signalRepository) Create(ctx context.Context, signal *domain.Signal) error {
+	return r.db.WithContext(ctx).Create(signal).Error
 }
 
 func (r *signalRepository) GetByIdeaId(ctx context.Context, ideaId uuid.UUID, userId *string, eventType *domain.EventType) ([]*domain.Signal, error) {

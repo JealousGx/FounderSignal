@@ -23,5 +23,16 @@ func NewMVPService(repo repository.MVPRepository) *mvpService {
 }
 
 func (s *mvpService) GetByIdea(ctx context.Context, ideaId uuid.UUID) (*domain.MVPSimulator, error) {
-	return s.repo.GetByIdea(ctx, ideaId)
+	mvp, err := s.repo.GetByIdea(ctx, ideaId)
+	if err != nil {
+		return nil, err
+	}
+
+	if mvp == nil {
+		return nil, nil
+	}
+
+	mvp.HTMLContent = generateLandingPageContent(*mvp)
+
+	return mvp, nil
 }

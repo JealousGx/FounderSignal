@@ -7,9 +7,11 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type AudienceRepository interface {
+	Upsert(ctx context.Context, ideaID uuid.UUID, userID string) (*domain.AudienceMember, error)
 	GetByIdeaId(ctx context.Context, ideaId uuid.UUID) ([]*domain.AudienceMember, error)
 	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID, start, end *time.Time) (int64, error)
 }
@@ -20,6 +22,37 @@ type audienceRepository struct {
 
 func NewAudienceRepo(db *gorm.DB) *audienceRepository {
 	return &audienceRepository{db: db}
+}
+
+func (r *audienceRepository) Upsert(ctx context.Context, ideaID uuid.UUID, userID string) (*domain.AudienceMember, error) {
+	member := domain.AudienceMember{
+		IdeaID: ideaID,
+		UserID: userID,
+	}
+
+	now := time.Now()
+
+	err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "idea_id"}, {Name: "user_id"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"last_active": gorm.Expr("NOW()"),
+			"visits":      gorm.Expr("audience_members.visits + 1"),
+			"engaged":     true,
+		}),
+	}).FirstOrCreate(&member, domain.AudienceMember{
+		IdeaID:     ideaID,
+		UserID:     userID,
+		SignupTime: time.Now(),
+		LastActive: &now,
+		Visits:     1,
+		Engaged:    true,
+	}).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &member, nil
 }
 
 func (r *audienceRepository) GetByIdeaId(ctx context.Context, ideaId uuid.UUID) ([]*domain.AudienceMember, error) {
