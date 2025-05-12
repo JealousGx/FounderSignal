@@ -1,18 +1,60 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { sendSignal } from "./action";
 
 interface MVPProps {
   htmlContent: string;
+  ideaId: string;
 }
 
-export const MVP = ({ htmlContent }: MVPProps) => {
+export const MVP = ({ htmlContent, ideaId }: MVPProps) => {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
   useEffect(() => {
-    if (htmlContent) {
-      document.documentElement.innerHTML = htmlContent;
+    if (iframeRef.current && htmlContent) {
+      const doc =
+        iframeRef.current.contentDocument ||
+        iframeRef.current.contentWindow?.document;
+      if (doc) {
+        doc.open();
+        doc.writeln(htmlContent);
+        doc.close();
+      }
     }
   }, [htmlContent]);
 
-  // Return null or a placeholder as the content is replaced
-  return null;
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Basic security: check origin if MVP is hosted on a different domain
+      // if (event.origin !== "http://expected-mvp-origin.com") return;
+
+      const { type, eventType, ideaId: msgIdeaId, metadata } = event.data;
+
+      if (type === "founderSignalTrack" && msgIdeaId === ideaId && eventType) {
+        console.log("Received track event from MVP iframe:", {
+          eventType,
+          ideaId,
+          metadata,
+        });
+        sendSignal(ideaId, eventType, metadata);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [ideaId]);
+
+  return (
+    <iframe
+      ref={iframeRef}
+      title="MVP Landing Page Preview"
+      style={{ width: "100%", height: "100vh", border: "none" }}
+      sandbox="allow-scripts allow-same-origin" // allow-forms if your MVP has forms that post
+      srcDoc={htmlContent} // Using srcDoc is an alternative to writing to iframe document
+    />
+  );
 };

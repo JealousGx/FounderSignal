@@ -1,3 +1,4 @@
+import { Link } from "@/components/ui/link";
 import { api } from "@/lib/api";
 import { cache, Suspense } from "react";
 import { MVP } from "./mvp";
@@ -39,11 +40,37 @@ export default async function MVPPage({
   const { ideaId } = await params;
   const mvp = await getMVP(ideaId);
 
+  if (!mvp || !mvp.htmlContent) {
+    // You could redirect or show a more user-friendly error page
+    // notFound();
+    return (
+      <div
+        style={{
+          padding: "40px",
+          textAlign: "center",
+          fontFamily: "sans-serif",
+        }}
+      >
+        <h1>MVP Not Found</h1>
+        <p>
+          The requested Minimum Viable Product page could not be loaded. It
+          might have been moved or deleted.
+        </p>
+        <Link
+          href="/explore"
+          style={{ color: "#007bff", textDecoration: "none" }}
+        >
+          Explore other ideas
+        </Link>
+      </div>
+    );
+  }
+
   console.log("MVPPage", ideaId);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      {mvp && <MVP htmlContent={mvp.htmlContent} />}
+      {mvp && <MVP htmlContent={mvp.htmlContent} ideaId={ideaId} />}
     </Suspense>
   );
 }

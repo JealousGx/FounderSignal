@@ -44,11 +44,7 @@ export const submitIdea = async (
 
   const idea = validatedFields.data;
 
-  console.log("Submitting idea:", idea);
-
   try {
-    console.log("Submitting idea to API:", idea);
-
     const response = await api.post("/dashboard/ideas", JSON.stringify(idea));
     const responseData = await response.json();
 

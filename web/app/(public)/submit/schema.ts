@@ -13,5 +13,5 @@ export const formSchema = z.object({
     .string()
     .trim()
     .min(8, { message: "Target audience must be at least 8 characters long." }),
-  cta: z.string().trim().optional(),
+  ctaButtonText: z.string().trim().optional(),
 });
