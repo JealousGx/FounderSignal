@@ -3,8 +3,6 @@ import {
   Calendar,
   Check,
   Eye,
-  ThumbsDown,
-  ThumbsUp,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -13,7 +11,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
 
-import { Button } from "@/components/ui/button";
 import { Link as CustomLink } from "@/components/ui/link";
 import { CommentsSection } from "./comments-section";
 
@@ -21,6 +18,7 @@ import { api } from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import { formatDate, getName } from "@/lib/utils";
 import { Idea } from "@/types/idea";
+import { ReactionButtons } from "./reaction-btns";
 
 type IdeaExtended = Idea & {
   founder: {
@@ -221,27 +219,13 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
                   <h3 className="text-lg font-medium">Is this idea helpful?</h3>
 
                   <div className="flex items-center gap-1">
-                    <Button size="sm" variant="ghost">
-                      <ThumbsUp
-                        className={`w-5 h-5 ${
-                          idea.likedByUser ? "text-primary" : "text-gray-500"
-                        }`}
-                      />
-                      <span>{idea.likes}</span>
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="inline-flex items-center gap-2"
-                    >
-                      <ThumbsDown
-                        className={`w-5 h-5 ${
-                          idea.dislikedByUser ? "text-red-500" : "text-gray-500"
-                        }`}
-                      />
-                      <span>{idea.dislikes}</span>
-                    </Button>
+                    <ReactionButtons
+                      ideaId={ideaId}
+                      likedByUser={idea.likedByUser}
+                      dislikedByUser={idea.dislikedByUser}
+                      likes={idea.likes}
+                      dislikes={idea.dislikes}
+                    />
                   </div>
                 </div>
               </div>

@@ -88,3 +88,58 @@ export const submit = async (
     };
   }
 };
+
+export const submitReaction = async (
+  ideaId: string,
+  type: "like" | "dislike" | "remove",
+  commentId?: string
+) => {
+  // for comment / reply
+  // url structure: /ideas/:ideaId/feedback/:commentId/reaction
+  // const { ideaId, commentId } = params;
+
+  if (ideaId === "") {
+    return {
+      error: "Idea ID required.",
+    };
+  }
+
+  let revalidationTag = `idea-${ideaId}`;
+  let path = `/dashboard/ideas/${ideaId}/reaction`;
+  if (commentId) {
+    path = `/dashboard/ideas/${ideaId}/feedback/${commentId}/reaction`;
+    revalidationTag = `comments-${ideaId}`;
+  }
+
+  const payload = {
+    type,
+  };
+
+  try {
+    const response = await api.put(path, JSON.stringify(payload));
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      console.error("API Error:", data.error || `Status: ${response.status}`);
+
+      return {
+        error: data.error || "Failed to submit reaction",
+      };
+    }
+
+    revalidateTag(revalidationTag);
+
+    return {
+      message: "Reaction submitted successfully!",
+      likes: data.likes,
+      dislikes: data.dislikes,
+      userReaction: data.userReaction,
+    };
+  } catch (e: any) {
+    console.error("Reaction submission failed:", e);
+
+    return {
+      error: e.message || "An unexpected error occurred.",
+    };
+  }
+};

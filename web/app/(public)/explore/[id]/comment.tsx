@@ -3,13 +3,14 @@
 import Image from "next/image";
 import { useState } from "react";
 
-import { ChevronDown, ChevronUp, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Comment } from "@/types/comment";
 
 import { formatDate } from "@/lib/utils";
 import { ReplyForm } from "./add-comment-form";
+import { ReactionButtons } from "./reaction-btns";
 
 export type CommentExtended = Omit<Comment, "replies"> & {
   content: string;
@@ -71,31 +72,14 @@ export const CommentItem = ({
           {userId && (
             <div className="w-full flex items-center gap-1 flex-col">
               <div className="flex items-center gap-1 flex-start w-full">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`flex items-center gap-1 text-sm ${
-                    comment.likedByUser
-                      ? "text-primary font-medium"
-                      : "text-gray-500"
-                  }`}
-                >
-                  <ThumbsUp className="w-4 h-4" />
-                  <span>{comment.likes}</span>
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`${
-                    comment.dislikedByUser
-                      ? "text-red-500 font-medium"
-                      : "text-gray-500"
-                  }`}
-                >
-                  <ThumbsDown className="w-4 h-4" />
-                  <span>{comment.dislikes}</span>
-                </Button>
+                <ReactionButtons
+                  ideaId={ideaId}
+                  commentId={comment.id}
+                  likedByUser={comment.likedByUser}
+                  dislikedByUser={comment.dislikedByUser}
+                  likes={comment.likes}
+                  dislikes={comment.dislikes}
+                />
 
                 <Button
                   variant="ghost"
@@ -114,7 +98,7 @@ export const CommentItem = ({
                   commentId={comment.id}
                   onCancel={handleReplyCancel}
                   onReplyAdded={handleReplyAdded}
-                  initialMention={`@${comment.author.name} `}
+                  initialMention={`@${comment.author.name}`}
                 />
               )}
             </div>
