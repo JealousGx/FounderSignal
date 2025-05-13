@@ -5,19 +5,21 @@ import (
 )
 
 type Handlers struct {
-	Idea     IdeaHandler
-	Feedback FeedbackHandler
-	Reaction ReactionHandler
-	MVP      MVPHandler
-	Signal   SignalHandler
+	Idea      IdeaHandler
+	Feedback  FeedbackHandler
+	Reaction  ReactionHandler
+	MVP       MVPHandler
+	Signal    SignalHandler
+	Dashboard DashboardHandler
 }
 
 func NewHandlers(services *service.Services) *Handlers {
 	return &Handlers{
-		Idea:     NewIdeaHandler(services.Idea),
-		Feedback: NewFeedbackHandler(services.Feedback),
-		Reaction: NewReactionHandler(services.Reaction),
-		MVP:      NewMVPHandler(services.MVP),
-		Signal:   NewSignalHandler(services.Idea),
+		Idea:      NewIdeaHandler(services.Idea),
+		Feedback:  NewFeedbackHandler(services.Feedback),
+		Reaction:  NewReactionHandler(services.Reaction),
+		MVP:       NewMVPHandler(services.MVP),
+		Signal:    NewSignalHandler(services.Idea),
+		Dashboard: NewDashboardHandler(services.Dashboard),
 	}
 }

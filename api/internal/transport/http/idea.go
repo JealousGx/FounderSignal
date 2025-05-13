@@ -6,7 +6,6 @@ import (
 	"foundersignal/internal/service"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -133,7 +132,3 @@ func (h *ideaHandler) GetByID(c *gin.Context) {
 
 // 	c.JSON(http.StatusOK, ideas)
 // }
-
-func isDashboardRequest(c *gin.Context) bool {
-	return strings.HasPrefix(c.Request.URL.Path, "/api/v1/dashboard")
-}

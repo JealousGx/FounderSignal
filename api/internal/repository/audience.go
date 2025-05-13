@@ -13,7 +13,10 @@ import (
 type AudienceRepository interface {
 	Upsert(ctx context.Context, ideaID uuid.UUID, userID string) (*domain.AudienceMember, error)
 	GetByIdeaId(ctx context.Context, ideaId uuid.UUID) ([]*domain.AudienceMember, error)
-	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID, start, end *time.Time) (int64, error)
+	GetSignupsByIdeaId(ctx context.Context, ideaId uuid.UUID, from, to time.Time) ([]int64, error)
+	GetSignupsByIdeaIds(ctx context.Context, ideaIds []uuid.UUID, from, to time.Time) (map[uuid.UUID]map[string]int, error)
+	GetRecentByUserIdeas(ctx context.Context, userID string, limit int) ([]domain.AudienceMember, error)
+	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID, from, to *time.Time) (int64, error)
 }
 
 type audienceRepository struct {
@@ -69,16 +72,16 @@ func (r *audienceRepository) GetByIdeaId(ctx context.Context, ideaId uuid.UUID) 
 func (r *audienceRepository) GetSignupsByIdeaId(
 	ctx context.Context,
 	ideaId uuid.UUID,
-	start, end time.Time,
+	from, to time.Time,
 ) ([]int64, error) {
 	var results []int64
 
 	query := r.db.WithContext(ctx).
 		Model(&domain.AudienceMember{}).
-		Select("DATE(created_at) as date, COUNT(*) as signups").
+		Select("DATE(signup_time) as date, COUNT(*) as signups").
 		Where("idea_id = ?", ideaId).
-		Where("created_at BETWEEN ? AND ?", start, end).
-		Group("DATE(created_at)").
+		Where("signup_time BETWEEN ? AND ?", from, to).
+		Group("DATE(signup_time)").
 		Order("date ASC")
 
 	err := query.Scan(&results).Error
@@ -89,21 +92,72 @@ func (r *audienceRepository) GetSignupsByIdeaId(
 	return results, nil
 }
 
+// GetSignupsByIdeaIDs gets daily signup counts for a set of ideas
+func (r *audienceRepository) GetSignupsByIdeaIds(ctx context.Context, ideaIds []uuid.UUID, from, to time.Time) (map[uuid.UUID]map[string]int, error) {
+	type DailySignupPerIdea struct {
+		IdeaID uuid.UUID `gorm:"column:idea_id"`
+		Date   string    `gorm:"column:date"`
+		Count  int       `gorm:"column:count"`
+	}
+
+	var results []DailySignupPerIdea
+
+	if len(ideaIds) == 0 {
+		return make(map[uuid.UUID]map[string]int), nil
+	}
+
+	query := r.db.WithContext(ctx).
+		Table("audience_members").
+		Select("idea_id, DATE(signup_time) as date, COUNT(*) as count").
+		Where("idea_id IN (?) AND signup_time BETWEEN ? AND ?", ideaIds, from, to).
+		Group("idea_id, DATE(signup_time)")
+
+	if err := query.Find(&results).Error; err != nil {
+		return nil, err
+	}
+
+	dailySignupsByIdea := make(map[uuid.UUID]map[string]int)
+	for _, result := range results {
+		if _, ok := dailySignupsByIdea[result.IdeaID]; !ok {
+			dailySignupsByIdea[result.IdeaID] = make(map[string]int)
+		}
+		dailySignupsByIdea[result.IdeaID][result.Date] = result.Count
+	}
+	return dailySignupsByIdea, nil
+}
+
+// GetRecentByUserIdeas gets recent signups for all ideas of a user
+func (r *audienceRepository) GetRecentByUserIdeas(ctx context.Context, userID string, limit int) ([]domain.AudienceMember, error) {
+	var members []domain.AudienceMember
+
+	query := r.db.WithContext(ctx).
+		Joins("JOIN ideas ON audience_members.idea_id = ideas.id").
+		Where("ideas.user_id = ?", userID).
+		Order("audience_members.signup_time DESC").
+		Limit(limit)
+
+	if err := query.Find(&members).Error; err != nil {
+		return nil, err
+	}
+
+	return members, nil
+}
+
 func (r *audienceRepository) GetCountByIdeaId(
 	ctx context.Context,
 	ideaId uuid.UUID,
-	start, end *time.Time,
+	from, to *time.Time,
 ) (int64, error) {
 	query := r.db.WithContext(ctx).
 		Model(&domain.AudienceMember{}).
 		Where("idea_id = ?", ideaId)
 
-	if start != nil && end != nil {
-		query = query.Where("created_at BETWEEN ? AND ?", *start, *end)
-	} else if start != nil {
-		query = query.Where("created_at >= ?", *start)
-	} else if end != nil {
-		query = query.Where("created_at <= ?", *end)
+	if from != nil && to != nil {
+		query = query.Where("signup_time BETWEEN ? AND ?", *from, *to)
+	} else if from != nil {
+		query = query.Where("signup_time >= ?", *from)
+	} else if to != nil {
+		query = query.Where("signup_time <= ?", *to)
 	}
 
 	var count int64
@@ -123,11 +177,11 @@ func WithAudienceFiltered(fields []string, start, end *time.Time) QueryOption {
 			}
 
 			if start != nil && end != nil {
-				return db.Where("created_at BETWEEN ? AND ?", *start, *end)
+				return db.Where("signup_time BETWEEN ? AND ?", *start, *end)
 			} else if start != nil {
-				return db.Where("created_at >= ?", *start)
+				return db.Where("signup_time >= ?", *start)
 			} else if end != nil {
-				return db.Where("created_at <= ?", *end)
+				return db.Where("signup_time <= ?", *end)
 			}
 			return db
 		}

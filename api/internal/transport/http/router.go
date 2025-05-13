@@ -26,6 +26,7 @@ func registerProtectedRoutes(router *gin.RouterGroup, h *Handlers) {
 	ideasRouter.POST("/:ideaId/feedback/:feedbackId", h.Feedback.Create)
 	ideasRouter.PUT("/:ideaId/feedback/:feedbackId/reaction", h.Reaction.FeedbackReaction)
 	ideasRouter.PUT("/:ideaId/reaction", h.Reaction.IdeaReaction)
+	ideasRouter.GET("/", h.Dashboard.GetDashboardData)
 }
 
 func registerPublicRoutes(router *gin.RouterGroup, h *Handlers) {

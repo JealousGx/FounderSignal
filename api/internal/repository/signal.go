@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"foundersignal/internal/domain"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 
 type SignalRepository interface {
 	Create(ctx context.Context, signal *domain.Signal) error
+	GetDailyViewsByIdeaIDs(ctx context.Context, ideaIds []uuid.UUID, from, to time.Time) (map[uuid.UUID]map[string]int, error)
+	GetRecentByUserIdeas(ctx context.Context, userId string, limit int) ([]domain.Signal, error)
 	GetByIdeaId(ctx context.Context, ideaId uuid.UUID, userId *string, eventType *domain.EventType) ([]*domain.Signal, error)
 	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID, eventType *domain.EventType, start, end *time.Time, fields []string) (int64, error)
 }
@@ -41,6 +44,60 @@ func (r *signalRepository) GetByIdeaId(ctx context.Context, ideaId uuid.UUID, us
 
 	err := query.Find(&signals).Error
 	if err != nil {
+		return nil, err
+	}
+
+	return signals, nil
+}
+
+// GetDailyViewsByIdeaIDs gets daily view counts for a set of ideas
+func (r *signalRepository) GetDailyViewsByIdeaIDs(ctx context.Context, ideaIds []uuid.UUID, from, to time.Time) (map[uuid.UUID]map[string]int, error) {
+	type DailyViewPerIdea struct {
+		IdeaID uuid.UUID `gorm:"column:idea_id"`
+		Date   string    `gorm:"column:date"`
+		Count  int       `gorm:"column:count"`
+	}
+
+	var results []DailyViewPerIdea
+
+	if len(ideaIds) == 0 {
+		return make(map[uuid.UUID]map[string]int), nil
+	}
+
+	query := r.db.WithContext(ctx).
+		Model(&domain.Signal{}).
+		Select("idea_id, DATE(created_at) as date, COUNT(*) as count").
+		Where("idea_id IN (?) AND event_type = ? AND created_at BETWEEN ? AND ?",
+			ideaIds, domain.EventTypePageView, from, to).
+		Group("idea_id, DATE(created_at)")
+
+	if err := query.Find(&results).Error; err != nil {
+		fmt.Println("Error executing query:", err)
+		return nil, err
+	}
+
+	dailyViewsByIdea := make(map[uuid.UUID]map[string]int)
+	for _, result := range results {
+		if _, ok := dailyViewsByIdea[result.IdeaID]; !ok {
+			dailyViewsByIdea[result.IdeaID] = make(map[string]int)
+		}
+		dailyViewsByIdea[result.IdeaID][result.Date] = result.Count
+	}
+
+	return dailyViewsByIdea, nil
+}
+
+// GetRecentByUserIdeas gets recent signals for all ideas of a user
+func (r *signalRepository) GetRecentByUserIdeas(ctx context.Context, userId string, limit int) ([]domain.Signal, error) {
+	var signals []domain.Signal
+
+	query := r.db.WithContext(ctx).
+		Joins("JOIN ideas ON signals.idea_id = ideas.id").
+		Where("ideas.user_id = ?", userId).
+		Order("signals.created_at DESC").
+		Limit(limit)
+
+	if err := query.Find(&signals).Error; err != nil {
 		return nil, err
 	}
 

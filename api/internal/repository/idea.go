@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"foundersignal/internal/domain"
+	"foundersignal/internal/dto/response"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -13,9 +15,10 @@ import (
 type IdeaRepository interface {
 	CreateWithMVP(ctx context.Context, idea *domain.Idea, mvp *domain.MVPSimulator) (uuid.UUID, error)
 	GetIdeas(ctx context.Context, queryParams domain.QueryParams, spec IdeaQuerySpec) ([]*domain.Idea, int64, error)
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.Idea, []*domain.Idea, error)
-	// GetWithMVP(ctx context.Context, id uuid.UUID) (*domain.Idea, error)
-	// UpdateMVP(ctx context.Context, mvpId uuid.UUID, mvp *domain.MVPSimulator) error
+	GetByID(ctx context.Context, id uuid.UUID, getRelatedIdeas *bool) (*domain.Idea, []*domain.Idea, error)
+	// GetByUserId(ctx context.Context, userId string) ([]*domain.Idea, error)
+	GetIdeasWithActivity(ctx context.Context, userID string, from, to time.Time, options ...QueryOption) ([]*response.IdeaWithActivity, error)
+	GetSpecificIdeas(ctx context.Context, ideaIds []uuid.UUID) ([]*domain.Idea, error)
 	// GetTopIdeas(ctx context.Context, userId string, days int, queryParams domain.QueryParams) ([]*response.IdeaWithActivity, error)
 
 	// utils
@@ -25,6 +28,7 @@ type IdeaRepository interface {
 type IdeaQuerySpec struct {
 	Status     domain.IdeaStatus
 	WithCounts bool
+	ByUserId   string
 }
 
 type ideaRepository struct {
@@ -63,7 +67,15 @@ func (r *ideaRepository) CreateWithMVP(ctx context.Context, idea *domain.Idea, m
 }
 
 func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryParams, spec IdeaQuerySpec) ([]*domain.Idea, int64, error) {
-	query := r.db.WithContext(ctx).Model(&domain.Idea{}).Where("status = ?", spec.Status)
+	query := r.db.WithContext(ctx).Model(&domain.Idea{})
+
+	if spec.Status != "" {
+		query = query.Where("status = ?", spec.Status)
+	}
+
+	if spec.ByUserId != "" {
+		query = query.Where("user_id = ?", spec.ByUserId)
+	}
 
 	var totalCount int64
 	if err := query.Count(&totalCount).Error; err != nil {
@@ -76,20 +88,6 @@ func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryP
 
 	query = r.paginateAndOrder(query, queryParams.Limit, queryParams.Offset, queryParams.Order)
 
-	if queryParams.Limit > 0 {
-		query = query.Limit(queryParams.Limit)
-	}
-
-	if queryParams.Offset > 0 {
-		query = query.Offset(queryParams.Offset)
-	}
-
-	if queryParams.Order != "" {
-		query = query.Order(queryParams.Order)
-	} else {
-		query = query.Order("created_at DESC")
-	}
-
 	var ideas []*domain.Idea
 	if err := query.Find(&ideas).Error; err != nil {
 		return nil, 0, err
@@ -98,7 +96,7 @@ func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryP
 	return ideas, totalCount, nil
 }
 
-func (r *ideaRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Idea, []*domain.Idea, error) {
+func (r *ideaRepository) GetByID(ctx context.Context, id uuid.UUID, getRelatedIdeas *bool) (*domain.Idea, []*domain.Idea, error) {
 	query := r.db.WithContext(ctx).Model(&domain.Idea{}).Where("id = ?", id).
 		Preload("Feedback", func(db *gorm.DB) *gorm.DB {
 			return db.Preload("Reactions")
@@ -118,26 +116,79 @@ func (r *ideaRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Ide
 		return nil, nil, gorm.ErrRecordNotFound
 	}
 
-	relatedIdeas := r.getRelatedIdeas(ctx, *idea)
+	var relatedIdeas []*domain.Idea
+	if getRelatedIdeas != nil && *getRelatedIdeas {
+		relatedIdeas = r.getRelatedIdeas(ctx, *idea)
+	}
 
 	return idea, relatedIdeas, nil
 }
 
-// func (r *ideaRepository) GetWithMVP(ctx context.Context, id uuid.UUID) (*domain.Idea, error) {
-// 	var idea domain.Idea
-// 	err := r.db.WithContext(ctx).
-// 		Preload("MVPSimulator").
-// 		First(&idea, "id = ?", id).Error
+// GetByUserId gets all ideas for a user
+func (r *ideaRepository) GetByUserId(ctx context.Context, userId string) ([]*domain.Idea, error) {
+	var ideas []*domain.Idea
 
-// 	return &idea, err
-// }
+	if err := r.db.WithContext(ctx).
+		Where("user_id = ?", userId).
+		Find(&ideas).Error; err != nil {
+		return nil, err
+	}
 
-// func (r *ideaRepository) UpdateMVP(ctx context.Context, mvpId uuid.UUID, mvp *domain.MVPSimulator) error {
-// 	return r.db.WithContext(ctx).
-// 		Model(&domain.MVPSimulator{}).
-// 		Where("id = ?", mvpId).
-// 		Updates(mvp).Error
-// }
+	return ideas, nil
+}
+
+// GetIdeasWithActivity fetches ideas with activity metrics for a time range
+func (r *ideaRepository) GetIdeasWithActivity(ctx context.Context, userID string, from, to time.Time, options ...QueryOption) ([]*response.IdeaWithActivity, error) {
+	var ideasWithActivity []*response.IdeaWithActivity
+
+	// Build subqueries for views and signups
+	signupsSub := r.db.
+		Select("idea_id, COUNT(*) as signups, MAX(signup_time) as latest_signup").
+		Table("audience_members").
+		Where("signup_time BETWEEN ? AND ?", from, to).
+		Group("idea_id")
+
+	viewsSub := r.db.
+		Select("idea_id, COUNT(*) as views, MAX(created_at) as latest_view").
+		Table("signals").
+		Where("event_type = ? AND created_at BETWEEN ? AND ?", domain.EventTypePageView, from, to).
+		Group("idea_id")
+
+	// Main query
+	query := r.db.WithContext(ctx).
+		Model(&domain.Idea{}).
+		Select("ideas.*, COALESCE(s.signups, 0) as signups, COALESCE(v.views, 0) as views, s.latest_signup, v.latest_view").
+		Joins("LEFT JOIN (?) as s ON ideas.id = s.idea_id", signupsSub).
+		Joins("LEFT JOIN (?) as v ON ideas.id = v.idea_id", viewsSub).
+		Where("ideas.user_id = ?", userID)
+
+	// Apply any additional options
+	for _, option := range options {
+		query = option(query)
+	}
+
+	if err := query.Find(&ideasWithActivity).Error; err != nil {
+		return nil, err
+	}
+
+	return ideasWithActivity, nil
+}
+
+func (r *ideaRepository) GetSpecificIdeas(ctx context.Context, ideaIds []uuid.UUID) ([]*domain.Idea, error) {
+	var ideas []*domain.Idea
+
+	if len(ideaIds) == 0 {
+		return ideas, nil
+	}
+
+	if err := r.db.WithContext(ctx).
+		Where("id IN ?", ideaIds).
+		Find(&ideas).Error; err != nil {
+		return nil, err
+	}
+
+	return ideas, nil
+}
 
 // GetTopIdeas retrieves ideas ranked by views and signups within a specified number of days.
 // Note: This query intentionally uses JOINs and database-level aggregation for performance
