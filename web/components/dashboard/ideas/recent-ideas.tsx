@@ -1,11 +1,14 @@
 import { formatDistanceToNow } from "date-fns";
-import { Eye, ArrowUpRight, BarChart2 } from "lucide-react";
+import { ArrowUpRight, BarChart2, Eye } from "lucide-react";
 
 import { Link } from "@/components/ui/link";
+import { Idea } from "@/types/idea";
 
-export default async function RecentIdeas({ userId }: { userId: string }) {
-  const ideas = await getUserIdeas(userId);
-
+export default async function RecentIdeas({
+  recentIdeas,
+}: {
+  recentIdeas: Idea[];
+}) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="flex items-center justify-between px-4 md:px-6 pt-4 md:pt-6 pb-4">
@@ -56,7 +59,7 @@ export default async function RecentIdeas({ userId }: { userId: string }) {
           </thead>
 
           <tbody className="divide-y divide-gray-200">
-            {ideas.map((idea) => (
+            {recentIdeas.map((idea) => (
               <tr key={idea.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
                   <div className="font-medium">{idea.title}</div>
@@ -68,7 +71,7 @@ export default async function RecentIdeas({ userId }: { userId: string }) {
 
                 <td className="px-6 py-4">
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
                     ${getStatusStyles(idea.status)}`}
                   >
                     {idea.status}
@@ -115,7 +118,7 @@ export default async function RecentIdeas({ userId }: { userId: string }) {
       {/* Mobile card view */}
       <div className="md:hidden">
         <div className="divide-y divide-gray-200">
-          {ideas.map((idea) => (
+          {recentIdeas.map((idea) => (
             <div key={idea.id} className="p-4 hover:bg-gray-50">
               <div className="flex justify-between items-start mb-2">
                 <div className="font-medium">{idea.title}</div>
@@ -185,39 +188,11 @@ function getStatusStyles(status: string) {
       return "bg-blue-50 text-blue-700";
     case "paused":
       return "bg-amber-50 text-amber-700";
+    case "draft":
+      return "bg-gray-100 text-gray-700";
+    case "archived":
+      return "bg-red-50 text-red-700";
     default:
       return "bg-gray-50 text-gray-700";
   }
-}
-
-async function getUserIdeas(userId: string) {
-  // TODO: Replace with actual API call to fetch user ideas
-  return [
-    {
-      id: "idea-1",
-      title: "EcoTrack",
-      description: "An app that helps consumers track their carbon footprint",
-      status: "Active",
-      signups: 183,
-      createdAt: "2023-10-15T14:32:00Z",
-    },
-    {
-      id: "idea-2",
-      title: "RemoteTeamOS",
-      description:
-        "All-in-one platform for remote teams with project management tools",
-      status: "Completed",
-      signups: 427,
-      createdAt: "2023-09-28T16:20:00Z",
-    },
-    {
-      id: "idea-3",
-      title: "SkillSwap",
-      description:
-        "Peer-to-peer platform where professionals can exchange skills",
-      status: "Paused",
-      signups: 91,
-      createdAt: "2023-10-03T09:15:00Z",
-    },
-  ];
 }

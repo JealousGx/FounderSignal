@@ -1,34 +1,63 @@
-import { Suspense } from "react";
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import MetricsOverview from "@/components/dashboard/metrics-overview";
-import RecentIdeas from "@/components/dashboard/ideas/recent-ideas";
+import { cache, Suspense } from "react";
+
 import ActivityFeed from "@/components/dashboard/activity-feed";
 import IdeaAnalytics from "@/components/dashboard/ideas/idea-analytics";
+import RecentIdeas from "@/components/dashboard/ideas/recent-ideas";
+import MetricsOverview from "@/components/dashboard/metrics-overview";
 import WelcomeBanner from "@/components/dashboard/welcome-banner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getTopIdeasForUser } from "@/lib/api";
+
+import { api } from "@/lib/api";
+import { getName } from "@/lib/utils";
+
+export const getDashboardData = cache(async () => {
+  try {
+    const response = await api.get("/dashboard/ideas", {
+      cache: "force-cache",
+      next: {
+        revalidate: 3600,
+        tags: [`ideas`],
+      },
+    });
+
+    if (!response.ok) {
+      console.error(
+        "API error fetching getDashboardData:",
+        response.status,
+        response.statusText
+      );
+
+      return null;
+    }
+
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error("Error in getDashboardData:", error);
+    return null;
+  }
+});
 
 export default async function Dashboard() {
-  // const { userId } = await auth();
-  const userId = "user_123"; // Placeholder for user ID, replace with actual auth logic
+  const user = await currentUser();
+  if (!user) {
+    redirect("/explore");
+  }
 
-  // if (!userId) {
-  //   redirect("/sign-in");
-  // }
-
-  // Fetch top performing ideas
-  const topIdeas = await getTopIdeasForUser(userId);
+  const data = await getDashboardData();
 
   return (
     <>
       <div className="space-y-6 pb-20 md:pb-0">
-        <WelcomeBanner />
+        <WelcomeBanner firstName={getName(user)} />
 
         <Suspense
           fallback={<Skeleton className="h-[180px] w-full rounded-xl" />}
         >
-          <MetricsOverview userId={userId} />
+          <MetricsOverview metrics={data.metrics} />
         </Suspense>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -36,13 +65,13 @@ export default async function Dashboard() {
             <Suspense
               fallback={<Skeleton className="h-[300px] w-full rounded-xl" />}
             >
-              <RecentIdeas userId={userId} />
+              <RecentIdeas recentIdeas={data.recentIdeas} />
             </Suspense>
 
             <Suspense
               fallback={<Skeleton className="h-[400px] w-full rounded-xl" />}
             >
-              <IdeaAnalytics ideas={topIdeas} />
+              <IdeaAnalytics analytics={data.analyticsData} />
             </Suspense>
           </div>
 
@@ -50,7 +79,7 @@ export default async function Dashboard() {
             <Suspense
               fallback={<Skeleton className="h-[500px] w-full rounded-xl" />}
             >
-              <ActivityFeed userId={userId} />
+              <ActivityFeed recentActivity={data.recentActivity} />
             </Suspense>
           </div>
         </div>

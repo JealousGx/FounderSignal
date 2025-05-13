@@ -1,13 +1,25 @@
-import { TrendingUp, Users, CheckCircle, Clock } from "lucide-react";
+import { BarChart, CheckCircle, TrendingUp, Users } from "lucide-react";
 
-export default async function MetricsOverview({ userId }: { userId: string }) {
-  const metrics = await getUserMetrics(userId);
+export type Metrics = {
+  totalSignups: number;
+  signupsChange: number;
+  avgConversion: number;
+  conversionChange: number;
+  ideasValidated: number;
+  ideasChange: number;
+  averageSignupsPerIdea: number;
+};
 
+export default async function MetricsOverview({
+  metrics,
+}: {
+  metrics: Metrics;
+}) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <MetricCard
         title="Total Signups"
-        value={metrics.totalSignups}
+        value={metrics.totalSignups.toLocaleString()}
         change={metrics.signupsChange}
         icon={<Users className="h-5 w-5 md:h-6 md:w-6" />}
         color="blue"
@@ -15,7 +27,7 @@ export default async function MetricsOverview({ userId }: { userId: string }) {
 
       <MetricCard
         title="Avg. Conversion"
-        value={`${metrics.avgConversion}%`}
+        value={`${metrics.avgConversion.toFixed(2)}%`}
         change={metrics.conversionChange}
         icon={<TrendingUp className="h-5 w-5 md:h-6 md:w-6" />}
         color="green"
@@ -23,17 +35,17 @@ export default async function MetricsOverview({ userId }: { userId: string }) {
 
       <MetricCard
         title="Ideas Validated"
-        value={metrics.ideasValidated}
+        value={metrics.ideasValidated.toLocaleString()}
         change={metrics.ideasChange}
         icon={<CheckCircle className="h-5 w-5 md:h-6 md:w-6" />}
         color="purple"
       />
 
       <MetricCard
-        title="Avg. Time"
-        value={metrics.timeToValidate}
-        change={0}
-        icon={<Clock className="h-5 w-5 md:h-6 md:w-6" />}
+        title="Avg. Signups / Idea"
+        value={metrics.averageSignupsPerIdea.toFixed(1)}
+        change={0} // Change calculation for this metric can be complex, so 0 for now
+        icon={<BarChart className="h-5 w-5 md:h-6 md:w-6" />}
         color="amber"
       />
     </div>
@@ -48,7 +60,13 @@ interface MetricCardProps {
   color: "blue" | "green" | "purple" | "amber";
 }
 
-function MetricCard({ title, value, change, icon, color }: MetricCardProps) {
+function MetricCard({
+  title,
+  value,
+  change = 0.0,
+  icon,
+  color,
+}: MetricCardProps) {
   const bgColors = {
     blue: "bg-blue-50",
     green: "bg-green-50",
@@ -81,7 +99,7 @@ function MetricCard({ title, value, change, icon, color }: MetricCardProps) {
                 }`}
               >
                 {change > 0 ? "+" : ""}
-                {change}%
+                {change.toFixed(2)}%
               </span>
 
               <span className="w-max text-xs text-gray-500 ml-1 hidden md:inline">
@@ -99,17 +117,4 @@ function MetricCard({ title, value, change, icon, color }: MetricCardProps) {
       </div>
     </div>
   );
-}
-
-async function getUserMetrics(userId: string) {
-  // TODO: Replace with actual API call to fetch user metrics
-  return {
-    totalSignups: 842,
-    signupsChange: 12.5,
-    avgConversion: 34.2,
-    conversionChange: 3.8,
-    ideasValidated: 7,
-    ideasChange: 40,
-    timeToValidate: "3.2d",
-  };
 }

@@ -1,9 +1,29 @@
 import { formatDistanceToNow } from "date-fns";
-import { User, ThumbsUp, MessageSquare, LineChart } from "lucide-react";
+import {
+  ArrowDownUp,
+  Eye,
+  HelpCircle,
+  MousePointerClick,
+  UserPlus,
+} from "lucide-react";
+import Link from "next/link";
 
-export default async function ActivityFeed({ userId }: { userId: string }) {
-  const activities = await getUserActivities(userId);
+type ActivityType = "cta_click" | "pageview" | "scroll_depth" | "time_on_page";
 
+type Activity = {
+  id: string;
+  ideaId: string;
+  ideaTitle: string;
+  type: ActivityType;
+  message: string;
+  timestamp: string;
+};
+
+export default async function ActivityFeed({
+  recentActivity,
+}: {
+  recentActivity: Activity[];
+}) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 h-max">
       <div className="px-4 md:px-6 pt-4 md:pt-6 pb-3 md:pb-4">
@@ -16,10 +36,10 @@ export default async function ActivityFeed({ userId }: { userId: string }) {
 
       <div className="px-4 md:px-6 pb-4 md:pb-6">
         <ul className="space-y-3 md:space-y-4">
-          {activities.map((activity) => (
-            <li key={activity.id} className="flex gap-2 md:gap-3">
+          {recentActivity.map((activity) => (
+            <li key={activity.id} className="flex gap-2 md:gap-3 items-start">
               <div
-                className={`h-fit rounded-full p-1.5 md:p-2 flex-shrink-0 ${getActivityIconStyles(
+                className={`h-fit rounded-full p-1.5 md:p-2 flex-shrink-0 mt-0.5 ${getActivityIconStyles(
                   activity.type
                 )}`}
               >
@@ -27,8 +47,21 @@ export default async function ActivityFeed({ userId }: { userId: string }) {
               </div>
 
               <div>
-                <p className="text-xs md:text-sm">{activity.description}</p>
-
+                <p className="text-xs md:text-sm font-medium">
+                  {activity.message}
+                </p>
+                {activity.ideaTitle &&
+                  activity.ideaTitle !== "Unknown Idea" && (
+                    <Link
+                      href={`/dashboard/ideas/${activity.ideaId}`}
+                      className="text-xs text-gray-600"
+                    >
+                      Idea:{" "}
+                      <span className="font-semibold">
+                        {activity.ideaTitle}
+                      </span>
+                    </Link>
+                  )}
                 <p className="text-xs text-gray-500 mt-0.5 md:mt-1">
                   {formatDistanceToNow(new Date(activity.timestamp), {
                     addSuffix: true,
@@ -43,69 +76,32 @@ export default async function ActivityFeed({ userId }: { userId: string }) {
   );
 }
 
-function getActivityIcon(type: string) {
+function getActivityIcon(type: ActivityType) {
   switch (type) {
-    case "signup":
-      return <User className="h-3.5 w-3.5 md:h-4 md:w-4" />;
-    case "feedback":
-      return <MessageSquare className="h-3.5 w-3.5 md:h-4 md:w-4" />;
-    case "engagement":
-      return <ThumbsUp className="h-3.5 w-3.5 md:h-4 md:w-4" />;
-    case "analytics":
-      return <LineChart className="h-3.5 w-3.5 md:h-4 md:w-4" />;
+    case "cta_click":
+      return <MousePointerClick className="h-3.5 w-3.5 md:h-4 md:w-4" />;
+    case "pageview":
+      return <Eye className="h-3.5 w-3.5 md:h-4 md:w-4" />;
+    case "scroll_depth":
+      return <ArrowDownUp className="h-3.5 w-3.5 md:h-4 md:w-4" />;
+    case "time_on_page":
+      return <UserPlus className="h-3.5 w-3.5 md:h-4 md:w-4" />;
     default:
-      return <User className="h-3.5 w-3.5 md:h-4 md:w-4" />;
+      return <HelpCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />;
   }
 }
 
-function getActivityIconStyles(type: string) {
+function getActivityIconStyles(type: ActivityType) {
   switch (type) {
-    case "signup":
+    case "cta_click":
       return "bg-blue-50 text-blue-600";
-    case "feedback":
+    case "pageview":
       return "bg-purple-50 text-purple-600";
-    case "engagement":
+    case "scroll_depth":
       return "bg-green-50 text-green-600";
-    case "analytics":
-      return "bg-amber-50 text-amber-600";
+    case "time_on_page":
+      return "bg-teal-50 text-teal-600";
     default:
-      return "bg-gray-50 text-gray-600";
+      return "bg-gray-100 text-gray-500";
   }
-}
-
-async function getUserActivities(userId: string) {
-  // TODO: Replace with actual API call to fetch user activities
-  return [
-    {
-      id: "act-1",
-      type: "signup",
-      description: "New signup for EcoTrack from example@gmail.com",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
-    },
-    {
-      id: "act-2",
-      type: "feedback",
-      description:
-        'Someone left feedback on RemoteTeamOS: "Love the concept, would use this daily!"',
-      timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
-    },
-    {
-      id: "act-3",
-      type: "engagement",
-      description: "12 new likes on SkillSwap in the last hour",
-      timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(), // 3 hours ago
-    },
-    {
-      id: "act-4",
-      type: "analytics",
-      description: "EcoTrack reached 100 signups milestone",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
-    },
-    {
-      id: "act-5",
-      type: "signup",
-      description: "New signup for SkillSwap from user123@example.com",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(), // 12 hours ago
-    },
-  ];
 }

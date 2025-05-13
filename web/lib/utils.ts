@@ -14,18 +14,23 @@ export function formatDate(dateString: string) {
   });
 }
 
-export const getName = (user: User) => {
-  if (user.firstName && user.lastName) {
-    return `${user.firstName} ${user.lastName}`;
+export const getName = ({
+  firstName,
+  lastName,
+  username,
+  emailAddresses,
+}: User) => {
+  if (firstName && lastName) {
+    return `${firstName} ${lastName}`;
   }
 
-  if (user.username) {
-    return user.username;
+  if (username) {
+    return username;
   }
 
-  if (user.emailAddresses[0]?.emailAddress) {
-    return user.emailAddresses[0].emailAddress.split("@")[0];
+  if (emailAddresses[0]?.emailAddress) {
+    return emailAddresses[0].emailAddress.split("@")[0];
   }
 
-  return "Unknown User";
+  return "Anonymous";
 };

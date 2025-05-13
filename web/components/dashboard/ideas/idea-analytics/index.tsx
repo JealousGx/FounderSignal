@@ -1,7 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -9,111 +22,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { Card } from "@/components/ui/card";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  Legend,
-} from "recharts";
-import { Idea, IdeaAnalytics as IIdeaAnalytics } from "@/types/idea";
-import { AnalyticsDataPoint } from "@/types/analytics";
-
-// Function to generate mock analytics data for an idea
-const generateIdeaAnalyticsData = (idea: Idea): IIdeaAnalytics => {
-  // Create 7 days of sample data
-  const dataPoints: AnalyticsDataPoint[] = [];
-  const endDate = new Date();
-  const startDate = new Date(endDate);
-  startDate.setDate(startDate.getDate() - 6); // 7 days including today
-
-  let totalViews = 0;
-  let totalSignups = 0;
-
-  // Ensure we have valid numbers to work with
-  const ideaViews =
-    typeof idea.views === "number" && !isNaN(idea.views) ? idea.views : 0;
-  const ideaSignups =
-    typeof idea.signups === "number" && !isNaN(idea.signups) ? idea.signups : 0;
-
-  // Generate daily data points with a realistic distribution
-  for (let i = 0; i < 7; i++) {
-    const currentDate = new Date(startDate);
-    currentDate.setDate(currentDate.getDate() + i);
-
-    // Create a realistic distribution with slightly random growth
-    const dayFactor = 0.7 + i / 10 + Math.random() * 0.3; // More views/signups as days progress
-
-    // If we have no views/signups, generate some sample data
-    let viewsForDay = 0;
-    let signupsForDay = 0;
-
-    if (ideaViews > 0) {
-      viewsForDay = Math.round((ideaViews / 15) * dayFactor);
-    } else {
-      // Generate some sample data if no views exist
-      viewsForDay = Math.round(10 * dayFactor);
-    }
-
-    if (ideaSignups > 0) {
-      signupsForDay = Math.round((ideaSignups / 15) * dayFactor);
-    } else {
-      // Generate some sample data if no signups exist
-      signupsForDay = Math.round(3 * dayFactor);
-    }
-
-    const conversionRate =
-      viewsForDay > 0
-        ? Math.round((signupsForDay / viewsForDay) * 100 * 10) / 10
-        : 0;
-
-    totalViews += viewsForDay;
-    totalSignups += signupsForDay;
-
-    dataPoints.push({
-      date: currentDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      views: viewsForDay,
-      signups: signupsForDay,
-      conversionRate,
-    });
-  }
-
-  // Calculate the average conversion rate
-  const averageConversionRate =
-    totalViews > 0
-      ? Math.round((totalSignups / totalViews) * 100 * 10) / 10
-      : 0;
-
-  return {
-    ideaId: idea.id,
-    idea,
-    timeframe: "day",
-    startDate: startDate.toISOString(),
-    endDate: endDate.toISOString(),
-    dataPoints,
-    totals: {
-      views: totalViews,
-      signups: totalSignups,
-      averageConversionRate,
-    },
+type AnalyticsData = {
+  ideaId: string;
+  ideaTitle: string;
+  dataPoints: {
+    date: string;
+    views: number;
+    signups: number;
+    conversionRate: number;
+  }[];
+  totals: {
+    views: number;
+    signups: number;
+    averageConversionRate: number;
   };
 };
-export default function IdeaAnalytics({ ideas }: { ideas: Idea[] }) {
+
+export default function IdeaAnalytics({
+  analytics,
+}: {
+  analytics: AnalyticsData[];
+}) {
   const [selectedIdea, setSelectedIdea] = useState(
-    ideas.length > 0 ? ideas[0].id : ""
+    analytics.length > 0 ? analytics[0].ideaId : ""
   );
   const [isMobile, setIsMobile] = useState(false);
-  const [analyticsData, setAnalyticsData] = useState<IIdeaAnalytics | null>(
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
     null
   );
 
@@ -129,16 +65,16 @@ export default function IdeaAnalytics({ ideas }: { ideas: Idea[] }) {
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
-  // Generate analytics data when selected idea changes
   useEffect(() => {
     if (selectedIdea) {
-      const currentIdea = ideas.find((idea) => idea.id === selectedIdea);
+      const currentIdea = analytics.find(
+        (idea) => idea.ideaId === selectedIdea
+      );
       if (currentIdea) {
-        const data = generateIdeaAnalyticsData(currentIdea);
-        setAnalyticsData(data);
+        setAnalyticsData(currentIdea);
       }
     }
-  }, [selectedIdea, ideas]);
+  }, [selectedIdea, analytics]);
 
   const formatTickForMobile = (value: string) => {
     if (isMobile && analyticsData && analyticsData.dataPoints.length > 5) {
@@ -148,7 +84,7 @@ export default function IdeaAnalytics({ ideas }: { ideas: Idea[] }) {
   };
 
   // If no ideas are available, show a message
-  if (ideas.length === 0) {
+  if (analytics.length === 0) {
     return (
       <Card className="p-6">
         <div className="text-center py-8">
@@ -189,9 +125,9 @@ export default function IdeaAnalytics({ ideas }: { ideas: Idea[] }) {
               <SelectValue placeholder="Select an idea" />
             </SelectTrigger>
             <SelectContent>
-              {ideas.map((idea) => (
-                <SelectItem key={idea.id} value={idea.id}>
-                  {idea.title}
+              {analytics.map((idea) => (
+                <SelectItem key={idea.ideaId} value={idea.ideaId}>
+                  {idea.ideaTitle}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -227,7 +163,7 @@ export default function IdeaAnalytics({ ideas }: { ideas: Idea[] }) {
                     if (name === "conversionRate") {
                       return [`${value}%`, "Conversion Rate"];
                     }
-                    return [value, name === "views" ? "Views" : "Signups"];
+                    return [value, name === "Views" ? "Views" : "Signups"];
                   }}
                 />
 
@@ -280,7 +216,7 @@ export default function IdeaAnalytics({ ideas }: { ideas: Idea[] }) {
                     if (name === "conversionRate") {
                       return [`${value}%`, "Conversion Rate"];
                     }
-                    return [value, name === "views" ? "Views" : "Signups"];
+                    return [value, name === "Views" ? "Views" : "Signups"];
                   }}
                 />
 
@@ -313,19 +249,19 @@ export default function IdeaAnalytics({ ideas }: { ideas: Idea[] }) {
         <div className="p-3 bg-muted/40 rounded-lg">
           <div className="text-sm text-muted-foreground">Total Views</div>
           <div className="text-xl font-semibold">
-            {analyticsData.totals.views}
+            {analyticsData.totals.views.toLocaleString()}
           </div>
         </div>
         <div className="p-3 bg-muted/40 rounded-lg">
           <div className="text-sm text-muted-foreground">Total Signups</div>
           <div className="text-xl font-semibold">
-            {analyticsData.totals.signups}
+            {analyticsData.totals.signups.toLocaleString()}
           </div>
         </div>
         <div className="p-3 bg-muted/40 rounded-lg">
           <div className="text-sm text-muted-foreground">Conversion Rate</div>
           <div className="text-xl font-semibold">
-            {analyticsData.totals.averageConversionRate}%
+            {analyticsData.totals.averageConversionRate.toFixed(2)}%
           </div>
         </div>
       </div>
