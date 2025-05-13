@@ -3,7 +3,7 @@ import {
   Calendar,
   Check,
   Eye,
-  Pencil,
+  Settings,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -119,7 +119,7 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
                   {idea.title}
                 </h1>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <CustomLink
                     href={`/mvp/${idea.id}`}
                     target="_blank"
@@ -137,7 +137,7 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
                       variant="outline"
                       className="bg-transparent border-gray-400 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
                     >
-                      <Pencil className="w-4 h-4" />
+                      <Settings className="w-4 h-4" />
                     </CustomLink>
                   )}
                 </div>
