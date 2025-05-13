@@ -88,6 +88,15 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
 
   const isCreator = currUser.userId === idea.userId;
 
+  const stages = {
+    validation: "Validated Idea",
+    ideation: "Ideation Stage",
+    mvp: "MVP Stage",
+  };
+
+  const ideaStage =
+    stages[idea.stage as keyof typeof stages] || idea.stage || "Unknown Stage";
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-12 md:px-6">
       <Link
@@ -105,7 +114,7 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
             <div className="p-6 md:p-8 border-b border-gray-100">
               <div className="flex items-center justify-between mb-6">
                 <div className="inline-flex items-center px-3 py-1.5 bg-primary/10 rounded-full text-sm font-medium text-primary">
-                  Validated Idea
+                  {ideaStage}
                 </div>
 
                 <div className="bg-green-50 text-green-700 text-sm font-medium rounded-full px-3 py-1 flex items-center">
@@ -151,7 +160,9 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
 
                 <div className="flex items-center text-gray-600">
                   <Eye className="w-4 h-4 mr-1.5" />
-                  <span>{idea.views} views</span>
+                  <span>
+                    {idea.views} view{idea.views > 1 ? "s" : ""}
+                  </span>
                 </div>
 
                 <div className="flex items-center text-gray-600">
@@ -190,7 +201,9 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-gray-600 text-sm mb-1">Sign-ups</p>
+                  <p className="text-gray-600 text-sm mb-1">
+                    Sign-up{idea.stats.signups > 1 ? "s" : ""}
+                  </p>
                   <p className="text-2xl font-bold">{idea.stats.signups}</p>
                 </div>
 

@@ -87,6 +87,8 @@ func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUser
 		Description:        idea.Description,
 		TargetAudience:     idea.TargetAudience,
 		CreatedAt:          idea.CreatedAt.Format(time.RFC3339),
+		Stage:              idea.Stage,
+		Status:             idea.Status,
 		EngagementRate:     engagementRate,
 		Views:              idea.Views,
 		Likes:              idea.Likes,

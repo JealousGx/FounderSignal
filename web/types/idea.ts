@@ -6,8 +6,8 @@ export interface Idea {
   title: string;
   description: string;
   targetAudience: string;
-  status: "Active" | "Paused" | "Completed" | "Draft";
-  stage: "Validation" | "MVP" | "Ideation";
+  status: "active" | "paused" | "completed" | "draft" | "archived";
+  stage: "validation" | "mvp" | "ideation";
   signups: number;
   targetSignups: number;
   views: number;

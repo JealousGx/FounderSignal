@@ -37,6 +37,8 @@ type PublicIdea struct {
 	Description        string          `json:"description"`
 	TargetAudience     string          `json:"targetAudience"`
 	CreatedAt          string          `json:"createdAt"`
+	Stage              string          `json:"stage"`
+	Status             string          `json:"status"`
 	EngagementRate     float64         `json:"engagementRate"`
 	Views              int             `json:"views"`
 	Likes              int             `json:"likes"`
