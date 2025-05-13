@@ -3,12 +3,22 @@ import {
   ArrowDownUp,
   Eye,
   HelpCircle,
+  MessageSquare,
   MousePointerClick,
+  ThumbsDown,
+  ThumbsUp,
   UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 
-type ActivityType = "cta_click" | "pageview" | "scroll_depth" | "time_on_page";
+type ActivityType =
+  | "cta_click"
+  | "pageview"
+  | "scroll_depth"
+  | "time_on_page"
+  | "comment"
+  | "like"
+  | "dislike";
 
 type Activity = {
   id: string;
@@ -86,6 +96,12 @@ function getActivityIcon(type: ActivityType) {
       return <ArrowDownUp className="h-3.5 w-3.5 md:h-4 md:w-4" />;
     case "time_on_page":
       return <UserPlus className="h-3.5 w-3.5 md:h-4 md:w-4" />;
+    case "comment":
+      return <MessageSquare className="h-3.5 w-3.5 md:h-4 md:w-4" />;
+    case "like":
+      return <ThumbsUp className="h-3.5 w-3.5 md:h-4 md:w-4" />;
+    case "dislike":
+      return <ThumbsDown className="h-3.5 w-3.5 md:h-4 md:w-4" />;
     default:
       return <HelpCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />;
   }
@@ -101,6 +117,12 @@ function getActivityIconStyles(type: ActivityType) {
       return "bg-green-50 text-green-600";
     case "time_on_page":
       return "bg-teal-50 text-teal-600";
+    case "comment":
+      return "bg-yellow-50 text-yellow-600";
+    case "like":
+      return "bg-pink-50 text-pink-600";
+    case "dislike":
+      return "bg-red-50 text-red-600";
     default:
       return "bg-gray-100 text-gray-500";
   }
