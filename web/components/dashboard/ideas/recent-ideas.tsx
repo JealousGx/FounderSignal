@@ -78,7 +78,9 @@ export default async function RecentIdeas({
                   </span>
                 </td>
 
-                <td className="px-6 py-4 font-medium">{idea.signups}</td>
+                <td className="px-6 py-4 font-medium">
+                  {idea.signups.toLocaleString()}
+                </td>
 
                 <td className="px-6 py-4 text-gray-500">
                   {formatDistanceToNow(new Date(idea.createdAt), {
@@ -124,7 +126,7 @@ export default async function RecentIdeas({
                 <div className="font-medium">{idea.title}</div>
 
                 <span
-                  className={`inline-flex items-center px-2 py-0.5 text-xs rounded-full
+                  className={`inline-flex items-center px-2 py-0.5 text-xs rounded-full capitalize
                   ${getStatusStyles(idea.status)}`}
                 >
                   {idea.status}
@@ -138,7 +140,7 @@ export default async function RecentIdeas({
               <div className="flex justify-between items-center text-xs">
                 <div className="flex gap-3">
                   <span className="text-gray-700 font-medium">
-                    {idea.signups} signups
+                    {idea.signups.toLocaleString()} signups
                   </span>
 
                   <span className="text-gray-500">
