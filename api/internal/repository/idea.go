@@ -18,7 +18,6 @@ type IdeaRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID, getRelatedIdeas *bool) (*domain.Idea, []*domain.Idea, error)
 	// GetByUserId(ctx context.Context, userId string) ([]*domain.Idea, error)
 	GetIdeasWithActivity(ctx context.Context, userID string, from, to time.Time, options ...QueryOption) ([]*response.IdeaWithActivity, error)
-	GetSpecificIdeas(ctx context.Context, ideaIds []uuid.UUID) ([]*domain.Idea, error)
 	// GetTopIdeas(ctx context.Context, userId string, days int, queryParams domain.QueryParams) ([]*response.IdeaWithActivity, error)
 
 	// utils
@@ -172,22 +171,6 @@ func (r *ideaRepository) GetIdeasWithActivity(ctx context.Context, userID string
 	}
 
 	return ideasWithActivity, nil
-}
-
-func (r *ideaRepository) GetSpecificIdeas(ctx context.Context, ideaIds []uuid.UUID) ([]*domain.Idea, error) {
-	var ideas []*domain.Idea
-
-	if len(ideaIds) == 0 {
-		return ideas, nil
-	}
-
-	if err := r.db.WithContext(ctx).
-		Where("id IN ?", ideaIds).
-		Find(&ideas).Error; err != nil {
-		return nil, err
-	}
-
-	return ideas, nil
 }
 
 // GetTopIdeas retrieves ideas ranked by views and signups within a specified number of days.

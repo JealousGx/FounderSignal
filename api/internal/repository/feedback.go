@@ -12,6 +12,7 @@ import (
 type FeedbackRepository interface {
 	Add(ctx context.Context, feedback *domain.Feedback) (uuid.UUID, error)
 	GetByIdea(ctx context.Context, ideaId uuid.UUID) ([]domain.Feedback, error)
+	GetForUser(ctx context.Context, userId string, limit int) ([]domain.Feedback, error)
 }
 
 type fbRepository struct {
@@ -26,7 +27,6 @@ func (r *fbRepository) Add(ctx context.Context, feedback *domain.Feedback) (uuid
 	// if the feedback.ParentId exists and the parent has its own parent.
 	// avoid deep nesting of feedbacks
 	// set the feedback.ParentId to the top level parent
-
 	if feedback.ParentID != nil && *feedback.ParentID != uuid.Nil {
 		var parentFeedback domain.Feedback
 		err := r.db.Model(&domain.Feedback{}).WithContext(ctx).
@@ -56,6 +56,25 @@ func (r *fbRepository) GetByIdea(ctx context.Context, ideaId uuid.UUID) ([]domai
 		Preload("Reactions").
 		Find(&feedbacks).Error; err != nil {
 		fmt.Println("Error fetching feedbacks:", err)
+		return nil, err
+	}
+
+	return feedbacks, nil
+}
+
+func (r *fbRepository) GetForUser(ctx context.Context, userId string, limit int) ([]domain.Feedback, error) {
+	var feedbacks []domain.Feedback
+
+	err := r.db.WithContext(ctx).
+		Joins("JOIN ideas ON ideas.id = feedbacks.idea_id").
+		Where("ideas.user_id = ?", userId).
+		Order("feedbacks.created_at DESC").
+		Limit(limit).
+		Preload("Reactions").
+		Find(&feedbacks).Error
+
+	if err != nil {
+		fmt.Printf("Error fetching recent feedback by user ID %s: %v\n", userId, err)
 		return nil, err
 	}
 

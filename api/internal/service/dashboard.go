@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"foundersignal/internal/domain"
+	"foundersignal/internal/dto/request"
 	"foundersignal/internal/dto/response"
 	"foundersignal/internal/repository"
 	"log"
@@ -20,8 +21,10 @@ type DashboardService interface {
 
 type dashboardService struct {
 	repo         repository.IdeaRepository
+	feedbackRepo repository.FeedbackRepository
 	signalRepo   repository.SignalRepository
 	audienceRepo repository.AudienceRepository
+	reactionRepo repository.ReactionRepository
 }
 
 type ideasResult struct {
@@ -37,12 +40,29 @@ type signupsResult struct {
 	err     error
 }
 
-func NewDashboardService(repo repository.IdeaRepository, signalRepo repository.SignalRepository,
-	audienceRepo repository.AudienceRepository) *dashboardService {
+type commentsResult struct {
+	comments []domain.Feedback
+	err      error
+}
+
+type reactionsResult struct {
+	reactions []domain.IdeaReaction
+	err       error
+}
+
+const (
+	MAX_ANALYTICS_DATA  = 5
+	MAX_RECENT_ACTIVITY = 5
+)
+
+func NewDashboardService(repo repository.IdeaRepository, feedbackRepo repository.FeedbackRepository, signalRepo repository.SignalRepository,
+	audienceRepo repository.AudienceRepository, reactionRepo repository.ReactionRepository) *dashboardService {
 	return &dashboardService{
 		repo:         repo,
+		feedbackRepo: feedbackRepo,
 		signalRepo:   signalRepo,
 		audienceRepo: audienceRepo,
+		reactionRepo: reactionRepo,
 	}
 }
 
@@ -54,7 +74,7 @@ func (s *dashboardService) GetDashboardData(ctx context.Context, userID string) 
 
 	dashboardData := &response.DashboardResponse{}
 
-	userIdeas, recentSignals, recentSignups, err := s.getDashboardPrerequisites(ctx, userID)
+	userIdeas, recentComments, recentSignals, recentSignups, recentReactions, err := s.getDashboardPrerequisites(ctx, userID)
 	if err != nil {
 		// This error is from fetching userIdeas, which is critical.
 
@@ -88,7 +108,7 @@ func (s *dashboardService) GetDashboardData(ctx context.Context, userID string) 
 	}
 	dashboardData.AnalyticsData = analyticsData
 
-	recentActivity, err := s.getRecentActivity(recentSignals, recentSignups, userIdeasMap)
+	recentActivity, err := s.getRecentActivity(recentSignals, recentSignups, recentComments, recentReactions, userIdeasMap)
 	if err != nil {
 		fmt.Printf("Failed to get recent activity: %v\n", err)
 		return nil, fmt.Errorf("failed to get recent activity: %w", err)
@@ -101,8 +121,10 @@ func (s *dashboardService) GetDashboardData(ctx context.Context, userID string) 
 // get ideas, signals, and signups concurrently
 func (s *dashboardService) getDashboardPrerequisites(ctx context.Context, userID string) (
 	allUserIdeasWithCounts []*domain.Idea,
+	recentComments []domain.Feedback,
 	recentSignals []domain.Signal,
 	recentSignups []domain.AudienceMember,
+	recentReactions []domain.IdeaReaction,
 	err error,
 ) {
 	var wg sync.WaitGroup
@@ -110,8 +132,10 @@ func (s *dashboardService) getDashboardPrerequisites(ctx context.Context, userID
 	ideasCh := make(chan ideasResult, 1)
 	signalsCh := make(chan signalsResult, 1)
 	signupsCh := make(chan signupsResult, 1)
+	commentsCh := make(chan commentsResult, 1)
+	reactionsCh := make(chan reactionsResult, 1)
 
-	wg.Add(3)
+	wg.Add(5)
 
 	go func() {
 		defer wg.Done()
@@ -124,24 +148,38 @@ func (s *dashboardService) getDashboardPrerequisites(ctx context.Context, userID
 
 	go func() {
 		defer wg.Done()
-		signals, fetchErr := s.signalRepo.GetRecentByUserIdeas(ctx, userID, 10)
+		signals, fetchErr := s.signalRepo.GetRecentByUserIdeas(ctx, userID, MAX_RECENT_ACTIVITY)
 		signalsCh <- signalsResult{signals: signals, err: fetchErr}
 	}()
 
 	go func() {
 		defer wg.Done()
-		signups, fetchErr := s.audienceRepo.GetRecentByUserIdeas(ctx, userID, 10)
+		signups, fetchErr := s.audienceRepo.GetRecentByUserIdeas(ctx, userID, MAX_RECENT_ACTIVITY)
 		signupsCh <- signupsResult{signups: signups, err: fetchErr}
+	}()
+
+	go func() {
+		defer wg.Done()
+		comments, fetchErr := s.feedbackRepo.GetForUser(ctx, userID, MAX_RECENT_ACTIVITY)
+		commentsCh <- commentsResult{comments: comments, err: fetchErr}
+	}()
+
+	go func() {
+		defer wg.Done()
+		reactions, fetchErr := s.reactionRepo.GetRecentIdeaReactionsForUser(ctx, userID, MAX_RECENT_ACTIVITY)
+		reactionsCh <- reactionsResult{reactions: reactions, err: fetchErr}
 	}()
 
 	wg.Wait()
 	close(ideasCh)
 	close(signalsCh)
 	close(signupsCh)
+	close(commentsCh)
+	close(reactionsCh)
 
 	ideasRes := <-ideasCh
 	if ideasRes.err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to get user ideas: %w", ideasRes.err)
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to get user ideas: %w", ideasRes.err)
 	}
 	allUserIdeasWithCounts = ideasRes.ideas
 
@@ -159,7 +197,21 @@ func (s *dashboardService) getDashboardPrerequisites(ctx context.Context, userID
 	}
 	recentSignups = signupsRes.signups
 
-	return allUserIdeasWithCounts, recentSignals, recentSignups, nil
+	commentsRes := <-commentsCh
+	if commentsRes.err != nil {
+		log.Printf("WARN: Failed to get recent comments for dashboard: %v", commentsRes.err)
+		// Non-critical, can proceed with nil comments
+	}
+	recentComments = commentsRes.comments
+
+	reactionsRes := <-reactionsCh
+	if reactionsRes.err != nil {
+		log.Printf("WARN: Failed to get recent reactions for dashboard: %v", reactionsRes.err)
+		// Non-critical, can proceed with nil reactions
+	}
+	recentReactions = reactionsRes.reactions
+
+	return allUserIdeasWithCounts, recentComments, recentSignals, recentSignups, recentReactions, nil
 }
 
 func (s *dashboardService) getAnalyticsMetrics(ctx context.Context, userID string, from, to time.Time, ideas []*domain.Idea) (response.Metrics, error) {
@@ -299,8 +351,6 @@ func (s *dashboardService) getAnalyticsData(
 ) ([]response.AnalyticsData, error) {
 	var result []response.AnalyticsData
 
-	const MAX_IDEAS = 5
-
 	if len(ideas) == 0 {
 		return result, nil
 	}
@@ -314,8 +364,8 @@ func (s *dashboardService) getAnalyticsData(
 	})
 
 	// for testing purposes, slice the ideas to a maximum of 10
-	if len(ideas) > MAX_IDEAS {
-		ideas = ideas[:MAX_IDEAS]
+	if len(ideas) > MAX_ANALYTICS_DATA {
+		ideas = ideas[:MAX_ANALYTICS_DATA]
 	}
 
 	var ideaIDs []uuid.UUID
@@ -407,6 +457,8 @@ func (s *dashboardService) getAnalyticsData(
 func (s *dashboardService) getRecentActivity(
 	recentSignals []domain.Signal,
 	recentSignups []domain.AudienceMember,
+	recentComments []domain.Feedback,
+	recentReactions []domain.IdeaReaction,
 	ideas map[string]*domain.Idea, // Key: idea.ID.String(), Value: *domain.Idea
 ) ([]response.ActivityItem, error) {
 	var activities []response.ActivityItem
@@ -457,13 +509,65 @@ func (s *dashboardService) getRecentActivity(
 		})
 	}
 
+	for _, comment := range recentComments {
+		ideaTitle := "Unknown Idea"
+		if idea, exists := ideas[comment.IdeaID.String()]; exists {
+			ideaTitle = idea.Title
+		}
+
+		activities = append(activities, response.ActivityItem{
+			ID:        comment.ID.String(),
+			Type:      "comment",
+			IdeaID:    comment.IdeaID.String(),
+			IdeaTitle: ideaTitle,
+			Message:   fmt.Sprintf("Someone commented on your idea: \"%s\"", truncateComment(comment.Comment, 30)),
+			Timestamp: comment.CreatedAt,
+		})
+	}
+
+	for _, reaction := range recentReactions {
+		ideaTitle := "Unknown Idea"
+		if idea, exists := ideas[reaction.IdeaID.String()]; exists {
+			ideaTitle = idea.Title
+		}
+
+		var message string
+		activityType := string(reaction.ReactionType)
+
+		switch reaction.ReactionType {
+		case string(request.LikeReaction):
+			message = "Someone liked your idea"
+		case string(request.DislikeReaction):
+			message = "Someone disliked your idea"
+		default:
+			message = "Someone reacted to your idea"
+			activityType = "reaction"
+		}
+
+		activities = append(activities, response.ActivityItem{
+			ID:        reaction.ID.String(),
+			Type:      activityType,
+			IdeaID:    reaction.IdeaID.String(),
+			IdeaTitle: ideaTitle,
+			Message:   message,
+			Timestamp: reaction.CreatedAt,
+		})
+	}
+
 	sort.Slice(activities, func(i, j int) bool {
 		return activities[i].Timestamp.After(activities[j].Timestamp)
 	})
 
-	if len(activities) > 10 {
-		activities = activities[:10]
+	if len(activities) > MAX_RECENT_ACTIVITY {
+		activities = activities[:MAX_RECENT_ACTIVITY]
 	}
 
 	return activities, nil
+}
+
+func truncateComment(text string, maxLength int) string {
+	if len(text) <= maxLength {
+		return text
+	}
+	return text[:maxLength] + "..."
 }

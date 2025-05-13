@@ -17,6 +17,7 @@ type ReactionRepository interface {
 	RemoveFeedbackReaction(ctx context.Context, fbId uuid.UUID, userId string) error
 	AddIdeaReaction(ctx context.Context, reaction *domain.IdeaReaction) error
 	RemoveIdeaReaction(ctx context.Context, ideaId uuid.UUID, userId string) error
+	GetRecentIdeaReactionsForUser(ctx context.Context, userId string, limit int) ([]domain.IdeaReaction, error)
 }
 
 type reactionRepository struct {
@@ -87,4 +88,23 @@ func (r *reactionRepository) RemoveIdeaReaction(ctx context.Context, ideaId uuid
 	}
 
 	return nil
+}
+
+func (r *reactionRepository) GetRecentIdeaReactionsForUser(ctx context.Context, userId string, limit int) ([]domain.IdeaReaction, error) {
+	var reactions []domain.IdeaReaction
+
+	err := r.db.WithContext(ctx).
+		Joins("JOIN ideas ON ideas.id = idea_reactions.idea_id").
+		Where("ideas.user_id = ?", userId).
+		Order("idea_reactions.created_at DESC").
+		Limit(limit).
+		Find(&reactions).Error
+
+	if err != nil {
+		fmt.Printf("Error fetching recent reactions by user ID %s: %v\n", userId, err)
+		return nil, err
+	}
+
+	return reactions, nil
+
 }

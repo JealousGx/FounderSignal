@@ -16,6 +16,6 @@ func NewServices(repos *repository.Repositories) *Services {
 		Feedback:  NewFeedbackService(repos.Feedback),
 		Reaction:  NewReactionService(repos.Reaction),
 		MVP:       NewMVPService(repos.MVP),
-		Dashboard: NewDashboardService(repos.Idea, repos.Signal, repos.Audience),
+		Dashboard: NewDashboardService(repos.Idea, repos.Feedback, repos.Signal, repos.Audience, repos.Reaction),
 	}
 }
