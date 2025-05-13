@@ -68,7 +68,7 @@ export default function SubmitPage() {
 
       if (state.ideaId) {
         const timer = setTimeout(
-          () => router.push(`/idea/${state.ideaId}`),
+          () => router.push(`/dashboard/ideas/${state.ideaId}`),
           1000
         );
 
