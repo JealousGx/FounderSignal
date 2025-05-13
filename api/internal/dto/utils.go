@@ -101,7 +101,15 @@ func calculateIdeaStats(signals []domain.Signal, signups int) response.PublicIde
 
 	if timeOnPageEventsCount > 0 {
 		avgTimeOnPageSeconds := totalDurationSeconds / float64(timeOnPageEventsCount)
-		avgTimeOnPageStr = fmt.Sprintf("%.2f s", avgTimeOnPageSeconds)
+		if avgTimeOnPageSeconds < 60 {
+			avgTimeOnPageStr = fmt.Sprintf("%.2f s", avgTimeOnPageSeconds)
+		} else if avgTimeOnPageSeconds < 3600 {
+			avgTimeOnPageMinutes := avgTimeOnPageSeconds / 60
+			avgTimeOnPageStr = fmt.Sprintf("%.2f m", avgTimeOnPageMinutes)
+		} else {
+			avgTimeOnPageHours := avgTimeOnPageSeconds / 3600
+			avgTimeOnPageStr = fmt.Sprintf("%.2f h", avgTimeOnPageHours)
+		}
 	}
 
 	if signups > 0 {

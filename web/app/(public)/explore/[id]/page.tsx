@@ -201,12 +201,12 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
                   </p>
                 </div>
 
-                {/* <div className="bg-gray-50 rounded-xl p-4">
+                <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-600 text-sm mb-1">Avg. Time</p>
                   <p className="text-2xl font-bold">
                     {idea.stats.avgTimeOnPage}
                   </p>
-                </div> */}
+                </div>
 
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-600 text-sm mb-1">Bounce Rate</p>
