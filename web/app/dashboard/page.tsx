@@ -14,7 +14,7 @@ import { getName } from "@/lib/utils";
 
 export const getDashboardData = cache(async () => {
   try {
-    const response = await api.get("/dashboard/ideas", {
+    const response = await api.get("/dashboard", {
       cache: "force-cache",
       next: {
         revalidate: 3600,
@@ -50,40 +50,36 @@ export default async function Dashboard() {
   const data = await getDashboardData();
 
   return (
-    <>
-      <div className="space-y-6 pb-20 md:pb-0">
-        <WelcomeBanner firstName={getName(user)} />
+    <div className="space-y-6 pb-20 md:pb-0">
+      <WelcomeBanner firstName={getName(user)} />
 
-        <Suspense
-          fallback={<Skeleton className="h-[180px] w-full rounded-xl" />}
-        >
-          <MetricsOverview metrics={data.metrics} />
-        </Suspense>
+      <Suspense fallback={<Skeleton className="h-[180px] w-full rounded-xl" />}>
+        <MetricsOverview metrics={data.metrics} />
+      </Suspense>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Suspense
-              fallback={<Skeleton className="h-[300px] w-full rounded-xl" />}
-            >
-              <RecentIdeas recentIdeas={data.recentIdeas} />
-            </Suspense>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Suspense
+            fallback={<Skeleton className="h-[300px] w-full rounded-xl" />}
+          >
+            <RecentIdeas recentIdeas={data.recentIdeas} />
+          </Suspense>
 
-            <Suspense
-              fallback={<Skeleton className="h-[400px] w-full rounded-xl" />}
-            >
-              <IdeaAnalytics analytics={data.analyticsData} />
-            </Suspense>
-          </div>
+          <Suspense
+            fallback={<Skeleton className="h-[400px] w-full rounded-xl" />}
+          >
+            <IdeaAnalytics analytics={data.analyticsData} />
+          </Suspense>
+        </div>
 
-          <div>
-            <Suspense
-              fallback={<Skeleton className="h-[500px] w-full rounded-xl" />}
-            >
-              <ActivityFeed recentActivity={data.recentActivity} />
-            </Suspense>
-          </div>
+        <div>
+          <Suspense
+            fallback={<Skeleton className="h-[500px] w-full rounded-xl" />}
+          >
+            <ActivityFeed />
+          </Suspense>
         </div>
       </div>
-    </>
+    </div>
   );
 }

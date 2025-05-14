@@ -1,8 +1,9 @@
 import { UserButton } from "@clerk/nextjs";
 import { Bell, Menu, Search } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardHeader() {
   return (

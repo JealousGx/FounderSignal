@@ -43,9 +43,6 @@ export const submit = async (
   const commentId = formData.get("commentId") as string | null;
   const content = validatedFields.data.content;
 
-  console.log("ideaId:", ideaId);
-  console.log("commentId:", commentId);
-
   const payload: Record<string, string> = {
     comment: content,
   };
