@@ -8,10 +8,9 @@ import (
 )
 
 type DashboardResponse struct {
-	Metrics        Metrics         `json:"metrics"`
-	RecentIdeas    []domain.Idea   `json:"recentIdeas"`
-	AnalyticsData  []AnalyticsData `json:"analyticsData"`
-	RecentActivity []ActivityItem  `json:"recentActivity"`
+	Metrics       Metrics         `json:"metrics"`
+	RecentIdeas   []domain.Idea   `json:"recentIdeas"`
+	AnalyticsData []AnalyticsData `json:"analyticsData"`
 }
 
 // Metrics holds the overview metrics.

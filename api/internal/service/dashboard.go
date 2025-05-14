@@ -6,6 +6,7 @@ import (
 	"foundersignal/internal/domain"
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/dto/response"
+	"foundersignal/internal/pkg"
 	"foundersignal/internal/repository"
 	"log"
 	"sort"
@@ -17,6 +18,7 @@ import (
 
 type DashboardService interface {
 	GetDashboardData(ctx context.Context, userID string) (*response.DashboardResponse, error)
+	GetRecentActivityForUser(ctx context.Context, userId string) ([]response.ActivityItem, error)
 }
 
 type dashboardService struct {
@@ -27,10 +29,6 @@ type dashboardService struct {
 	reactionRepo repository.ReactionRepository
 }
 
-type ideasResult struct {
-	ideas []*domain.Idea
-	err   error
-}
 type signalsResult struct {
 	signals []domain.Signal
 	err     error
@@ -74,10 +72,12 @@ func (s *dashboardService) GetDashboardData(ctx context.Context, userID string) 
 
 	dashboardData := &response.DashboardResponse{}
 
-	userIdeas, recentComments, recentSignals, recentSignups, recentReactions, err := s.getDashboardPrerequisites(ctx, userID)
+	userIdeas, _, err := s.repo.GetIdeas(ctx, domain.QueryParams{}, repository.IdeaQuerySpec{
+		WithCounts: true,
+		ByUserId:   userID,
+	})
 	if err != nil {
 		// This error is from fetching userIdeas, which is critical.
-
 		fmt.Printf("Failed to get dashboard prerequisites: %v\n", err)
 		return nil, err
 	}
@@ -108,110 +108,7 @@ func (s *dashboardService) GetDashboardData(ctx context.Context, userID string) 
 	}
 	dashboardData.AnalyticsData = analyticsData
 
-	recentActivity, err := s.getRecentActivity(recentSignals, recentSignups, recentComments, recentReactions, userIdeasMap)
-	if err != nil {
-		fmt.Printf("Failed to get recent activity: %v\n", err)
-		return nil, fmt.Errorf("failed to get recent activity: %w", err)
-	}
-	dashboardData.RecentActivity = recentActivity
-
 	return dashboardData, nil
-}
-
-// get ideas, signals, and signups concurrently
-func (s *dashboardService) getDashboardPrerequisites(ctx context.Context, userID string) (
-	allUserIdeasWithCounts []*domain.Idea,
-	recentComments []domain.Feedback,
-	recentSignals []domain.Signal,
-	recentSignups []domain.AudienceMember,
-	recentReactions []domain.IdeaReaction,
-	err error,
-) {
-	var wg sync.WaitGroup
-
-	ideasCh := make(chan ideasResult, 1)
-	signalsCh := make(chan signalsResult, 1)
-	signupsCh := make(chan signupsResult, 1)
-	commentsCh := make(chan commentsResult, 1)
-	reactionsCh := make(chan reactionsResult, 1)
-
-	wg.Add(5)
-
-	go func() {
-		defer wg.Done()
-		ideas, _, fetchErr := s.repo.GetIdeas(ctx, domain.QueryParams{}, repository.IdeaQuerySpec{
-			WithCounts: true,
-			ByUserId:   userID,
-		})
-		ideasCh <- ideasResult{ideas: ideas, err: fetchErr}
-	}()
-
-	go func() {
-		defer wg.Done()
-		signals, fetchErr := s.signalRepo.GetRecentByUserIdeas(ctx, userID, MAX_RECENT_ACTIVITY)
-		signalsCh <- signalsResult{signals: signals, err: fetchErr}
-	}()
-
-	go func() {
-		defer wg.Done()
-		signups, fetchErr := s.audienceRepo.GetRecentByUserIdeas(ctx, userID, MAX_RECENT_ACTIVITY)
-		signupsCh <- signupsResult{signups: signups, err: fetchErr}
-	}()
-
-	go func() {
-		defer wg.Done()
-		comments, fetchErr := s.feedbackRepo.GetForUser(ctx, userID, MAX_RECENT_ACTIVITY)
-		commentsCh <- commentsResult{comments: comments, err: fetchErr}
-	}()
-
-	go func() {
-		defer wg.Done()
-		reactions, fetchErr := s.reactionRepo.GetRecentIdeaReactionsForUser(ctx, userID, MAX_RECENT_ACTIVITY)
-		reactionsCh <- reactionsResult{reactions: reactions, err: fetchErr}
-	}()
-
-	wg.Wait()
-	close(ideasCh)
-	close(signalsCh)
-	close(signupsCh)
-	close(commentsCh)
-	close(reactionsCh)
-
-	ideasRes := <-ideasCh
-	if ideasRes.err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("failed to get user ideas: %w", ideasRes.err)
-	}
-	allUserIdeasWithCounts = ideasRes.ideas
-
-	signalsRes := <-signalsCh
-	if signalsRes.err != nil {
-		log.Printf("WARN: Failed to get recent signals for dashboard: %v", signalsRes.err)
-		// Non-critical, can proceed with nil signals
-	}
-	recentSignals = signalsRes.signals
-
-	signupsRes := <-signupsCh
-	if signupsRes.err != nil {
-		log.Printf("WARN: Failed to get recent signups for dashboard: %v", signupsRes.err)
-		// Non-critical, can proceed with nil signups
-	}
-	recentSignups = signupsRes.signups
-
-	commentsRes := <-commentsCh
-	if commentsRes.err != nil {
-		log.Printf("WARN: Failed to get recent comments for dashboard: %v", commentsRes.err)
-		// Non-critical, can proceed with nil comments
-	}
-	recentComments = commentsRes.comments
-
-	reactionsRes := <-reactionsCh
-	if reactionsRes.err != nil {
-		log.Printf("WARN: Failed to get recent reactions for dashboard: %v", reactionsRes.err)
-		// Non-critical, can proceed with nil reactions
-	}
-	recentReactions = reactionsRes.reactions
-
-	return allUserIdeasWithCounts, recentComments, recentSignals, recentSignups, recentReactions, nil
 }
 
 func (s *dashboardService) getAnalyticsMetrics(ctx context.Context, userID string, from, to time.Time, ideas []*domain.Idea) (response.Metrics, error) {
@@ -454,14 +351,48 @@ func (s *dashboardService) getAnalyticsData(
 	return result, nil
 }
 
-func (s *dashboardService) getRecentActivity(
-	recentSignals []domain.Signal,
-	recentSignups []domain.AudienceMember,
-	recentComments []domain.Feedback,
-	recentReactions []domain.IdeaReaction,
-	ideas map[string]*domain.Idea, // Key: idea.ID.String(), Value: *domain.Idea
+func (s *dashboardService) GetRecentActivityForUser(
+	ctx context.Context, userId string,
 ) ([]response.ActivityItem, error) {
 	var activities []response.ActivityItem
+
+	recentComments, recentSignals, recentSignups, recentReactions, err := s.getActivityPrerequisitesForUser(ctx, userId)
+	if err != nil {
+		log.Printf("Failed to get recent activity prerequisites: %v", err)
+		return nil, fmt.Errorf("failed to get recent activity prerequisites: %w", err)
+	}
+
+	ideaIdSet := make(map[uuid.UUID]struct{})
+	for _, signal := range recentSignals {
+		ideaIdSet[signal.IdeaID] = struct{}{}
+	}
+	for _, signup := range recentSignups {
+		ideaIdSet[signup.IdeaID] = struct{}{}
+	}
+	for _, comment := range recentComments {
+		ideaIdSet[comment.IdeaID] = struct{}{}
+	}
+	for _, reaction := range recentReactions {
+		ideaIdSet[reaction.IdeaID] = struct{}{}
+	}
+
+	var ideaIDsToFetch []uuid.UUID
+	for id := range ideaIdSet {
+		ideaIDsToFetch = append(ideaIDsToFetch, id)
+	}
+
+	ideas := make(map[uuid.UUID]*domain.Idea)
+	if len(ideaIDsToFetch) > 0 {
+		rawIdeas, fetchErr := s.repo.GetByIds(ctx, ideaIDsToFetch)
+		if fetchErr != nil {
+			log.Printf("WARN: Failed to fetch idea details for recent activity: %v", fetchErr)
+			// Continue without titles
+		} else {
+			for _, idea := range rawIdeas {
+				ideas[idea.ID] = idea
+			}
+		}
+	}
 
 	for _, signal := range recentSignals {
 		var message string
@@ -477,8 +408,7 @@ func (s *dashboardService) getRecentActivity(
 		}
 
 		ideaTitle := "Unknown Idea"
-		idea, exists := ideas[signal.IdeaID.String()]
-		if exists {
+		if idea, exists := ideas[signal.IdeaID]; exists {
 			ideaTitle = idea.Title
 		}
 
@@ -494,8 +424,9 @@ func (s *dashboardService) getRecentActivity(
 
 	// Process signups
 	for _, signup := range recentSignups {
+
 		ideaTitle := "Unknown Idea"
-		idea, exists := ideas[signup.IdeaID.String()]
+		idea, exists := ideas[signup.IdeaID]
 		if exists {
 			ideaTitle = idea.Title
 		}
@@ -511,7 +442,7 @@ func (s *dashboardService) getRecentActivity(
 
 	for _, comment := range recentComments {
 		ideaTitle := "Unknown Idea"
-		if idea, exists := ideas[comment.IdeaID.String()]; exists {
+		if idea, exists := ideas[comment.IdeaID]; exists {
 			ideaTitle = idea.Title
 		}
 
@@ -520,14 +451,14 @@ func (s *dashboardService) getRecentActivity(
 			Type:      "comment",
 			IdeaID:    comment.IdeaID.String(),
 			IdeaTitle: ideaTitle,
-			Message:   fmt.Sprintf("Someone commented on your idea: \"%s\"", truncateComment(comment.Comment, 30)),
+			Message:   fmt.Sprintf("Someone commented on your idea: \"%s\"", pkg.TruncateComment(comment.Comment, 30)),
 			Timestamp: comment.CreatedAt,
 		})
 	}
 
 	for _, reaction := range recentReactions {
 		ideaTitle := "Unknown Idea"
-		if idea, exists := ideas[reaction.IdeaID.String()]; exists {
+		if idea, exists := ideas[reaction.IdeaID]; exists {
 			ideaTitle = idea.Title
 		}
 
@@ -565,9 +496,80 @@ func (s *dashboardService) getRecentActivity(
 	return activities, nil
 }
 
-func truncateComment(text string, maxLength int) string {
-	if len(text) <= maxLength {
-		return text
+// get signals, and signups concurrently
+func (s *dashboardService) getActivityPrerequisitesForUser(ctx context.Context, userID string) (
+	recentComments []domain.Feedback,
+	recentSignals []domain.Signal,
+	recentSignups []domain.AudienceMember,
+	recentReactions []domain.IdeaReaction,
+	err error,
+) {
+	var wg sync.WaitGroup
+
+	signalsCh := make(chan signalsResult, 1)
+	signupsCh := make(chan signupsResult, 1)
+	commentsCh := make(chan commentsResult, 1)
+	reactionsCh := make(chan reactionsResult, 1)
+
+	wg.Add(4)
+
+	go func() {
+		defer wg.Done()
+		signals, fetchErr := s.signalRepo.GetRecentByUserIdeas(ctx, userID, MAX_RECENT_ACTIVITY)
+		signalsCh <- signalsResult{signals: signals, err: fetchErr}
+	}()
+
+	go func() {
+		defer wg.Done()
+		signups, fetchErr := s.audienceRepo.GetRecentByUserIdeas(ctx, userID, MAX_RECENT_ACTIVITY)
+		signupsCh <- signupsResult{signups: signups, err: fetchErr}
+	}()
+
+	go func() {
+		defer wg.Done()
+		comments, fetchErr := s.feedbackRepo.GetForUser(ctx, userID, MAX_RECENT_ACTIVITY)
+		commentsCh <- commentsResult{comments: comments, err: fetchErr}
+	}()
+
+	go func() {
+		defer wg.Done()
+		reactions, fetchErr := s.reactionRepo.GetRecentIdeaReactionsForUser(ctx, userID, MAX_RECENT_ACTIVITY)
+		reactionsCh <- reactionsResult{reactions: reactions, err: fetchErr}
+	}()
+
+	wg.Wait()
+	close(signalsCh)
+	close(signupsCh)
+	close(commentsCh)
+	close(reactionsCh)
+
+	signalsRes := <-signalsCh
+	if signalsRes.err != nil {
+		log.Printf("WARN: Failed to get recent signals for dashboard: %v", signalsRes.err)
+		// Non-critical, can proceed with nil signals
 	}
-	return text[:maxLength] + "..."
+	recentSignals = signalsRes.signals
+
+	signupsRes := <-signupsCh
+	if signupsRes.err != nil {
+		log.Printf("WARN: Failed to get recent signups for dashboard: %v", signupsRes.err)
+		// Non-critical, can proceed with nil signups
+	}
+	recentSignups = signupsRes.signups
+
+	commentsRes := <-commentsCh
+	if commentsRes.err != nil {
+		log.Printf("WARN: Failed to get recent comments for dashboard: %v", commentsRes.err)
+		// Non-critical, can proceed with nil comments
+	}
+	recentComments = commentsRes.comments
+
+	reactionsRes := <-reactionsCh
+	if reactionsRes.err != nil {
+		log.Printf("WARN: Failed to get recent reactions for dashboard: %v", reactionsRes.err)
+		// Non-critical, can proceed with nil reactions
+	}
+	recentReactions = reactionsRes.reactions
+
+	return recentComments, recentSignals, recentSignups, recentReactions, nil
 }

@@ -10,7 +10,7 @@ import (
 )
 
 type FeedbackRepository interface {
-	Add(ctx context.Context, feedback *domain.Feedback) (uuid.UUID, error)
+	Add(ctx context.Context, feedback *domain.Feedback) (*domain.Feedback, error)
 	GetByIdea(ctx context.Context, ideaId uuid.UUID) ([]domain.Feedback, error)
 	GetForUser(ctx context.Context, userId string, limit int) ([]domain.Feedback, error)
 }
@@ -23,7 +23,7 @@ func NewFeedbackRepo(db *gorm.DB) *fbRepository {
 	return &fbRepository{db: db}
 }
 
-func (r *fbRepository) Add(ctx context.Context, feedback *domain.Feedback) (uuid.UUID, error) {
+func (r *fbRepository) Add(ctx context.Context, feedback *domain.Feedback) (*domain.Feedback, error) {
 	// if the feedback.ParentId exists and the parent has its own parent.
 	// avoid deep nesting of feedbacks
 	// set the feedback.ParentId to the top level parent
@@ -42,10 +42,10 @@ func (r *fbRepository) Add(ctx context.Context, feedback *domain.Feedback) (uuid
 	}
 
 	if err := r.db.Model(&domain.Feedback{}).WithContext(ctx).Create(feedback).Error; err != nil {
-		return uuid.Nil, err
+		return nil, err
 	}
 
-	return feedback.ID, nil
+	return feedback, nil
 }
 
 func (r *fbRepository) GetByIdea(ctx context.Context, ideaId uuid.UUID) ([]domain.Feedback, error) {

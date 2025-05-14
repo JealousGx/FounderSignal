@@ -16,6 +16,7 @@ type IdeaRepository interface {
 	CreateWithMVP(ctx context.Context, idea *domain.Idea, mvp *domain.MVPSimulator) (uuid.UUID, error)
 	GetIdeas(ctx context.Context, queryParams domain.QueryParams, spec IdeaQuerySpec) ([]*domain.Idea, int64, error)
 	GetByID(ctx context.Context, id uuid.UUID, getRelatedIdeas *bool) (*domain.Idea, []*domain.Idea, error)
+	GetByIds(ctx context.Context, ids []uuid.UUID) ([]*domain.Idea, error)
 	// GetByUserId(ctx context.Context, userId string) ([]*domain.Idea, error)
 	GetIdeasWithActivity(ctx context.Context, userID string, from, to time.Time, options ...QueryOption) ([]*response.IdeaWithActivity, error)
 	// GetTopIdeas(ctx context.Context, userId string, days int, queryParams domain.QueryParams) ([]*response.IdeaWithActivity, error)
@@ -121,6 +122,22 @@ func (r *ideaRepository) GetByID(ctx context.Context, id uuid.UUID, getRelatedId
 	}
 
 	return idea, relatedIdeas, nil
+}
+
+func (r *ideaRepository) GetByIds(ctx context.Context, ids []uuid.UUID) ([]*domain.Idea, error) {
+	var ideas []*domain.Idea
+
+	if len(ids) == 0 {
+		return ideas, nil
+	}
+
+	if err := r.db.WithContext(ctx).
+		Where("id IN ?", ids).
+		Find(&ideas).Error; err != nil {
+		return nil, err
+	}
+
+	return ideas, nil
 }
 
 // GetByUserId gets all ideas for a user

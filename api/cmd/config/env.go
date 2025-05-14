@@ -13,6 +13,8 @@ type Config struct {
 	DB domain.DBConfig
 
 	CLERK_JWKS_URL string
+
+	APP_ENV string
 }
 
 var Envs = initConfig()
@@ -35,6 +37,8 @@ func initConfig() Config {
 		},
 
 		CLERK_JWKS_URL: getEnv("CLERK_JWKS_URL", "https://clerk.YOUR_INSTANCE.clerk.accounts.dev/.well-known/jwks.json"),
+
+		APP_ENV: getEnv("APP_ENV", "development"),
 	}
 }
 

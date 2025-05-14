@@ -2,13 +2,13 @@ package service
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"foundersignal/internal/domain"
 	"foundersignal/internal/dto"
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/dto/response"
 	"foundersignal/internal/repository"
+	"foundersignal/internal/websocket"
+	"log"
 
 	"github.com/google/uuid"
 )
@@ -19,18 +19,23 @@ type FeedbackService interface {
 }
 
 type fbService struct {
-	repo repository.FeedbackRepository
+	repo        repository.FeedbackRepository
+	ideaRepo    repository.IdeaRepository
+	broadcaster websocket.ActivityBroadcaster
 }
 
-func NewFeedbackService(repo repository.FeedbackRepository) *fbService {
+func NewFeedbackService(repo repository.FeedbackRepository, ideaRepo repository.IdeaRepository,
+	broadcaster websocket.ActivityBroadcaster) *fbService {
 	return &fbService{
-		repo: repo,
+		repo:        repo,
+		ideaRepo:    ideaRepo,
+		broadcaster: broadcaster,
 	}
 }
 
-func (s *fbService) Add(ctx context.Context, parsedIdeaId uuid.UUID, parsedParentId *uuid.UUID, userId string, req *request.CreateFeedback) (uuid.UUID, error) {
+func (s *fbService) Add(ctx context.Context, ideaId uuid.UUID, parsedParentId *uuid.UUID, userId string, req *request.CreateFeedback) (uuid.UUID, error) {
 	fb := &domain.Feedback{
-		IdeaID:  parsedIdeaId,
+		IdeaID:  ideaId,
 		UserID:  userId,
 		Comment: req.Comment,
 	}
@@ -39,14 +44,32 @@ func (s *fbService) Add(ctx context.Context, parsedIdeaId uuid.UUID, parsedParen
 		fb.ParentID = parsedParentId
 	}
 
-	ideaJSON, err := json.MarshalIndent(fb, "", "  ") // Marshal to JSON with indentation
+	// ideaJSON, err := json.MarshalIndent(fb, "", "  ") // Marshal to JSON with indentation
+	// if err != nil {
+	// 	fmt.Println("Error marshalling idea to JSON:", err)
+	// } else {
+	// 	fmt.Println("Found idea (JSON):", string(ideaJSON))
+	// }
+
+	feedback, err := s.repo.Add(ctx, fb)
 	if err != nil {
-		fmt.Println("Error marshalling idea to JSON:", err)
-	} else {
-		fmt.Println("Found idea (JSON):", string(ideaJSON))
+		return uuid.Nil, err
 	}
 
-	return s.repo.Add(ctx, fb)
+	idea, _, err := s.ideaRepo.GetByID(ctx, ideaId, nil)
+	if err != nil {
+		log.Printf("Error fetching idea %s for broadcasting feedback: %v", ideaId, err)
+		// Continue without broadcasting
+		return feedback.ID, nil
+	}
+
+	if idea != nil && idea.UserID != "" {
+		s.broadcaster.FormatAndBroadcastComment(idea.UserID, *feedback, idea.Title)
+	} else {
+		log.Printf("WARN: Could not broadcast feedback for idea %s, idea owner or title not found.", ideaId)
+	}
+
+	return feedback.ID, nil
 }
 
 func (s *fbService) GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string) ([]response.IdeaComment, error) {
