@@ -19,8 +19,8 @@ func ToCreateIdeaRequest(idea *domain.Idea) *request.CreateIdea {
 	}
 }
 
-func ToIdeasListResponse(ideas []*domain.Idea, count int64) *response.IdeaListResponse {
-	publicIdeas := &response.IdeaListResponse{
+func ToIdeasListResponse(ideas []*domain.Idea, count int64, stats *response.UserDashboardStats) *response.IdeaListResponse {
+	res := &response.IdeaListResponse{
 		Total: count,
 		Ideas: []response.IdeaList{},
 	}
@@ -28,7 +28,7 @@ func ToIdeasListResponse(ideas []*domain.Idea, count int64) *response.IdeaListRe
 	for _, idea := range ideas {
 		engagementRate := calculateEngagementRate(idea.Views, idea.Signups)
 
-		publicIdeas.Ideas = append(publicIdeas.Ideas, response.IdeaList{
+		res.Ideas = append(res.Ideas, response.IdeaList{
 			ID:             idea.ID,
 			Title:          idea.Title,
 			Description:    idea.Description,
@@ -44,7 +44,12 @@ func ToIdeasListResponse(ideas []*domain.Idea, count int64) *response.IdeaListRe
 			UpdatedAt:      idea.UpdatedAt.Format("2006-01-02"),
 		})
 	}
-	return publicIdeas
+
+	if stats != nil {
+		res.Stats = *stats
+	}
+
+	return res
 }
 
 func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUserID string) *response.PublicIdeaResponse {

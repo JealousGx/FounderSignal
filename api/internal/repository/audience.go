@@ -17,6 +17,7 @@ type AudienceRepository interface {
 	GetSignupsByIdeaIds(ctx context.Context, ideaIds []uuid.UUID, from, to time.Time) (map[uuid.UUID]map[string]int, error)
 	GetRecentByUserIdeas(ctx context.Context, userID string, limit int) ([]domain.AudienceMember, error)
 	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID, from, to *time.Time) (int64, error)
+	GetCountForIdeaOwner(ctx context.Context, ideaOwnerId string, start, end *time.Time) (int64, error)
 }
 
 type audienceRepository struct {
@@ -158,6 +159,29 @@ func (r *audienceRepository) GetCountByIdeaId(
 		query = query.Where("signup_time >= ?", *from)
 	} else if to != nil {
 		query = query.Where("signup_time <= ?", *to)
+	}
+
+	var count int64
+	err := query.Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *audienceRepository) GetCountForIdeaOwner(ctx context.Context, ideaOwnerId string, start, end *time.Time) (int64, error) {
+	query := r.db.WithContext(ctx).
+		Model(&domain.AudienceMember{}).
+		Joins("JOIN ideas ON ideas.id = audience_members.idea_id").
+		Where("ideas.user_id = ?", ideaOwnerId)
+
+	if start != nil && end != nil {
+		query = query.Where("audience_members.signup_time BETWEEN ? AND ?", *start, *end)
+	} else if start != nil {
+		query = query.Where("audience_members.signup_time >= ?", *start)
+	} else if end != nil {
+		query = query.Where("audience_members.signup_time <= ?", *end)
 	}
 
 	var count int64

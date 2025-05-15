@@ -19,8 +19,8 @@ type Idea struct {
 	Title          string `gorm:"not null" json:"title"`
 	Description    string `gorm:"type:text;not null" json:"description"`
 	TargetAudience string `gorm:"not null" json:"targetAudience"`
-	Status         string `gorm:"not null;default:'active';index" json:"status"`  // Active, Paused, Completed, Draft
-	Stage          string `gorm:"not null;default:'ideation';index" json:"stage"` // Validation, MVP, Ideation
+	Status         string `gorm:"not null;default:'active';index" json:"status"` // status defined in ./types.go file
+	Stage          string `gorm:"not null;default:'ideation';index" json:"stage"`
 	TargetSignups  int    `gorm:"default:100" json:"targetSignups"`
 	ImageURL       string `json:"imageUrl"`
 	Likes          int    `gorm:"default:0" json:"likes"`
@@ -44,7 +44,9 @@ func (i *Idea) AfterFind(tx *gorm.DB) (err error) {
 	var likesCount int
 	var dislikesCount int
 
-	if i.Reactions != nil {
+	var viewsCount int
+
+	if len(i.Reactions) > 0 {
 		for _, reaction := range i.Reactions {
 			if reaction.ReactionType == "like" {
 				likesCount++
@@ -52,9 +54,25 @@ func (i *Idea) AfterFind(tx *gorm.DB) (err error) {
 				dislikesCount++
 			}
 		}
+
+		i.Likes = likesCount
+		i.Dislikes = dislikesCount
 	}
-	i.Likes = likesCount
-	i.Dislikes = dislikesCount
+
+	if len(i.Signals) > 0 {
+		for _, signal := range i.Signals {
+			if signal.EventType == string(EventTypePageView) {
+				viewsCount++
+			}
+		}
+
+		i.Views = viewsCount
+	}
+
+	if len(i.AudienceMembers) > 0 {
+		i.Signups = len(i.AudienceMembers)
+	}
+
 	return nil
 }
 
@@ -89,7 +107,7 @@ type Signal struct {
 type Feedback struct {
 	Base
 	IdeaID   uuid.UUID  `gorm:"type:uuid;not null;index" json:"ideaId"`
-	UserID   string     `gorm:"not null;index" json:"userId,omitempty"` // Can be null for anonymous feedback
+	UserID   string     `gorm:"not null;index" json:"userId"`
 	Comment  string     `gorm:"type:text" json:"comment"`
 	ParentID *uuid.UUID `gorm:"type:uuid;null;index" json:"parentId,omitempty"` // For nested replies
 	Likes    int        `gorm:"default:0" json:"likes"`

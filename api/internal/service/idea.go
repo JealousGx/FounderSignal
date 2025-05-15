@@ -11,15 +11,17 @@ import (
 	"foundersignal/internal/repository"
 	"foundersignal/pkg/validator"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/sync/errgroup"
 	"gorm.io/datatypes"
 )
 
 type IdeaService interface {
 	Create(ctx context.Context, userId string, req *request.CreateIdea) (uuid.UUID, error)
 	GetIdeas(ctx context.Context, queryParams domain.QueryParams) (*response.IdeaListResponse, error)
-	// GetUserIdeas(ctx context.Context, userId string, queryParams domain.QueryParams) ([]*response.IdeaList, error)
+	GetUserIdeas(ctx context.Context, userId string, getStats bool, queryParams domain.QueryParams) (*response.IdeaListResponse, error)
 	GetByID(ctx context.Context, id uuid.UUID, userId string) (*response.PublicIdeaResponse, error)
 	// UpdateMVP(ctx context.Context, mvpId, ideaId uuid.UUID, userId string, req *request.UpdateMVP) error
 	// GetTopIdeas(ctx context.Context, userId string, queryParams domain.QueryParams) ([]response.PrivateTopIdeaList, error)
@@ -92,7 +94,31 @@ func (s *ideaService) GetIdeas(ctx context.Context, queryParams domain.QueryPara
 		return nil, err
 	}
 
-	ideas := dto.ToIdeasListResponse(ideasRaw, totalCount)
+	ideas := dto.ToIdeasListResponse(ideasRaw, totalCount, nil)
+
+	return ideas, nil
+}
+
+func (s *ideaService) GetUserIdeas(ctx context.Context, userId string, getStats bool, queryParams domain.QueryParams) (*response.IdeaListResponse, error) {
+	ideasRaw, totalCount, err := s.repo.GetIdeas(ctx, queryParams, repository.IdeaQuerySpec{
+		WithCounts: true,
+		ByUserId:   userId,
+		Status:     domain.IdeaStatus(queryParams.FilterBy),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var stats *response.UserDashboardStats
+
+	if getStats {
+		stats, err = s.getUserDashboardStats(ctx, userId)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	ideas := dto.ToIdeasListResponse(ideasRaw, totalCount, stats)
 
 	return ideas, nil
 }
@@ -129,6 +155,118 @@ func (s *ideaService) RecordSignal(ctx context.Context, ideaID uuid.UUID, userID
 	}
 
 	return nil
+}
+
+func (s *ideaService) getUserDashboardStats(ctx context.Context, userId string) (*response.UserDashboardStats, error) {
+	now := time.Now()
+	currentMonthStart, currentMonthEnd, prevMonthStart, prevMonthEnd, _ := getTrendDateRanges(now)
+
+	var currentTotalIdeas, prevMonthTotalIdeas int64
+	var currentActiveIdeas, prevMonthActiveIdeas int64
+	var currentMonthSignups, prevMonthSignups int64
+	var currentMonthViews, prevMonthViews int64
+	var totalViews, totalSignups int64
+
+	activeStatus := domain.IdeaStatusActive
+	pageViewEventType := domain.EventTypePageView
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// get total ideas count for this month
+	g.Go(func() error {
+		var err error
+		currentTotalIdeas, err = s.repo.GetCountForUser(gCtx, userId, &currentMonthStart, &currentMonthEnd, nil)
+		return err
+	})
+
+	// get total ideas count for prev month
+	g.Go(func() error {
+		var err error
+		prevMonthTotalIdeas, err = s.repo.GetCountForUser(gCtx, userId, &prevMonthStart, &prevMonthEnd, nil)
+		return err
+	})
+
+	// get active ideas count for this month
+	g.Go(func() error {
+		var err error
+		currentActiveIdeas, err = s.repo.GetCountForUser(gCtx, userId, &currentMonthStart, &currentMonthEnd, &activeStatus)
+		return err
+	})
+
+	// get active ideas count for prev month
+	g.Go(func() error {
+		var err error
+		prevMonthActiveIdeas, err = s.repo.GetCountForUser(gCtx, userId, &prevMonthStart, &prevMonthEnd, &activeStatus)
+
+		return err
+	})
+
+	// get total signups count for this month
+	g.Go(func() error {
+		var err error
+		currentMonthSignups, err = s.audienceRepo.GetCountForIdeaOwner(gCtx, userId, &currentMonthStart, &currentMonthEnd)
+		return err
+	})
+
+	// get total signups count for prev month
+	g.Go(func() error {
+		var err error
+		prevMonthSignups, err = s.audienceRepo.GetCountForIdeaOwner(gCtx, userId, &prevMonthStart, &prevMonthEnd)
+		return err
+	})
+
+	g.Go(func() error {
+		var err error
+		currentMonthViews, err = s.signalRepo.GetCountForIdeaOwner(gCtx, userId, repository.SignalQuerySpecs{
+			EventType: pageViewEventType,
+			Start:     &currentMonthStart,
+			End:       &currentMonthEnd,
+		})
+		return err
+	})
+
+	g.Go(func() error {
+		var err error
+		prevMonthViews, err = s.signalRepo.GetCountForIdeaOwner(gCtx, userId, repository.SignalQuerySpecs{
+			EventType: pageViewEventType,
+			Start:     &prevMonthStart,
+			End:       &prevMonthEnd,
+		})
+		return err
+	})
+
+	g.Go(func() error {
+		var err error
+		totalViews, err = s.signalRepo.GetCountForIdeaOwner(gCtx, userId, repository.SignalQuerySpecs{
+			EventType: domain.EventTypePageView})
+		return err
+	})
+
+	g.Go(func() error {
+		var err error
+		totalSignups, err = s.audienceRepo.GetCountForIdeaOwner(gCtx, userId, nil, nil)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, fmt.Errorf("getUserDashboardStats: failed to fetch stats concurrently: %w", err)
+	}
+
+	// Calculate the trend ratios
+	signupChange := calculateTrendRatio(float64(currentMonthSignups), float64(prevMonthSignups))
+	viewChange := calculateTrendRatio(float64(currentMonthViews), float64(prevMonthViews))
+	activeIdeasChange := calculateTrendRatio(float64(currentActiveIdeas), float64(prevMonthActiveIdeas))
+	totalIdeasChange := calculateTrendRatio(float64(currentTotalIdeas), float64(prevMonthTotalIdeas))
+
+	return &response.UserDashboardStats{
+		ActiveIdeas:       currentActiveIdeas,
+		TotalSignups:      totalSignups,
+		TotalViews:        totalViews,
+		TotalIdeasChange:  totalIdeasChange,
+		ActiveIdeasChange: activeIdeasChange,
+		SignupsChange:     signupChange,
+		ViewsChange:       viewChange,
+	}, nil
 }
 
 func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
@@ -229,4 +367,41 @@ func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
     </script>
 </body>
 </html>`, mvpDetails.Headline, mvpDetails.Headline, mvpDetails.Subheadline, mvpDetails.CTAButton, mvpDetails.IdeaID.String())
+}
+
+// calculateTrendRatio calculates the percentage change as a ratio.
+// e.g., 0.1 for +10%, -0.05 for -5%.
+func calculateTrendRatio(currentValue, previousValue float64) float64 {
+	if previousValue == 0 {
+		if currentValue > 0 {
+			return 100
+		}
+
+		return 0.0
+	}
+
+	if currentValue == previousValue {
+		return 0
+	}
+
+	return (currentValue - previousValue) / previousValue * 100
+}
+
+// getTrendDateRanges provides date ranges for current and previous periods.
+func getTrendDateRanges(t time.Time) (
+	currentPeriodStart, currentPeriodEnd time.Time, // For "current month up to now"
+	previousPeriodStart, previousPeriodEnd time.Time, // For "entire previous month"
+	startOfCurrentMonthForComparison time.Time, // For counts "before the start of the current month"
+) {
+	currentYear, currentMonth, _ := t.Date()
+	location := t.Location()
+
+	startOfCurrentMonthForComparison = time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, location)
+	currentPeriodStart = startOfCurrentMonthForComparison
+	currentPeriodEnd = t // "Now" for current month's activity up to this moment
+
+	previousPeriodStart = startOfCurrentMonthForComparison.AddDate(0, -1, 0)   // First day of previous month
+	previousPeriodEnd = startOfCurrentMonthForComparison.Add(-time.Nanosecond) // Last moment of previous month
+
+	return
 }

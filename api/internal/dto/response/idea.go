@@ -5,8 +5,9 @@ import (
 )
 
 type IdeaListResponse struct {
-	Ideas []IdeaList `json:"ideas"`
-	Total int64      `json:"total"`
+	Ideas []IdeaList         `json:"ideas"`
+	Total int64              `json:"total"`
+	Stats UserDashboardStats `json:"stats,omitempty"`
 }
 
 type PublicIdeaResponse struct {
@@ -80,4 +81,16 @@ type RelatedIdea struct {
 	Description    string    `json:"description"`
 	EngagementRate float64   `json:"engagementRate"`
 	ImageUrl       string    `json:"imageUrl"`
+}
+
+type UserDashboardStats struct {
+	ActiveIdeas  int64 `json:"activeIdeas"`
+	TotalSignups int64 `json:"totalSignups"` // total signups across all ideas for this month
+	TotalViews   int64 `json:"totalViews"`   // total views across all ideas for this month
+
+	// Trends (percentage change from last month)
+	ActiveIdeasChange float64 `json:"activeIdeasChange,omitempty"`
+	TotalIdeasChange  float64 `json:"totalIdeasChange,omitempty"`
+	SignupsChange     float64 `json:"signupsChange,omitempty"`
+	ViewsChange       float64 `json:"viewsChange,omitempty"`
 }

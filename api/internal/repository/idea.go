@@ -17,8 +17,8 @@ type IdeaRepository interface {
 	GetIdeas(ctx context.Context, queryParams domain.QueryParams, spec IdeaQuerySpec) ([]*domain.Idea, int64, error)
 	GetByID(ctx context.Context, id uuid.UUID, getRelatedIdeas *bool) (*domain.Idea, []*domain.Idea, error)
 	GetByIds(ctx context.Context, ids []uuid.UUID) ([]*domain.Idea, error)
-	// GetByUserId(ctx context.Context, userId string) ([]*domain.Idea, error)
 	GetIdeasWithActivity(ctx context.Context, userID string, from, to time.Time, options ...QueryOption) ([]*response.IdeaWithActivity, error)
+	GetCountForUser(ctx context.Context, userId string, start, end *time.Time, status *domain.IdeaStatus) (int64, error)
 	// GetTopIdeas(ctx context.Context, userId string, days int, queryParams domain.QueryParams) ([]*response.IdeaWithActivity, error)
 
 	// utils
@@ -82,14 +82,34 @@ func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryP
 		return nil, 0, err
 	}
 
-	if spec.WithCounts {
+	orderClause := "created_at DESC"
+	needsCountsForSort := false
+
+	switch queryParams.SortBy {
+	case "newest":
+		orderClause = "created_at DESC"
+	case "oldest":
+		orderClause = "created_at ASC"
+	case "views":
+		orderClause = "views DESC"
+		needsCountsForSort = true
+	case "signups":
+		orderClause = "signups DESC"
+		needsCountsForSort = true
+	default:
+		// default already set;
+	}
+
+	if spec.WithCounts || needsCountsForSort {
+		// for sorting by views or signups, we need to join the counts
 		query = r.withCounts(query)
 	}
 
-	query = r.paginateAndOrder(query, queryParams.Limit, queryParams.Offset, queryParams.Order)
+	query = r.paginateAndOrder(query, queryParams.Limit, queryParams.Offset, orderClause)
 
 	var ideas []*domain.Idea
 	if err := query.Find(&ideas).Error; err != nil {
+		fmt.Println("Error finding ideas:", err)
 		return nil, 0, err
 	}
 
@@ -102,9 +122,8 @@ func (r *ideaRepository) GetByID(ctx context.Context, id uuid.UUID, getRelatedId
 			return db.Preload("Reactions")
 		}).
 		Preload("Reactions").
-		Preload("Signals")
-
-	query = r.withCounts(query)
+		Preload("Signals").
+		Preload("AudienceMembers")
 
 	idea := &domain.Idea{}
 	if err := query.Find(idea).Error; err != nil {
@@ -190,6 +209,32 @@ func (r *ideaRepository) GetIdeasWithActivity(ctx context.Context, userID string
 	return ideasWithActivity, nil
 }
 
+func (r *ideaRepository) GetCountForUser(ctx context.Context, userId string, start, end *time.Time, status *domain.IdeaStatus) (int64, error) {
+	query := r.db.WithContext(ctx).
+		Model(&domain.Idea{}).
+		Where("user_id = ?", userId)
+
+	if status != nil {
+		query = query.Where("status = ?", *status)
+	}
+
+	if start != nil && end != nil {
+		query = query.Where("created_at BETWEEN ? AND ?", *start, *end)
+	} else if start != nil {
+		query = query.Where("created_at >= ?", *start)
+	} else if end != nil {
+		query = query.Where("created_at <= ?", *end)
+	}
+
+	var count int64
+	err := query.Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // GetTopIdeas retrieves ideas ranked by views and signups within a specified number of days.
 // Note: This query intentionally uses JOINs and database-level aggregation for performance
 // in fetching and ranking top ideas, rather than fetching all data and processing in the service layer.
@@ -256,14 +301,16 @@ func (r *ideaRepository) paginateAndOrder(query *gorm.DB, limit, offset int, ord
 	}
 	if order != "" {
 		query = query.Order(order)
-	} else {
-		query = query.Order("created_at DESC")
 	}
 	return query
 }
 
 func (r *ideaRepository) getRelatedIdeas(ctx context.Context, idea domain.Idea) []*domain.Idea {
 	var relatedIdeas []*domain.Idea
+	baseQuery := r.db.WithContext(ctx).Model(&domain.Idea{}).
+		Preload("Signals").
+		Preload("AudienceMembers")
+
 	tokens := simpleTokenizer(idea.TargetAudience)
 
 	if len(tokens) > 0 {
@@ -286,13 +333,10 @@ func (r *ideaRepository) getRelatedIdeas(ctx context.Context, idea domain.Idea) 
 		matchScoreSQL := strings.Join(scoreClauses, " + ")
 		whereSQL := strings.Join(whereClauses, " OR ")
 
-		relatedIdeasQuery := r.db.WithContext(ctx).Model(&domain.Idea{})
-		relatedIdeasQuery = r.withCounts(relatedIdeasQuery)
-
 		currentSelect := "ideas.*, COALESCE(v.view_count, 0) as views, COALESCE(s.signup_count, 0) as signups"
 		finalSelect := fmt.Sprintf("%s, (%s) as match_score", currentSelect, matchScoreSQL)
 
-		relatedIdeasQuery = relatedIdeasQuery.
+		relatedIdeasQuery := baseQuery.
 			Select(finalSelect, queryArgs[:len(tokens)]...).
 			Where("ideas.id != ? AND ideas.status = ?", idea.ID, domain.IdeaStatusActive).
 			Where(whereSQL, queryArgs[len(tokens):]...).
@@ -304,9 +348,7 @@ func (r *ideaRepository) getRelatedIdeas(ctx context.Context, idea domain.Idea) 
 			relatedIdeas = nil
 		}
 	} else {
-		fallbackQuery := r.db.WithContext(ctx).Model(&domain.Idea{})
-		fallbackQuery = r.withCounts(fallbackQuery)
-		fallbackQuery = fallbackQuery.
+		fallbackQuery := baseQuery.
 			Where("id != ? AND status = ?", idea.ID, domain.IdeaStatusActive).
 			Where("target_audience LIKE ?", "%"+idea.TargetAudience+"%").
 			Order("views DESC").
@@ -351,8 +393,29 @@ func (r *ideaRepository) withCounts(query *gorm.DB) *gorm.DB {
 		Select("idea_id, COUNT(DISTINCT user_id) as signup_count").
 		Group("idea_id")
 
+	selectIdeaFields := []string{
+		"ideas.id", "ideas.created_at", "ideas.updated_at", "ideas.deleted_at",
+		"ideas.user_id",
+		"ideas.title",
+		"ideas.description",
+		"ideas.target_audience",
+		"ideas.status",
+		"ideas.stage",
+		"ideas.target_signups",
+		"ideas.image_url",
+		"ideas.likes",
+		"ideas.dislikes",
+	}
+
+	var fullSelectParts []string
+	fullSelectParts = append(fullSelectParts, selectIdeaFields...)
+	fullSelectParts = append(fullSelectParts, "COALESCE(v.view_count, 0) as views")
+	fullSelectParts = append(fullSelectParts, "COALESCE(s.signup_count, 0) as signups")
+
+	fullSelectClause := strings.Join(fullSelectParts, ", ")
+
 	return query.
-		Select("ideas.*, COALESCE(v.view_count, 0) as views, COALESCE(s.signup_count, 0) as signups").
+		Select(fullSelectClause).
 		Joins("LEFT JOIN (?) as v ON ideas.id = v.idea_id", views).
 		Joins("LEFT JOIN (?) as s ON ideas.id = s.idea_id", signups)
 }

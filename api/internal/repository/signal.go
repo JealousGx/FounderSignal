@@ -15,11 +15,18 @@ type SignalRepository interface {
 	GetDailyViewsByIdeaIDs(ctx context.Context, ideaIds []uuid.UUID, from, to time.Time) (map[uuid.UUID]map[string]int, error)
 	GetRecentByUserIdeas(ctx context.Context, userId string, limit int) ([]domain.Signal, error)
 	GetByIdeaId(ctx context.Context, ideaId uuid.UUID, userId *string, eventType *domain.EventType) ([]*domain.Signal, error)
+	GetCountForIdeaOwner(ctx context.Context, ideaOwnerId string, specs SignalQuerySpecs) (int64, error)
 	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID, eventType *domain.EventType, start, end *time.Time, fields []string) (int64, error)
 }
 
 type signalRepository struct {
 	db *gorm.DB
+}
+
+type SignalQuerySpecs struct {
+	EventType domain.EventType
+	Start     *time.Time
+	End       *time.Time
 }
 
 func NewSignalRepo(db *gorm.DB) *signalRepository {
@@ -129,6 +136,34 @@ func (r *signalRepository) GetCountByIdeaId(
 
 	if len(fields) > 0 {
 		query = query.Select(fields)
+	}
+
+	var count int64
+	err := query.Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *signalRepository) GetCountForIdeaOwner(ctx context.Context, ideaOwnerId string, specs SignalQuerySpecs) (int64, error) {
+	if specs.EventType == "" {
+		specs.EventType = domain.EventTypePageView
+	}
+
+	query := r.db.WithContext(ctx).
+		Model(&domain.Signal{}).
+		Joins("JOIN ideas ON ideas.id = signals.idea_id").
+		Where("ideas.user_id = ?", ideaOwnerId).
+		Where("signals.event_type = ?", specs.EventType)
+
+	if specs.Start != nil && specs.End != nil {
+		query = query.Where("signals.created_at BETWEEN ? AND ?", *specs.Start, *specs.End)
+	} else if specs.Start != nil {
+		query = query.Where("signals.created_at >= ?", *specs.Start)
+	} else if specs.End != nil {
+		query = query.Where("signals.created_at <= ?", *specs.End)
 	}
 
 	var count int64

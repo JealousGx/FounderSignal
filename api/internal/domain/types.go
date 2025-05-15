@@ -15,9 +15,11 @@ type Server struct {
 }
 
 type QueryParams struct {
-	Limit  int
-	Offset int
-	Order  string
+	Limit    int
+	Offset   int
+	Order    string
+	SortBy   string
+	FilterBy string
 }
 
 type EventType string

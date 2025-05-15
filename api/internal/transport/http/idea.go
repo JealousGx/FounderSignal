@@ -15,6 +15,7 @@ type IdeaHandler interface {
 	Create(c *gin.Context)
 	GetIdeas(c *gin.Context)
 	GetByID(c *gin.Context)
+	GetUserIdeas(c *gin.Context)
 }
 
 type ideaHandler struct {
@@ -52,7 +53,7 @@ func (h *ideaHandler) Create(c *gin.Context) {
 }
 
 func (h *ideaHandler) GetIdeas(c *gin.Context) {
-	limit := 2
+	limit := 6
 	if l := c.Query("limit"); l != "" {
 		if n, err := strconv.Atoi(l); err == nil && n > 0 {
 			limit = n
@@ -69,6 +70,48 @@ func (h *ideaHandler) GetIdeas(c *gin.Context) {
 	ideas, err := h.service.GetIdeas(c.Request.Context(), domain.QueryParams{
 		Limit:  limit,
 		Offset: offset,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, ideas)
+}
+
+func (h *ideaHandler) GetUserIdeas(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	limit := 10
+	if l := c.Query("limit"); l != "" {
+		if n, err := strconv.Atoi(l); err == nil && n > 0 {
+			limit = n
+		}
+	}
+
+	offset := 0
+	if l := c.Query("offset"); l != "" {
+		if n, err := strconv.Atoi(l); err == nil && n > 0 {
+			offset = n
+		}
+	}
+
+	getStats := c.Query("getStats")
+	if getStats == "" {
+		getStats = "false"
+	}
+	sortBy := c.Query("sortBy")
+	filterBy := c.Query("filterBy")
+
+	ideas, err := h.service.GetUserIdeas(c.Request.Context(), userId.(string), getStats == "true", domain.QueryParams{
+		Limit:    limit,
+		Offset:   offset,
+		FilterBy: filterBy,
+		SortBy:   sortBy,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

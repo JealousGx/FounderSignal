@@ -132,11 +132,10 @@ func (s *dashboardService) getAnalyticsMetrics(ctx context.Context, userID strin
 	ideasWithData := 0
 
 	for _, idea := range ideas {
-		totalGlobalSignupsAcrossAllIdeas += int64(idea.Signups) // Assuming idea.Signups is the global count
+		totalGlobalSignupsAcrossAllIdeas += int64(idea.Signups)
 
 		if idea.TargetSignups > 0 && idea.Signups >= idea.TargetSignups {
 			currentGloballyValidatedIdeasCount++
-			// ... (logic for TimeToValidate, can be removed or commented out) ...
 		}
 	}
 
