@@ -13,7 +13,6 @@ import (
 type AudienceRepository interface {
 	Upsert(ctx context.Context, ideaID uuid.UUID, userID string) (*domain.AudienceMember, error)
 	GetByIdeaId(ctx context.Context, ideaId uuid.UUID) ([]*domain.AudienceMember, error)
-	GetSignupsByIdeaId(ctx context.Context, ideaId uuid.UUID, from, to time.Time) ([]int64, error)
 	GetSignupsByIdeaIds(ctx context.Context, ideaIds []uuid.UUID, from, to time.Time) (map[uuid.UUID]map[string]int, error)
 	GetRecentByUserIdeas(ctx context.Context, userID string, limit int) ([]domain.AudienceMember, error)
 	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID, from, to *time.Time) (int64, error)
@@ -68,29 +67,6 @@ func (r *audienceRepository) GetByIdeaId(ctx context.Context, ideaId uuid.UUID) 
 	}
 
 	return audienceMembers, nil
-}
-
-func (r *audienceRepository) GetSignupsByIdeaId(
-	ctx context.Context,
-	ideaId uuid.UUID,
-	from, to time.Time,
-) ([]int64, error) {
-	var results []int64
-
-	query := r.db.WithContext(ctx).
-		Model(&domain.AudienceMember{}).
-		Select("DATE(signup_time) as date, COUNT(*) as signups").
-		Where("idea_id = ?", ideaId).
-		Where("signup_time BETWEEN ? AND ?", from, to).
-		Group("DATE(signup_time)").
-		Order("date ASC")
-
-	err := query.Scan(&results).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return results, nil
 }
 
 // GetSignupsByIdeaIDs gets daily signup counts for a set of ideas
@@ -191,25 +167,4 @@ func (r *audienceRepository) GetCountForIdeaOwner(ctx context.Context, ideaOwner
 	}
 
 	return count, nil
-}
-
-func WithAudienceFiltered(fields []string, start, end *time.Time) QueryOption {
-	return func(db *gorm.DB) *gorm.DB {
-		preloadQuery := func(db *gorm.DB) *gorm.DB {
-			if len(fields) > 0 {
-				db = db.Select(fields)
-			}
-
-			if start != nil && end != nil {
-				return db.Where("signup_time BETWEEN ? AND ?", *start, *end)
-			} else if start != nil {
-				return db.Where("signup_time >= ?", *start)
-			} else if end != nil {
-				return db.Where("signup_time <= ?", *end)
-			}
-			return db
-		}
-
-		return db.Preload("AudienceMembers", preloadQuery)
-	}
 }

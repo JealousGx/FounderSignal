@@ -5,6 +5,7 @@ import (
 	"foundersignal/internal/domain"
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/repository"
+	"foundersignal/pkg/validator"
 
 	"github.com/google/uuid"
 )
@@ -25,6 +26,10 @@ func NewReactionService(repo repository.ReactionRepository) *reactionService {
 }
 
 func (s *reactionService) FeedbackReaction(ctx context.Context, fbId uuid.UUID, userId string, reactionType request.ReactionType) error {
+	if err := validator.Validate(reactionType); err != nil {
+		return err
+	}
+
 	if reactionType == request.RemoveReaction {
 		if err := s.repo.RemoveFeedbackReaction(ctx, fbId, userId); err != nil {
 			return err
@@ -47,6 +52,10 @@ func (s *reactionService) FeedbackReaction(ctx context.Context, fbId uuid.UUID, 
 }
 
 func (s *reactionService) IdeaReaction(ctx context.Context, ideaId uuid.UUID, userId string, reactionType request.ReactionType) error {
+	if err := validator.Validate(reactionType); err != nil {
+		return err
+	}
+
 	if reactionType == request.RemoveReaction {
 		if err := s.repo.RemoveIdeaReaction(ctx, ideaId, userId); err != nil {
 			return err

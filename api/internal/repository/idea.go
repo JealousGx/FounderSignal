@@ -19,7 +19,6 @@ type IdeaRepository interface {
 	GetByIds(ctx context.Context, ids []uuid.UUID) ([]*domain.Idea, error)
 	GetIdeasWithActivity(ctx context.Context, userID string, from, to time.Time, options ...QueryOption) ([]*response.IdeaWithActivity, error)
 	GetCountForUser(ctx context.Context, userId string, start, end *time.Time, status *domain.IdeaStatus) (int64, error)
-	// GetTopIdeas(ctx context.Context, userId string, days int, queryParams domain.QueryParams) ([]*response.IdeaWithActivity, error)
 
 	// utils
 	VerifyIdeaOwner(ctx context.Context, ideaID uuid.UUID, userID string) (bool, error)
@@ -235,46 +234,6 @@ func (r *ideaRepository) GetCountForUser(ctx context.Context, userId string, sta
 	return count, nil
 }
 
-// GetTopIdeas retrieves ideas ranked by views and signups within a specified number of days.
-// Note: This query intentionally uses JOINs and database-level aggregation for performance
-// in fetching and ranking top ideas, rather than fetching all data and processing in the service layer.
-// func (r *ideaRepository) GetTopIdeas(ctx context.Context, userId string, days int, queryParams domain.QueryParams) ([]*response.IdeaWithActivity, error) {
-// 	var ideas []*response.IdeaWithActivity
-// 	since := time.Now().AddDate(0, 0, -days)
-
-// 	// Subquery for signups
-// 	signupsSub := r.db.
-// 		Select("idea_id, COUNT(*) as signups, MAX(signup_time) as latest_signup").
-// 		Table("audience_members").
-// 		Where("signup_time >= ?", since).
-// 		Group("idea_id")
-
-// 	// Subquery for views
-// 	viewsSub := r.db.
-// 		Select("idea_id, COUNT(*) as views, MAX(created_at) as latest_view").
-// 		Table("signals").
-// 		Where("event_type = ? AND created_at >= ?", domain.EventTypePageView, since).
-// 		Group("idea_id")
-
-// 	// Join subqueries to ideas and order by counts
-// 	err := r.db.WithContext(ctx).
-// 		Table("ideas").
-// 		Select("ideas.*, COALESCE(s.signups, 0) as signups, COALESCE(v.views, 0) as views").
-// 		Joins("LEFT JOIN (?) as s ON ideas.id = s.idea_id", signupsSub).
-// 		Joins("LEFT JOIN (?) as v ON ideas.id = v.idea_id", viewsSub).
-// 		Where("ideas.user_id = ?", userId).
-// 		Order("views DESC, signups DESC").
-// 		Limit(queryParams.Limit).
-// 		Offset(queryParams.Offset).
-// 		Scan(&ideas).Error
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return ideas, nil
-// }
-
 func (r *ideaRepository) VerifyIdeaOwner(ctx context.Context, ideaID uuid.UUID, userID string) (bool, error) {
 	var idea domain.Idea
 
@@ -362,26 +321,6 @@ func (r *ideaRepository) getRelatedIdeas(ctx context.Context, idea domain.Idea) 
 
 	return relatedIdeas
 }
-
-// func WithMVPSimulator(fields ...string) QueryOption {
-// 	return func(db *gorm.DB) *gorm.DB {
-// 		if len(fields) > 0 {
-// 			return db.Preload("MVPSimulator", selectFields(fields))
-// 		}
-
-// 		return db.Preload("MVPSimulator")
-// 	}
-// }
-
-// func WithFeedback(fields ...string) QueryOption {
-// 	return func(db *gorm.DB) *gorm.DB {
-// 		if len(fields) > 0 {
-// 			return db.Preload("Feedback", selectFields(fields))
-// 		}
-
-// 		return db.Preload("Feedback")
-// 	}
-// }
 
 func (r *ideaRepository) withCounts(query *gorm.DB) *gorm.DB {
 	views := r.db.Model(&domain.Signal{}).

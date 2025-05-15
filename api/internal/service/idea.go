@@ -23,8 +23,6 @@ type IdeaService interface {
 	GetIdeas(ctx context.Context, queryParams domain.QueryParams) (*response.IdeaListResponse, error)
 	GetUserIdeas(ctx context.Context, userId string, getStats bool, queryParams domain.QueryParams) (*response.IdeaListResponse, error)
 	GetByID(ctx context.Context, id uuid.UUID, userId string) (*response.PublicIdeaResponse, error)
-	// UpdateMVP(ctx context.Context, mvpId, ideaId uuid.UUID, userId string, req *request.UpdateMVP) error
-	// GetTopIdeas(ctx context.Context, userId string, queryParams domain.QueryParams) ([]response.PrivateTopIdeaList, error)
 	RecordSignal(ctx context.Context, ideaID uuid.UUID, userID string, eventType string, ipAddress string, userAgent string, metadata map[string]interface{}) error
 }
 
