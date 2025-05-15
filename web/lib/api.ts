@@ -31,6 +31,14 @@ export const api = {
   del: (path: string) => customFetch(path, { method: "DELETE" }),
 };
 
+export type QueryParams = {
+  sortBy?: string;
+  limit?: number;
+  offset?: number;
+  filterBy?: string;
+  search?: string;
+};
+
 export async function getIdeas() {
   const res = await fetch("http://localhost:8080/api/ideas", {
     method: "GET",

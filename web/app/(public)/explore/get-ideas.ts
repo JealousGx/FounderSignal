@@ -1,18 +1,21 @@
 "use server";
 
-import { api } from "@/lib/api";
+import { api, QueryParams } from "@/lib/api";
 import { Idea } from "@/types/idea";
 import { cache } from "react";
 
-export const getIdeas = cache(async (limit: number, offset: number) => {
+export const getIdeas = cache(async (qs: QueryParams) => {
   try {
-    const response = await api.get(`/ideas?limit=${limit}&offset=${offset}`, {
-      cache: "force-cache",
-      next: {
-        revalidate: 3600,
-        tags: [`ideas`],
-      },
-    });
+    const response = await api.get(
+      `/ideas?limit=${qs.limit}&offset=${qs.offset}`,
+      {
+        cache: "force-cache",
+        next: {
+          revalidate: 3600,
+          tags: [`ideas`],
+        },
+      }
+    );
 
     if (!response.ok) {
       console.error(

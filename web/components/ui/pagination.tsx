@@ -1,5 +1,12 @@
-import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "./button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./select";
 
 interface PaginationProps {
   currentPage: number;
@@ -8,6 +15,52 @@ interface PaginationProps {
   className?: string;
   maxPageButtons?: number;
 }
+
+export const PaginationWithPageSize = ({
+  currentPage,
+  totalPages,
+  itemsPerPage,
+  handlePageChange,
+  handlePageSizeChange,
+  pageSizeOptions = [5, 10, 20, 50],
+}: {
+  currentPage: number;
+  totalPages: number;
+  itemsPerPage: number;
+  handlePageChange: (page: number) => void;
+  handlePageSizeChange: (pageSize: string) => void;
+  className?: string;
+  pageSizeOptions?: number[];
+}) => {
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 w-full">
+      <div className="flex items-center">
+        <span className="text-sm mr-3">Page size:</span>
+        <Select
+          value={itemsPerPage.toString()}
+          onValueChange={handlePageSizeChange}
+        >
+          <SelectTrigger className="w-[80px]">
+            <SelectValue placeholder={itemsPerPage} />
+          </SelectTrigger>
+          <SelectContent>
+            {pageSizeOptions?.map((option) => (
+              <SelectItem key={option} value={option.toString()}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
+    </div>
+  );
+};
 
 export function Pagination({
   currentPage,

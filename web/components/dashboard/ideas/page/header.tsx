@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
+import { Link } from "@/components/ui/link";
 
 export default function IdeasPageHeader() {
   return (
@@ -11,12 +11,11 @@ export default function IdeasPageHeader() {
           Manage and track all your validation projects
         </p>
       </div>
-      <Button asChild className="gap-2">
-        <Link href="/submit">
-          <Plus className="h-4 w-4" />
-          Create New Idea
-        </Link>
-      </Button>
+
+      <Link href="/submit" className="gap-2">
+        <Plus className="h-4 w-4" />
+        Create New Idea
+      </Link>
     </div>
   );
 }

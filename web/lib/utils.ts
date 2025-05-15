@@ -34,3 +34,18 @@ export const getName = ({
 
   return "Anonymous";
 };
+
+export const constructNewPath = (
+  basePath: string,
+  params: Record<string, string | number | boolean | undefined>
+) => {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) {
+      searchParams.append(key, value.toString());
+    }
+  });
+
+  return `${basePath}?${searchParams.toString()}`;
+};

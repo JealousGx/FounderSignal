@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -7,11 +7,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { formatDate, getStatusBadgeColor, getStageBadgeColor } from "../utils";
 import { Idea } from "@/types/idea";
-import { EngagementIndicator } from "./engagement-indicator";
+import Image from "next/image";
+import { formatDate, getStageBadgeColor, getStatusBadgeColor } from "../utils";
 import { IdeaActions } from "./actions";
+import { EngagementIndicator } from "./engagement-indicator";
 
 interface IdeasTableViewProps {
   ideas: Idea[];
@@ -39,13 +39,15 @@ export default function IdeasTableView({ ideas }: IdeasTableViewProps) {
               <TableCell className="font-medium">
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 rounded overflow-hidden flex-shrink-0">
-                    <Image
-                      src={idea.imageUrl}
-                      alt={idea.title}
-                      width={48}
-                      height={48}
-                      className="object-cover h-full w-full"
-                    />
+                    {idea.imageUrl && idea.imageUrl !== "" && (
+                      <Image
+                        src={idea.imageUrl}
+                        alt={idea.title}
+                        width={48}
+                        height={48}
+                        className="object-cover h-full w-full"
+                      />
+                    )}
                   </div>
                   <div>
                     <p className="font-medium">{idea.title}</p>
@@ -58,7 +60,7 @@ export default function IdeasTableView({ ideas }: IdeasTableViewProps) {
               <TableCell>
                 <Badge
                   variant="outline"
-                  className={getStatusBadgeColor(idea.status)}
+                  className={`${getStatusBadgeColor(idea.status)} capitalize`}
                 >
                   {idea.status}
                 </Badge>
@@ -66,16 +68,20 @@ export default function IdeasTableView({ ideas }: IdeasTableViewProps) {
               <TableCell>
                 <Badge
                   variant="outline"
-                  className={getStageBadgeColor(idea.stage)}
+                  className={`${getStageBadgeColor(idea.stage)} capitalize`}
                 >
                   {idea.stage}
                 </Badge>
               </TableCell>
-              <TableCell className="text-right">{idea.signups}</TableCell>
-              <TableCell className="text-right">{idea.views}</TableCell>
+              <TableCell className="text-right">
+                {idea.signups.toLocaleString()}
+              </TableCell>
+              <TableCell className="text-right">
+                {idea.views.toLocaleString()}
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
-                  {idea.engagementRate}%
+                  {idea.engagementRate.toFixed(2)}%
                   <EngagementIndicator rate={idea.engagementRate} />
                 </div>
               </TableCell>

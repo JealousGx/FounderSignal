@@ -1,18 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { ArrowRight, TrendingUp, Users, Clock } from "lucide-react";
+import { PaginationWithPageSize } from "@/components/ui/pagination";
 import { Idea } from "@/types/idea";
+import { ArrowRight, Clock, TrendingUp, Users } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { getIdeas } from "./get-ideas";
-import { Pagination } from "@/components/ui/pagination";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface IdeasGridClientProps {
   initialIdeas: Idea[];
@@ -44,7 +37,7 @@ export default function Ideas({
     setIsLoading(true);
     try {
       const offset = (page - 1) * pageSize;
-      const result = await getIdeas(pageSize, offset);
+      const result = await getIdeas({ limit: pageSize, offset });
 
       if (result && "ideas" in result && Array.isArray(result.ideas)) {
         setIdeas(result.ideas);
@@ -126,31 +119,14 @@ export default function Ideas({
         ))}
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
-        <div className="flex items-center">
-          <span className="text-sm mr-3">Page size:</span>
-          <Select
-            value={itemsPerPage.toString()}
-            onValueChange={handlePageSizeChange}
-          >
-            <SelectTrigger className="w-[80px]">
-              <SelectValue placeholder={itemsPerPage} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="6">6</SelectItem>
-              <SelectItem value="12">12</SelectItem>
-              <SelectItem value="24">24</SelectItem>
-              <SelectItem value="48">48</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      </div>
+      <PaginationWithPageSize
+        currentPage={currentPage}
+        totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
+        handlePageChange={handlePageChange}
+        handlePageSizeChange={handlePageSizeChange}
+        pageSizeOptions={[6, 12, 24, 48]}
+      />
 
       {isLoading && (
         <div className="flex justify-center py-4">

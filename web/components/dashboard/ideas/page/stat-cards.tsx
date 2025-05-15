@@ -1,63 +1,60 @@
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  ArrowDown,
+  ArrowUp,
+  Eye,
+  Minus,
   Sparkles,
   TrendingUp,
   Users,
-  Eye,
-  ArrowUp,
-  ArrowDown,
-  Minus,
 } from "lucide-react";
 
 interface IdeasStatCardsProps {
-  totalIdeas: number;
-  activeIdeas: number;
-  totalSignups: number;
-  totalViews: number;
-  trends?: {
-    ideas?: number;
-    active?: number;
-    signups?: number;
-    views?: number;
+  total: number;
+  stats: {
+    activeIdeas: number;
+    totalSignups: number;
+    totalViews: number;
+    activeIdeasChange: number;
+    totalIdeasChange: number;
+    signupsChange: number;
+    viewsChange: number;
   };
 }
 
-export default function IdeasStatCards({
-  totalIdeas,
-  activeIdeas,
-  totalSignups,
-  totalViews,
-  trends = {},
-}: IdeasStatCardsProps) {
+export default function IdeasStatCards({ total, stats }: IdeasStatCardsProps) {
   const {
-    ideas: ideasTrend = 0,
-    active: activeTrend = 0,
-    signups: signupsTrend = 8.5,
-    views: viewsTrend = 12.3,
-  } = trends;
+    activeIdeas,
+    totalSignups,
+    totalViews,
+    activeIdeasChange = 0,
+    totalIdeasChange = 0,
+    signupsChange = 0,
+    viewsChange = 0,
+  } = stats;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard
         label="Total Ideas"
-        value={totalIdeas}
+        value={total}
         icon={<Sparkles className="h-4 w-4 md:h-5 md:w-5" />}
-        trend={ideasTrend}
+        trend={totalIdeasChange}
         color="purple"
       />
       <StatCard
         label="Active Ideas"
         value={activeIdeas}
         icon={<TrendingUp className="h-4 w-4 md:h-5 md:w-5" />}
-        trend={activeTrend}
+        trend={activeIdeasChange}
         color="blue"
-        subtitle={`${Math.round((activeIdeas / totalIdeas) * 100)}% of total`}
+        subtitle={`${Math.round((activeIdeas / total) * 100)}% of total`}
       />
       <StatCard
         label="Total Signups"
         value={totalSignups}
         icon={<Users className="h-4 w-4 md:h-5 md:w-5" />}
-        trend={signupsTrend}
+        trend={signupsChange}
         color="green"
         subtitle="Across all ideas"
       />
@@ -65,7 +62,7 @@ export default function IdeasStatCards({
         label="Total Views"
         value={totalViews}
         icon={<Eye className="h-4 w-4 md:h-5 md:w-5" />}
-        trend={viewsTrend}
+        trend={viewsChange}
         color="amber"
         subtitle={`${Math.round(
           (totalSignups / totalViews) * 100
@@ -106,15 +103,22 @@ function StatCard({
     amber: "text-amber-600",
   };
 
+  // need to define the border color for the top border
+  // due to tailwindcss JIT compilation
+  const topBorderBgColors = {
+    blue: "bg-blue-600",
+    green: "bg-green-600",
+    purple: "bg-purple-600",
+    amber: "bg-amber-600",
+  };
+
   const hasChange = trend !== 0;
 
   return (
     <Card className="bg-white overflow-hidden relative p-0">
-      <div
-        className={`h-1 w-full ${textColors[color].replace("text", "bg")}`}
-      ></div>
+      <div className={`h-1 w-full ${topBorderBgColors[color]}`}></div>
 
-      <CardContent className="p-2 md:p-4">
+      <CardContent className="p-2 md:p-4 flex flex-col justify-between flex-grow">
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-center gap-1.5">
@@ -154,7 +158,7 @@ function StatCard({
               }`}
             >
               {trend > 0 ? "+" : ""}
-              {trend}%
+              {trend.toFixed(2)}%
             </span>
             <span className="text-xs text-gray-500 ml-1">vs. last period</span>
           </div>
