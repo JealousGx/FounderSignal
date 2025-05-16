@@ -21,6 +21,8 @@ import (
 
 type IdeaService interface {
 	Create(ctx context.Context, userId string, req *request.CreateIdea) (uuid.UUID, error)
+	Update(ctx context.Context, userId string, ideaId uuid.UUID, req request.UpdateIdea) error
+	Delete(ctx context.Context, userId string, ideaId uuid.UUID) error
 	GetIdeas(ctx context.Context, queryParams domain.QueryParams) (*response.IdeaListResponse, error)
 	GetUserIdeas(ctx context.Context, userId string, getStats bool, queryParams domain.QueryParams) (*response.IdeaListResponse, error)
 	GetByID(ctx context.Context, id uuid.UUID, userId string) (*response.PublicIdeaResponse, error)
@@ -62,6 +64,65 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 	}
 
 	return s.repo.CreateWithMVP(ctx, idea, mvp)
+}
+
+func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUID, req request.UpdateIdea) error {
+	// Check if the idea exists
+	existingIdea, _, err := s.repo.GetByID(ctx, ideaId, nil)
+	if err != nil {
+		return err
+	}
+
+	if existingIdea == nil {
+		return gorm.ErrRecordNotFound
+	}
+
+	if existingIdea.UserID != userId {
+		return fmt.Errorf("user not authorized to update this idea")
+	}
+
+	idea := &domain.Idea{
+		Base: domain.Base{
+			ID: ideaId,
+		},
+		Title:          req.Title,
+		Description:    req.Description,
+		Status:         req.Status,
+		Stage:          req.Stage,
+		ImageURL:       req.ImageURL,
+		TargetAudience: req.TargetAudience,
+		TargetSignups:  req.TargetSignups,
+	}
+
+	// Update the idea
+	if err := s.repo.Update(ctx, idea); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *ideaService) Delete(ctx context.Context, userId string, ideaId uuid.UUID) error {
+	// Check if the idea exists
+	existingIdea, _, err := s.repo.GetByID(ctx, ideaId, nil)
+	if err != nil {
+		return err
+	}
+
+	if existingIdea == nil {
+		return gorm.ErrRecordNotFound
+	}
+
+	if existingIdea.UserID != userId {
+		return fmt.Errorf("user not authorized to delete this idea")
+	}
+
+	// Delete the idea
+	if err := s.repo.Delete(ctx, ideaId); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *ideaService) GetByID(ctx context.Context, id uuid.UUID, userId string) (*response.PublicIdeaResponse, error) {

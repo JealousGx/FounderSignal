@@ -19,11 +19,12 @@ import (
 type DashboardService interface {
 	GetDashboardData(ctx context.Context, userID string) (*response.DashboardResponse, error)
 	GetRecentActivityForUser(ctx context.Context, userId string) ([]response.ActivityItem, error)
-	GetIdea(ctx context.Context, id uuid.UUID, userId string) (*response.DashboardIdeaResponse, error)
+	GetIdea(ctx context.Context, id uuid.UUID, userId string, specs DashboardIdeaSpecs) (*response.DashboardIdeaResponse, error)
 }
 
 type dashboardService struct {
 	repo         repository.IdeaRepository
+	mvpRepo      repository.MVPRepository
 	feedbackRepo repository.FeedbackRepository
 	signalRepo   repository.SignalRepository
 	audienceRepo repository.AudienceRepository
@@ -49,15 +50,21 @@ type reactionsResult struct {
 	err       error
 }
 
+type DashboardIdeaSpecs struct {
+	WithMVP       bool
+	WithAnalytics bool
+}
+
 const (
 	MAX_ANALYTICS_DATA  = 5
 	MAX_RECENT_ACTIVITY = 5
 )
 
-func NewDashboardService(repo repository.IdeaRepository, feedbackRepo repository.FeedbackRepository, signalRepo repository.SignalRepository,
+func NewDashboardService(repo repository.IdeaRepository, mvpRepo repository.MVPRepository, feedbackRepo repository.FeedbackRepository, signalRepo repository.SignalRepository,
 	audienceRepo repository.AudienceRepository, reactionRepo repository.ReactionRepository) *dashboardService {
 	return &dashboardService{
 		repo:         repo,
+		mvpRepo:      mvpRepo,
 		feedbackRepo: feedbackRepo,
 		signalRepo:   signalRepo,
 		audienceRepo: audienceRepo,
@@ -112,24 +119,43 @@ func (s *dashboardService) GetDashboardData(ctx context.Context, userID string) 
 	return dashboardData, nil
 }
 
-func (s *dashboardService) GetIdea(ctx context.Context, id uuid.UUID, userId string) (*response.DashboardIdeaResponse, error) {
+func (s *dashboardService) GetIdea(ctx context.Context, id uuid.UUID, userId string, specs DashboardIdeaSpecs) (*response.DashboardIdeaResponse, error) {
 	getRelatedIdeas := false
 	rawIdea, _, err := s.repo.GetByID(ctx, id, &getRelatedIdeas)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get idea by ID: %w", err)
 	}
 
-	now := time.Now()
-	thirtyDaysAgo := now.AddDate(0, -1, 0)
+	var analyticsData response.AnalyticsData
+	var mvp domain.MVPSimulator
 
-	analyticsData, err := s.getAnalyticsData(ctx, thirtyDaysAgo, now, []*domain.Idea{rawIdea})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get analytics data: %w", err)
+	if specs.WithAnalytics {
+		now := time.Now()
+		thirtyDaysAgo := now.AddDate(0, -1, 0)
+		_analyticsData, err := s.getAnalyticsData(ctx, thirtyDaysAgo, now, []*domain.Idea{rawIdea})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get analytics data: %w", err)
+		}
+
+		analyticsData = _analyticsData[0]
+	}
+
+	if specs.WithMVP {
+		_mvp, err := s.mvpRepo.GetByIdea(ctx, id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get MVP data: %w", err)
+		}
+
+		if _mvp != nil {
+			mvp = *_mvp
+			mvp.HTMLContent = "" // no need to pass html to dashboard
+		}
 	}
 
 	return &response.DashboardIdeaResponse{
 		Idea:          *rawIdea,
 		AnalyticsData: analyticsData,
+		MVP:           mvp,
 	}, nil
 }
 

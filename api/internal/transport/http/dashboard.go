@@ -65,7 +65,15 @@ func (h *dashboardHandler) GetIdea(c *gin.Context) {
 		return
 	}
 
-	data, err := h.service.GetIdea(c.Request.Context(), uuid.MustParse(ideaId), userIDStr)
+	withAnalytics := c.Query("withAnalytics")
+	withMVP := c.Query("withMVP")
+
+	specs := service.DashboardIdeaSpecs{
+		WithAnalytics: withAnalytics == "true",
+		WithMVP:       withMVP == "true",
+	}
+
+	data, err := h.service.GetIdea(c.Request.Context(), uuid.MustParse(ideaId), userIDStr, specs)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

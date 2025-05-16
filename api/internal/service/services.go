@@ -21,8 +21,8 @@ func NewServices(repos *repository.Repositories, broadcaster websocket.ActivityB
 		Idea:        NewIdeasService(repos.Idea, repos.Signal, repos.Audience),
 		Feedback:    NewFeedbackService(repos.Feedback, repos.Idea, broadcaster),
 		Reaction:    NewReactionService(repos.Reaction),
-		MVP:         NewMVPService(repos.MVP),
-		Dashboard:   NewDashboardService(repos.Idea, repos.Feedback, repos.Signal, repos.Audience, repos.Reaction),
+		MVP:         NewMVPService(repos.MVP, repos.Idea),
+		Dashboard:   NewDashboardService(repos.Idea, repos.MVP, repos.Feedback, repos.Signal, repos.Audience, repos.Reaction),
 		Broadcaster: broadcaster,
 	}
 }

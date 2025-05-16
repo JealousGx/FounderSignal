@@ -14,8 +14,9 @@ type DashboardResponse struct {
 }
 
 type DashboardIdeaResponse struct {
-	Idea          domain.Idea     `json:"idea"`
-	AnalyticsData []AnalyticsData `json:"analyticsData"`
+	Idea          domain.Idea         `json:"idea"`
+	AnalyticsData AnalyticsData       `json:"analyticsData"`
+	MVP           domain.MVPSimulator `json:"landingPage"`
 }
 
 // Metrics holds the overview metrics.

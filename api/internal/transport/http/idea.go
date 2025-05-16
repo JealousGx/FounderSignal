@@ -13,6 +13,8 @@ import (
 
 type IdeaHandler interface {
 	Create(c *gin.Context)
+	Update(c *gin.Context)
+	Delete(c *gin.Context)
 	GetIdeas(c *gin.Context)
 	GetByID(c *gin.Context)
 	GetUserIdeas(c *gin.Context)
@@ -50,6 +52,59 @@ func (h *ideaHandler) Create(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"id": createdIdeaId})
+}
+
+func (h *ideaHandler) Update(c *gin.Context) {
+	var idea request.UpdateIdea
+
+	if err := c.ShouldBindJSON(&idea); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	ideaId := c.Param("ideaId")
+	if ideaId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Idea ID is required"})
+		return
+	}
+
+	err := h.service.Update(c.Request.Context(), userId.(string), uuid.MustParse(ideaId), idea)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Idea updated successfully"})
+}
+
+func (h *ideaHandler) Delete(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	ideaId := c.Param("ideaId")
+	if ideaId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Idea ID is required"})
+		return
+	}
+
+	err := h.service.Delete(c.Request.Context(), userId.(string), uuid.MustParse(ideaId))
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Idea deleted successfully"})
 }
 
 func (h *ideaHandler) GetIdeas(c *gin.Context) {

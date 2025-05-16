@@ -14,6 +14,8 @@ import (
 
 type IdeaRepository interface {
 	CreateWithMVP(ctx context.Context, idea *domain.Idea, mvp *domain.MVPSimulator) (uuid.UUID, error)
+	Update(ctx context.Context, idea *domain.Idea) error
+	Delete(ctx context.Context, ideaId uuid.UUID) error
 	GetIdeas(ctx context.Context, queryParams domain.QueryParams, spec IdeaQuerySpec) ([]*domain.Idea, int64, error)
 	GetByID(ctx context.Context, id uuid.UUID, getRelatedIdeas *bool) (*domain.Idea, []*domain.Idea, error)
 	GetByIds(ctx context.Context, ids []uuid.UUID) ([]*domain.Idea, error)
@@ -63,6 +65,25 @@ func (r *ideaRepository) CreateWithMVP(ctx context.Context, idea *domain.Idea, m
 	}
 
 	return idea.ID, nil
+}
+
+func (r *ideaRepository) Update(ctx context.Context, idea *domain.Idea) error {
+	if err := r.db.WithContext(ctx).Model(idea).Updates(idea).Error; err != nil {
+		fmt.Println("Error updating idea:", err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (r *ideaRepository) Delete(ctx context.Context, ideaId uuid.UUID) error {
+	if err := r.db.WithContext(ctx).Delete(&domain.Idea{}, ideaId).Error; err != nil {
+		fmt.Println("Error deleting idea:", err)
+		return err
+	}
+
+	return nil
 }
 
 func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryParams, spec IdeaQuerySpec) ([]*domain.Idea, int64, error) {

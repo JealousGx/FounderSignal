@@ -11,6 +11,7 @@ import (
 
 type MVPRepository interface {
 	GetByIdea(ctx context.Context, ideaId uuid.UUID) (*domain.MVPSimulator, error)
+	Update(ctx context.Context, mvp *domain.MVPSimulator) error
 }
 
 type mvpRepository struct {
@@ -31,4 +32,14 @@ func (r *mvpRepository) GetByIdea(ctx context.Context, ideaId uuid.UUID) (*domai
 		return nil, err
 	}
 	return &mvp, nil
+}
+
+func (r *mvpRepository) Update(ctx context.Context, mvp *domain.MVPSimulator) error {
+	if err := r.db.WithContext(ctx).Model(mvp).Where("idea_id = ? ", mvp.IdeaID).Updates(mvp).Error; err != nil {
+		fmt.Println("Error updating mvp:", err)
+
+		return err
+	}
+
+	return nil
 }
