@@ -1,16 +1,16 @@
-import { Suspense } from "react";
-import { notFound } from "next/navigation";
-import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
-import { Button } from "@/components/ui/button";
+import BasicDetailsForm from "@/components/dashboard/ideas/single/edit/basic-details-form";
+import DangerZone from "@/components/dashboard/ideas/single/edit/danger-zone";
+import EditHeader from "@/components/dashboard/ideas/single/edit/header";
+import LandingPageForm from "@/components/dashboard/ideas/single/edit/landing-page-form";
+import { Link } from "@/components/ui/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getIdeaById } from "@/lib/api";
-import EditHeader from "@/components/dashboard/ideas/single/edit/header";
-import BasicDetailsForm from "@/components/dashboard/ideas/single/edit/basic-details-form";
-import LandingPageForm from "@/components/dashboard/ideas/single/edit/landing-page-form";
-import DangerZone from "@/components/dashboard/ideas/single/edit/danger-zone";
+
+import { getIdea } from "../get-idea";
 
 interface EditIdeaPageProps {
   params: {
@@ -20,20 +20,22 @@ interface EditIdeaPageProps {
 
 export default async function EditIdeaPage({ params }: EditIdeaPageProps) {
   const { id } = await params;
-  const idea = await getIdeaById(id);
 
-  if (!idea) {
+  const data = await getIdea(id, { withMVP: true });
+
+  if (!data) {
     notFound();
   }
+
+  const idea = data?.idea;
+  const landingPage = data?.landingPage;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href={`/dashboard/ideas/${id}`}>
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
+        <Link variant="ghost" size="icon" href={`/dashboard/ideas/${id}`}>
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
         <h1 className="font-semibold text-lg md:text-xl">Edit Idea</h1>
       </div>
 
@@ -56,13 +58,13 @@ export default async function EditIdeaPage({ params }: EditIdeaPageProps) {
 
         <TabsContent value="landing">
           <Suspense fallback={<Skeleton className="h-[600px] w-full" />}>
-            <LandingPageForm idea={idea} />
+            <LandingPageForm landingPage={landingPage} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="advanced">
           <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
-            <DangerZone ideaId={id} />
+            <DangerZone ideaId={id} ideaTitle={idea.title} />
           </Suspense>
         </TabsContent>
       </Tabs>

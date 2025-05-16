@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
-import { Upload, X } from "lucide-react";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Upload, X } from "lucide-react";
+import Image from "next/image";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +21,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -25,7 +30,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -33,55 +38,58 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+
 import { Idea } from "@/types/idea";
-
-const formSchema = z.object({
-  title: z.string().min(3, {
-    message: "Title must be at least 3 characters.",
-  }),
-  description: z.string().min(20, {
-    message: "Description must be at least 20 characters.",
-  }),
-  status: z.enum(["Active", "Paused", "Draft", "Completed"]),
-  stage: z.enum(["Ideation", "Validation", "MVP"]),
-  imageUrl: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { updateIdea, UpdateIdeaState } from "./actions";
+import { UpdateIdeaFormValues, updateIdeaSchema } from "./schema";
 
 interface BasicDetailsFormProps {
   idea: Idea;
 }
 
 export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [state, formAction, isPending] = useActionState<
+    UpdateIdeaState | null,
+    FormData
+  >(updateIdea, null);
+
+  const [, startTransition] = useTransition();
   const [previewImage, setPreviewImage] = useState(idea.imageUrl || null);
 
+  const formRef = useRef<HTMLFormElement>(null);
+
   // Initialize form with existing idea data
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<UpdateIdeaFormValues>({
+    resolver: zodResolver(updateIdeaSchema),
     defaultValues: {
       title: idea.title,
       description: idea.description,
       status: idea.status,
       stage: idea.stage,
+      targetAudience: idea.targetAudience,
+      targetSignups: idea.targetSignups,
       imageUrl: idea.imageUrl,
     },
   });
 
-  async function onSubmit(data: FormValues) {
+  async function onSubmit(data: UpdateIdeaFormValues) {
     try {
-      setIsSubmitting(true);
+      const formData = new FormData();
+      formData.append("title", data.title);
+      formData.append("description", data.description);
+      formData.append("status", data.status);
+      formData.append("stage", data.stage);
+      formData.append("ideaId", idea.id);
+      formData.append("targetAudience", data.targetAudience);
+      formData.append("targetSignups", String(data.targetSignups));
 
-      // TODO: Replace with actual API call to update the idea
-      console.log("Form submitted with:", data);
+      if (data.imageUrl) {
+        formData.append("imageUrl", data.imageUrl);
+      }
 
-      // Simulating API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      toast.success("Idea updated successfully!", {
-        description: "Your idea details have been successfully updated.",
+      startTransition(() => {
+        formAction(formData);
       });
     } catch (error) {
       toast.error("Error updating idea", {
@@ -89,8 +97,6 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
           "There was a problem updating your idea. Please try again.",
       });
       console.error("Error updating idea:", error);
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
@@ -98,7 +104,7 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // In a real app, you would upload the file to your storage service
+    // In a production, we would upload the file to storage service
     // and get back a URL to use
 
     // For now, we'll just create a local object URL for preview
@@ -112,6 +118,46 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
     form.setValue("imageUrl", "");
   }
 
+  useEffect(() => {
+    // Reset form values when idea changes
+    form.reset({
+      title: idea.title,
+      description: idea.description,
+      status: idea.status,
+      stage: idea.stage,
+      targetAudience: idea.targetAudience,
+      targetSignups: idea.targetSignups,
+      imageUrl: idea.imageUrl,
+    });
+  }, [idea, form]);
+
+  useEffect(() => {
+    if (state?.error) {
+      toast.error(state.error);
+      if (state.fieldErrors) {
+        for (const [fieldName, message] of Object.entries(state.fieldErrors)) {
+          if (message) {
+            form.setError(fieldName as keyof UpdateIdeaFormValues, {
+              type: "server",
+              message,
+            });
+          }
+        }
+      }
+    }
+    if (state?.message && !state.error) {
+      toast.success("Idea updated successfully!", {
+        description: "Your idea details have been successfully updated.",
+      });
+
+      form.reset();
+
+      if (formRef.current) {
+        formRef.current.reset();
+      }
+    }
+  }, [state, form]);
+
   return (
     <Card>
       <CardHeader>
@@ -122,7 +168,11 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            ref={formRef}
+            className="space-y-8"
+          >
             <FormField
               control={form.control}
               name="title"
@@ -161,6 +211,47 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="targetAudience"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Target Audience</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Describe your target audience"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Who will benefit from your idea?
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="targetSignups"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Target Signups</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="Enter your target signups"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    How many signups do you aim to achieve?
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
@@ -178,10 +269,10 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Paused">Paused</SelectItem>
-                        <SelectItem value="Draft">Draft</SelectItem>
-                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="paused">Paused</SelectItem>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
@@ -208,9 +299,9 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Ideation">Ideation</SelectItem>
-                        <SelectItem value="Validation">Validation</SelectItem>
-                        <SelectItem value="MVP">MVP</SelectItem>
+                        <SelectItem value="ideation">Ideation</SelectItem>
+                        <SelectItem value="validation">Validation</SelectItem>
+                        <SelectItem value="mvp">MVP</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
@@ -280,9 +371,9 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
               <Button
                 type="submit"
                 className="min-w-[120px]"
-                disabled={isSubmitting}
+                disabled={isPending}
               >
-                {isSubmitting ? "Saving..." : "Save Changes"}
+                {isPending ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </form>

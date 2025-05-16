@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { cache, Suspense } from "react";
+import { Suspense } from "react";
 
 import FeedbackSection from "@/components/dashboard/ideas/single/feedback-section";
 import IdeaHeader from "@/components/dashboard/ideas/single/header";
@@ -11,40 +11,7 @@ import ValidationProgress from "@/components/dashboard/ideas/single/validation-p
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { api } from "@/lib/api";
-
-export const getIdea = cache(async (id: string) => {
-  try {
-    const response = await api.get(`/dashboard/ideas/user/${id}`, {
-      next: {
-        revalidate: 3600,
-        tags: [`idea-${id}`],
-      },
-    });
-
-    if (!response.ok) {
-      console.error(
-        "API error fetching getIdea:",
-        response.status,
-        response.statusText
-      );
-
-      return null;
-    }
-
-    const data = await response.json();
-
-    return data
-      ? {
-          idea: data.idea,
-          overview: data.analyticsData[0],
-        }
-      : null;
-  } catch (error) {
-    console.error("Error in getIdea:", error);
-    return null;
-  }
-});
+import { getIdea } from "./get-idea";
 
 interface IdeaPageProps {
   params: {
@@ -55,7 +22,7 @@ interface IdeaPageProps {
 export default async function IdeaPage({ params }: IdeaPageProps) {
   const { id } = await params;
 
-  const data = await getIdea(id);
+  const data = await getIdea(id, { withAnalytics: true });
 
   if (!data || !data.idea) {
     console.error("Idea not found or invalid data:", data);
@@ -82,7 +49,7 @@ export default async function IdeaPage({ params }: IdeaPageProps) {
 
           <TabsContent value="analytics" className="space-y-6">
             <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-              <MetricsOverview overview={data.overview} />
+              <MetricsOverview overview={data.analyticsData} />
             </Suspense>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

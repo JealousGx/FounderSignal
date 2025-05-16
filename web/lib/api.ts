@@ -28,7 +28,7 @@ export const api = {
     customFetch(path, { method: "POST", body }),
   put: (path: string, body?: BodyInit | null) =>
     customFetch(path, { method: "PUT", body }),
-  del: (path: string) => customFetch(path, { method: "DELETE" }),
+  delete: (path: string) => customFetch(path, { method: "DELETE" }),
 };
 
 export type QueryParams = {

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,13 +25,14 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { deleteIdea } from "./actions";
 
 interface DangerZoneProps {
   ideaId: string;
+  ideaTitle: string;
 }
 
-export default function DangerZone({ ideaId }: DangerZoneProps) {
+export default function DangerZone({ ideaId, ideaTitle }: DangerZoneProps) {
   const [confirmText, setConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -38,11 +41,17 @@ export default function DangerZone({ ideaId }: DangerZoneProps) {
     try {
       setIsDeleting(true);
 
-      // TODO: Replace with actual API call to delete the idea
       console.log("Deleting idea:", ideaId);
 
-      // Simulating API delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const res = await deleteIdea(ideaId);
+
+      if (res.error) {
+        toast.error("Error deleting idea", {
+          description: res.error,
+        });
+        setIsDeleting(false);
+        return;
+      }
 
       toast.success("Idea deleted", {
         description: "Your idea has been successfully deleted.",
@@ -60,7 +69,7 @@ export default function DangerZone({ ideaId }: DangerZoneProps) {
     }
   }
 
-  const isDeleteButtonDisabled = confirmText !== "delete";
+  const isDeleteButtonDisabled = confirmText !== ideaTitle;
 
   return (
     <Card className="border-red-200">
@@ -89,14 +98,14 @@ export default function DangerZone({ ideaId }: DangerZoneProps) {
 
             <div className="py-2">
               <Label htmlFor="confirm" className="text-sm font-medium">
-                Type <span className="font-bold">delete</span> to confirm
+                Type <span className="font-bold">{ideaTitle}</span> to confirm
               </Label>
               <Input
                 id="confirm"
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 className="mt-2"
-                placeholder="delete"
+                placeholder={ideaTitle}
               />
             </div>
 

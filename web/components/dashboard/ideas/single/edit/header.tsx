@@ -1,11 +1,12 @@
-import Image from "next/image";
-import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import Image from "next/image";
+
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getStatusBadgeColor } from "../../utils";
+import { Link } from "@/components/ui/link";
+
 import { Idea } from "@/types/idea";
+import { getStatusBadgeColor } from "../../utils";
 
 interface EditHeaderProps {
   idea: Idea;
@@ -28,7 +29,9 @@ export default function EditHeader({ idea }: EditHeaderProps) {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex flex-wrap gap-2 mb-2">
-                <Badge className={getStatusBadgeColor(idea.status)}>
+                <Badge
+                  className={`${getStatusBadgeColor(idea.status)} capitalize`}
+                >
                   {idea.status}
                 </Badge>
               </div>
@@ -38,12 +41,16 @@ export default function EditHeader({ idea }: EditHeaderProps) {
               </h1>
             </div>
 
-            <Button size="sm" className="h-9" variant="secondary" asChild>
-              <Link href={`/mvp/${idea.id}`} target="_blank">
-                <ExternalLink className="h-4 w-4 mr-1" />
-                Preview Landing Page
-              </Link>
-            </Button>
+            <Link
+              size="sm"
+              className="h-9"
+              variant="secondary"
+              href={`/mvp/${idea.id}`}
+              target="_blank"
+            >
+              <ExternalLink className="h-4 w-4 mr-1" />
+              Preview Landing Page
+            </Link>
           </div>
         </div>
       </div>
