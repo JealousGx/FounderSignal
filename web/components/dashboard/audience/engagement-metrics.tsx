@@ -7,33 +7,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Legend,
-  Tooltip,
-  Sector,
-} from "recharts";
-import { useState } from "react";
 import { AudienceStats } from "@/types/audience";
+import { useState } from "react";
+import {
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Sector,
+  Tooltip,
+} from "recharts";
 import { PieSectorDataItem } from "recharts/types/polar/Pie";
 
 interface EngagementMetricsProps {
   stats: AudienceStats;
+  metrics: {
+    name: string;
+    value: number;
+  }[];
 }
 
-export default function EngagementMetrics({ stats }: EngagementMetricsProps) {
+export default function EngagementMetrics({
+  stats,
+  metrics,
+}: EngagementMetricsProps) {
   // State to track active slice for the idea distribution chart
   const [activeIdeaIndex, setActiveIdeaIndex] = useState<number | undefined>();
-
-  const ideaDistributionData = [
-    { name: "EcoTrack", value: 42 },
-    { name: "RemoteTeamOS", value: 28 },
-    { name: "SkillSwap", value: 18 },
-    { name: "Other", value: 12 },
-  ];
 
   // Colors for pie charts
   const COLORS = [
@@ -59,7 +59,7 @@ export default function EngagementMetrics({ stats }: EngagementMetricsProps) {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={ideaDistributionData}
+                  data={metrics}
                   cx="50%"
                   cy="50%"
                   innerRadius={0}
@@ -88,26 +88,26 @@ export default function EngagementMetrics({ stats }: EngagementMetricsProps) {
                           cx={cx}
                           cy={cy}
                           innerRadius={innerRadius}
-                          outerRadius={outerRadius + 5} // Make the active slice slightly larger
+                          outerRadius={outerRadius + 3} // Make the active slice slightly larger
                           startAngle={startAngle}
                           endAngle={endAngle}
                           fill={fill}
                         />
                         <text
                           x={cx}
-                          y={cy - 5}
+                          y={cy - 7}
                           textAnchor="middle"
                           fill="#333"
-                          fontSize={14}
+                          fontSize={12}
                         >
                           {`${payload.name}`}
                         </text>
                         <text
                           x={cx}
-                          y={cy + 15}
+                          y={cy + 10}
                           textAnchor="middle"
-                          fill="#333"
-                          fontSize={12}
+                          fill="#555"
+                          fontSize={10}
                         >
                           {`${value} (${(percent * 100).toFixed(0)}%)`}
                         </text>
@@ -117,7 +117,7 @@ export default function EngagementMetrics({ stats }: EngagementMetricsProps) {
                   onMouseEnter={(_, index) => setActiveIdeaIndex(index)}
                   onMouseLeave={() => setActiveIdeaIndex(undefined)}
                 >
-                  {ideaDistributionData.map((entry, index) => (
+                  {metrics.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
@@ -128,7 +128,7 @@ export default function EngagementMetrics({ stats }: EngagementMetricsProps) {
                 <Legend
                   verticalAlign="bottom"
                   height={36}
-                  payload={ideaDistributionData.map((item, index) => ({
+                  payload={metrics.map((item, index) => ({
                     id: item.name,
                     type: "square",
                     value: `${item.name} (${item.value})`,
@@ -150,17 +150,18 @@ export default function EngagementMetrics({ stats }: EngagementMetricsProps) {
                 Avg. signups per day:
               </span>
               <span className="font-medium">
-                {(stats.newSubscribers / 30).toFixed(1)}
+                {(stats.newSubscribers / 30).toFixed(2)}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Most active idea:</span>
-              <span className="font-medium">EcoTrack</span>
+              {/* 0th item in metrics array will have the most signups, hence, most active. */}
+              <span className="font-medium">{metrics[0].name}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Conversion rate:</span>
               <span className="font-medium">
-                {stats.averageConversionRate.toFixed(1)}%
+                {stats.averageConversionRate.toFixed(2)}%
               </span>
             </div>
           </div>

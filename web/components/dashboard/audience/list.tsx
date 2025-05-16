@@ -1,6 +1,25 @@
 "use client";
 
+import { ChevronDown, Mail, Search, Tag } from "lucide-react";
 import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -9,34 +28,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ChevronDown, Search, MoreHorizontal, Mail, Tag } from "lucide-react";
+
+import { getAudience } from "@/app/dashboard/audience/get-audience";
 import { formatDate } from "@/lib/utils";
 import { AudienceMember } from "@/types/audience";
-import { Pagination } from "@/components/ui/pagination";
+import Link from "next/link";
 
 interface AudienceListProps {
   members: AudienceMember[];
+  total: number;
+  itemsPerPage?: number;
 }
 
-export default function AudienceList({ members }: AudienceListProps) {
+export default function AudienceList({
+  members: initialMembers,
+  total,
+  itemsPerPage = 10,
+}: AudienceListProps) {
+  const [members, setMembers] = useState(initialMembers);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [totalMembers, setTotalMembers] = useState(total);
 
   const filteredMembers = members.filter(
     (member) =>
@@ -45,11 +58,65 @@ export default function AudienceList({ members }: AudienceListProps) {
         member.idea?.title.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
-  const paginatedMembers = filteredMembers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = Math.ceil(totalMembers / itemsPerPage);
+
+  const fetchAudience = async ({
+    page,
+    pageSize,
+    sortBy,
+    filterBy,
+  }: {
+    page: number;
+    pageSize: number;
+    sortBy?: string;
+    filterBy?: string;
+  }) => {
+    if (isLoading) return;
+
+    // filterBy = filterBy === filters[0].value ? undefined : filterBy; // no need to pass filter if "All Ideas" is selected)
+
+    setIsLoading(true);
+    try {
+      const offset = (page - 1) * pageSize;
+      const result = await getAudience(false, {
+        limit: pageSize,
+        offset,
+        sortBy,
+        filterBy,
+      });
+
+      if (!result) {
+        setMembers([]);
+        setTotalMembers(0);
+      }
+
+      if (result && "audiences" in result && Array.isArray(result.audiences)) {
+        setMembers(result.audiences);
+      }
+      if ("total" in result) {
+        setTotalMembers(result.total);
+      }
+
+      if (typeof result?.total !== "number") {
+        // If API response for total is not a number, set totalMembers to 0 to avoid NaN issues in pagination.
+        setTotalMembers(0);
+      }
+    } catch (error) {
+      console.error("Error fetching audience:", error);
+      setMembers([]);
+      setTotalMembers(0);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchAudience({
+      page,
+      pageSize: itemsPerPage,
+    });
+  };
 
   return (
     <Card>
@@ -100,15 +167,24 @@ export default function AudienceList({ members }: AudienceListProps) {
                 <TableHead>Email</TableHead>
                 <TableHead>Signed Up For</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {/* <TableHead className="text-right">Actions</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedMembers.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={3}
+                    className="text-center py-8 text-muted-foreground h-[370px]"
+                  >
+                    Loading subscribers...
+                  </TableCell>
+                </TableRow>
+              ) : filteredMembers.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={5}
-                    className="text-center py-8 text-muted-foreground"
+                    className="text-center py-8 text-muted-foreground h-[370px]"
                   >
                     {searchQuery
                       ? "No subscribers match your search"
@@ -116,8 +192,8 @@ export default function AudienceList({ members }: AudienceListProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedMembers.map((member) => (
-                  <TableRow key={member.id}>
+                filteredMembers.map((member) => (
+                  <TableRow key={member.userId + member.ideaId}>
                     <TableCell className="font-medium">
                       <div className="flex items-center">
                         <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -125,13 +201,16 @@ export default function AudienceList({ members }: AudienceListProps) {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center">
+                      <Link
+                        href={`/dashboard/ideas/${member.ideaId}`}
+                        className="flex items-center"
+                      >
                         <Tag className="h-4 w-4 mr-2 text-muted-foreground" />
                         {member.idea?.title}
-                      </div>
+                      </Link>
                     </TableCell>
                     <TableCell>{formatDate(member.signupTime)}</TableCell>
-                    <TableCell className="text-right">
+                    {/* <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon">
@@ -147,20 +226,22 @@ export default function AudienceList({ members }: AudienceListProps) {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
         </div>
+      </CardContent>
 
+      <CardFooter>
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={setCurrentPage}
+          onPageChange={handlePageChange}
         />
-      </CardContent>
+      </CardFooter>
     </Card>
   );
 }

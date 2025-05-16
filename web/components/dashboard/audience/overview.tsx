@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { AudienceStats } from "@/types/audience";
-import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
 interface AudienceOverviewProps {
   stats: AudienceStats;
@@ -25,14 +25,14 @@ export default function AudienceOverview({ stats }: AudienceOverviewProps) {
       <MetricCard
         label="Average Conversion Rate"
         value={stats.averageConversionRate}
-        valueFormatted={`${stats.averageConversionRate.toFixed(1)}%`}
+        valueFormatted={`${stats.averageConversionRate.toFixed(2)}%`}
         change={stats.conversionRateChange}
       />
 
       <MetricCard
         label="Active Ideas"
-        value={stats.totalIdeas}
-        valueFormatted={stats.totalIdeas.toString()}
+        value={stats.activeIdeas}
+        valueFormatted={stats.activeIdeas.toLocaleString()}
       />
     </div>
   );
@@ -65,7 +65,7 @@ function MetricCard({ label, valueFormatted, change }: MetricCardProps) {
               ) : (
                 <ArrowDownRight className="h-3.5 w-3.5 mr-0.5" />
               )}
-              {Math.abs(change)}%
+              {Math.abs(change).toFixed(2)}%
             </div>
           )}
         </div>

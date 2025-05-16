@@ -8,11 +8,11 @@ export interface AudienceStats {
   newSubscribersChange: number;
   averageConversionRate: number;
   conversionRateChange: number;
-  totalIdeas: number;
+  activeIdeas: number;
 }
 
 export interface AudienceMember {
-  id: string;
+  userId: string;
   email: string;
   name?: string;
   signupTime: string;
