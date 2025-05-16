@@ -37,8 +37,10 @@ export const getName = ({
 
 export const constructNewPath = (
   basePath: string,
-  params: Record<string, string | number | boolean | undefined>
+  params?: Record<string, string | number | boolean | undefined>
 ) => {
+  if (!params) return basePath;
+
   const searchParams = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {

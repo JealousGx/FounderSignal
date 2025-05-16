@@ -8,25 +8,27 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  LineChart,
+  CartesianGrid,
+  Legend,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
-import { Idea } from "@/types/idea";
 
 interface MetricsOverviewProps {
-  idea: Idea;
+  overview: {
+    dataPoints: {
+      date: string;
+      views: number;
+      signups: number;
+    }[];
+  };
 }
 
-export default function MetricsOverview({ idea }: MetricsOverviewProps) {
-  // Normally you'd fetch this data from an API
-  const chartData = generateChartData(idea);
-
+export default function MetricsOverview({ overview }: MetricsOverviewProps) {
   return (
     <Card>
       <CardHeader>
@@ -37,7 +39,7 @@ export default function MetricsOverview({ idea }: MetricsOverviewProps) {
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
-              data={chartData}
+              data={overview.dataPoints}
               margin={{
                 top: 5,
                 right: 30,
@@ -70,38 +72,4 @@ export default function MetricsOverview({ idea }: MetricsOverviewProps) {
       </CardContent>
     </Card>
   );
-}
-
-function generateChartData(idea: Idea) {
-  // This would normally come from your API
-  // For now, we'll generate sample data
-  const today = new Date();
-  const days = 14;
-
-  return Array.from({ length: days }).map((_, i) => {
-    const date = new Date();
-    date.setDate(today.getDate() - (days - i - 1));
-    const dateStr = date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-
-    // Generate somewhat realistic data based on the idea's total values
-    const dayFactor = 1 + Math.sin(i / (days / Math.PI)) * 0.5; // Creates a wave pattern
-    const growthFactor = (i / days) * 1.5; // Shows growth over time
-    const randomFactor = 0.7 + Math.random() * 0.6; // Adds randomness
-
-    const viewsPerDay = Math.round(
-      (idea.views / days) * dayFactor * growthFactor * randomFactor
-    );
-    const signupsPerDay = Math.round(
-      (idea.signups / days) * dayFactor * growthFactor * randomFactor
-    );
-
-    return {
-      date: dateStr,
-      views: viewsPerDay,
-      signups: signupsPerDay,
-    };
-  });
 }

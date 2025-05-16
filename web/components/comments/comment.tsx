@@ -1,34 +1,34 @@
 "use client";
 
+import { formatDistanceToNow } from "date-fns";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
-import { ChevronDown, ChevronUp } from "lucide-react";
-
+import { ReactionButtons } from "@/components/reactions-btns";
 import { Button } from "@/components/ui/button";
-import { Comment } from "@/types/comment";
 
-import { formatDate } from "@/lib/utils";
-import { ReplyForm } from "./add-comment-form";
-import { ReactionButtons } from "./reaction-btns";
+import { CommentExtended } from "@/types/comment";
 
-export type CommentExtended = Omit<Comment, "replies"> & {
-  content: string;
-  author: {
-    name: string;
-    image: string;
-  };
-  replies: CommentExtended[];
-};
+type ReplyFormType = React.ComponentType<{
+  ideaId: string;
+  userId: string | null;
+  commentId: string;
+  onCancel: () => void;
+  onReplyAdded: () => void;
+  initialMention?: string;
+}>;
 
 export const CommentItem = ({
   ideaId,
   comment,
   userId,
+  ReplyForm,
 }: {
   comment: CommentExtended;
   userId: string | null;
   ideaId: string;
+  ReplyForm: ReplyFormType;
 }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
 
@@ -62,7 +62,9 @@ export const CommentItem = ({
             <div>
               <h4 className="font-medium">{comment.author.name}</h4>
               <p className="text-xs text-gray-500">
-                {formatCommentDate(comment.createdAt)}
+                {formatDistanceToNow(new Date(comment.createdAt), {
+                  addSuffix: true,
+                })}
               </p>
             </div>
           </div>
@@ -98,7 +100,7 @@ export const CommentItem = ({
                   commentId={comment.id}
                   onCancel={handleReplyCancel}
                   onReplyAdded={handleReplyAdded}
-                  initialMention={`@${comment.author.name}`}
+                  initialMention={`@${comment.author.name} `}
                 />
               )}
             </div>
@@ -109,6 +111,7 @@ export const CommentItem = ({
               ideaId={ideaId}
               replies={comment.replies}
               userId={userId}
+              ReplyForm={ReplyForm}
             />
           )}
         </div>
@@ -117,14 +120,16 @@ export const CommentItem = ({
   );
 };
 
-export const CollapsibleReplies = ({
+const CollapsibleReplies = ({
   replies,
   userId,
   ideaId,
+  ReplyForm,
 }: {
   replies: CommentExtended[];
   userId: string | null;
   ideaId: string;
+  ReplyForm: ReplyFormType;
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -139,6 +144,7 @@ export const CollapsibleReplies = ({
           ideaId={ideaId}
           comment={reply}
           userId={userId}
+          ReplyForm={ReplyForm}
         />
       ))}
 
@@ -164,20 +170,3 @@ export const CollapsibleReplies = ({
     </div>
   );
 };
-
-function formatCommentDate(dateString: string) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - date.getTime());
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) {
-    return "Today";
-  } else if (diffDays === 1) {
-    return "Yesterday";
-  } else if (diffDays < 7) {
-    return `${diffDays} days ago`;
-  } else {
-    return formatDate(dateString);
-  }
-}

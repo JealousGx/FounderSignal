@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -6,46 +7,53 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { getStageBadgeColor } from "../utils";
+
 import { Idea } from "@/types/idea";
+import { getStageBadgeColor } from "../utils";
 
 interface ValidationProgressProps {
   idea: Idea;
 }
 
 export default function ValidationProgress({ idea }: ValidationProgressProps) {
-  const validationGoals = {
-    Ideation: 20,
-    Validation: 100,
-    MVP: 500,
+  const progress = (idea.signups / idea.targetSignups) * 100;
+
+  const milestonesGoal = {
+    ProblemFit: 1,
+    SolutionFit: 1.5,
+    MarketFit: 3,
+    ScaleFit: 5,
   };
 
-  const currentStage = idea.stage || "Ideation";
-  const goalSignups = validationGoals[currentStage] || 100;
-  const progress = Math.min(
-    100,
-    Math.round((idea.signups / goalSignups) * 100)
-  );
-
-  // Generate milestones
   const milestones = [
     {
       name: "Problem Fit",
-      target: validationGoals.Ideation,
-      complete: progress >= 20,
+      target: idea.targetSignups,
+      complete: progress >= milestonesGoal.ProblemFit * 100,
     },
     {
       name: "Solution Fit",
-      target: validationGoals.Validation,
-      complete: progress >= 100,
+      target: idea.targetSignups * milestonesGoal.SolutionFit,
+      complete: progress >= milestonesGoal.SolutionFit * 100,
     },
     {
       name: "Market Fit",
-      target: validationGoals.MVP,
-      complete: progress >= 500,
+      target: idea.targetSignups * milestonesGoal.MarketFit,
+      complete: progress >= milestonesGoal.MarketFit * 100,
     },
   ];
+
+  let currentGoal = idea.targetSignups;
+
+  if (progress >= milestonesGoal.ProblemFit * 100) {
+    currentGoal = idea.targetSignups * milestonesGoal.SolutionFit;
+  }
+  if (progress >= milestonesGoal.SolutionFit * 100) {
+    currentGoal = idea.targetSignups * milestonesGoal.MarketFit;
+  }
+  if (progress >= milestonesGoal.MarketFit * 100) {
+    currentGoal = idea.targetSignups * milestonesGoal.ScaleFit;
+  }
 
   return (
     <Card>
@@ -57,8 +65,8 @@ export default function ValidationProgress({ idea }: ValidationProgressProps) {
               Tracking against your validation goals
             </CardDescription>
           </div>
-          <Badge className={getStageBadgeColor(currentStage)}>
-            {currentStage} Stage
+          <Badge className={`${getStageBadgeColor(idea.stage)} capitalize`}>
+            {idea.stage} Stage
           </Badge>
         </div>
       </CardHeader>
@@ -66,15 +74,15 @@ export default function ValidationProgress({ idea }: ValidationProgressProps) {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-sm font-medium">
-              Current goal: {goalSignups} signups
+              Current goal: {currentGoal} signups
             </span>
             <span className="text-sm font-medium">
-              {idea.signups}/{goalSignups}
+              {idea.signups}/{idea.targetSignups}
             </span>
           </div>
           <Progress value={progress} className="h-2" />
           <span className="text-xs text-muted-foreground">
-            {progress}% complete for {currentStage} validation
+            {progress.toFixed(2)}% complete for {idea.stage} validation
           </span>
         </div>
 

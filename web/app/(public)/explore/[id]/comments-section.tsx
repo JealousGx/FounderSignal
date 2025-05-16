@@ -1,50 +1,15 @@
-import { auth, User } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 
 import { AddCommentButton } from "./add-comment-button";
-import { AddCommentForm } from "./add-comment-form";
-import { CommentExtended, CommentItem } from "./comment";
+import { AddCommentForm, ReplyForm } from "./add-comment-form";
 
-import { api } from "@/lib/api";
-import { getUsers } from "@/lib/auth";
-import { getName } from "@/lib/utils";
-import { Comment } from "@/types/comment";
-
-const getComments = async (ideaId: string) => {
-  try {
-    const response = await api.get(`/ideas/${ideaId}/feedback`, {
-      cache: "force-cache",
-      next: {
-        revalidate: 3600,
-        tags: [`comments-${ideaId}`],
-      },
-    });
-
-    if (!response.ok) {
-      console.error(
-        "API error fetching comments:",
-        response.status,
-        response.statusText
-      );
-
-      return null;
-    }
-
-    const data = await response.json();
-    return (data.comments || []) as Comment[];
-  } catch (error) {
-    console.error("Error in getComments:", error);
-    return null;
-  }
-};
+import { CommentItem } from "@/components/comments/comment";
+import { getComments } from "@/components/comments/get-comments";
 
 export const CommentsSection = async ({ ideaId }: { ideaId: string }) => {
-  const comments = await getComments(ideaId);
+  const data = await getComments(ideaId);
+  const comments = data?.comments || [];
   const { userId } = await auth();
-
-  const allUserIds = getAllUserIds(comments || []);
-  const users = await getUsers(allUserIds);
-
-  const _comments = mapComments(comments || [], users);
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-8">
@@ -58,14 +23,15 @@ export const CommentsSection = async ({ ideaId }: { ideaId: string }) => {
         </div>
       </div>
 
-      {_comments?.length > 0 ? (
+      {comments && comments.length > 0 ? (
         <div className="divide-y divide-gray-100">
-          {_comments.map((comment) => (
+          {comments.map((comment) => (
             <CommentItem
               key={comment.id}
               ideaId={ideaId}
               comment={comment}
               userId={userId}
+              ReplyForm={ReplyForm}
             />
           ))}
         </div>
@@ -81,41 +47,4 @@ export const CommentsSection = async ({ ideaId }: { ideaId: string }) => {
       {userId && <AddCommentForm ideaId={ideaId} userId={userId} />}
     </div>
   );
-};
-
-const getAllUserIds = (commentList: Comment[]): string[] => {
-  const ids = new Set<string>();
-
-  commentList.forEach((comment) => {
-    ids.add(comment.userId);
-
-    if (comment.replies && comment.replies.length > 0) {
-      const replyIds = getAllUserIds(comment.replies);
-      replyIds.forEach((id) => ids.add(id));
-    }
-  });
-
-  return Array.from(ids);
-};
-
-const mapComments = (
-  commentList: Comment[],
-  users: User[]
-): CommentExtended[] => {
-  return commentList?.map((c) => {
-    const user = users.find((user) => user.id === c.userId);
-
-    return {
-      ...c,
-      content: c.comment,
-      author: {
-        name: user ? getName(user) : "Unknown User",
-        image:
-          user?.imageUrl || "https://randomuser.me/api/portraits/men/76.jpg",
-      },
-      replies: c.replies
-        ? mapComments(c.replies, users)
-        : ([] as CommentExtended[]),
-    };
-  });
 };

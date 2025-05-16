@@ -9,3 +9,12 @@ export type Comment = {
   createdAt: string;
   replies: Comment[];
 };
+
+export type CommentExtended = Omit<Comment, "replies"> & {
+  content: string;
+  author: {
+    name: string;
+    image: string;
+  };
+  replies: CommentExtended[];
+};

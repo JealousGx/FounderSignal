@@ -1,10 +1,10 @@
 "use client";
 
 import { ThumbsDown, ThumbsUp } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { submitReaction } from "./action";
+
+import { submitReaction } from "@/components/comments/actions";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   likedByUser: boolean;

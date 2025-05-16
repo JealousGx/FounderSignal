@@ -1,3 +1,11 @@
+import {
+  Edit,
+  ExternalLink,
+  PauseCircle,
+  PlayCircle,
+  Share2,
+} from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,14 +16,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Link } from "@/components/ui/link";
+
 import { Idea } from "@/types/idea";
-import {
-  Edit,
-  ExternalLink,
-  PauseCircle,
-  PlayCircle,
-  Share2,
-} from "lucide-react";
 import { getStatusBadgeColor } from "../utils";
 
 export function IdeaSettings({ idea }: { idea: Idea }) {
@@ -82,19 +84,21 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
                     Your campaign is {idea.status.toLowerCase()}
                   </p>
                 </div>
-                <Badge className={getStatusBadgeColor(idea.status)}>
+                <Badge
+                  className={`${getStatusBadgeColor(idea.status)} capitalize`}
+                >
                   {idea.status}
                 </Badge>
               </div>
             </div>
 
             <div>
-              {idea.status === "Active" ? (
+              {idea.status === "active" ? (
                 <Button variant="outline" className="w-full gap-2">
                   <PauseCircle className="w-4 h-4" />
                   Pause Campaign
                 </Button>
-              ) : idea.status === "Paused" ? (
+              ) : idea.status === "paused" ? (
                 <Button variant="outline" className="w-full gap-2">
                   <PlayCircle className="w-4 h-4" />
                   Resume Campaign

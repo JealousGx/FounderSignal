@@ -107,6 +107,8 @@ export default function IdeasDataView({
   }) => {
     if (isLoading) return;
 
+    filterBy = filterBy === filters[0].value ? undefined : filterBy; // no need to pass filter if "All Ideas" is selected)
+
     setIsLoading(true);
     try {
       const offset = (page - 1) * pageSize;
@@ -164,7 +166,7 @@ export default function IdeasDataView({
     fetchIdeas({
       page: 1,
       pageSize: itemsPerPage,
-      filterBy: value === filters[0].value ? undefined : value, // no need to pass filter if "All Ideas" is selected
+      filterBy: value,
       sortBy: selectedSort,
     });
   };

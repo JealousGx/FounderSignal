@@ -37,6 +37,9 @@ export type QueryParams = {
   offset?: number;
   filterBy?: string;
   search?: string;
+
+  lastCreatedAt?: string;
+  lastId?: string;
 };
 
 export async function getIdeas() {

@@ -1,5 +1,3 @@
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Calendar,
   ExternalLink,
@@ -14,9 +12,11 @@ import {
   Users,
 } from "lucide-react";
 import Image from "next/image";
-import { formatDate, getStageBadgeColor, getStatusBadgeColor } from "../utils";
 import Link from "next/link";
-import { Link as CustomLink } from "@/components/ui/link";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,11 +24,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { Link as CustomLink } from "@/components/ui/link";
+
 import { Idea } from "@/types/idea";
+import { formatDate, getStageBadgeColor, getStatusBadgeColor } from "../utils";
 
 export function IdeaOverview({ idea }: { idea: Idea }) {
-  const isActive = idea.status === "Active";
+  const isActive = idea.status === "active";
 
   return (
     <Card className="border-none overflow-hidden shadow-sm">
@@ -46,10 +48,13 @@ export function IdeaOverview({ idea }: { idea: Idea }) {
 
         <div className="absolute bottom-0 left-0 p-4 md:p-6 w-full">
           <div className="flex flex-wrap gap-2 mb-3">
-            <Badge className={getStatusBadgeColor(idea.status)}>
+            <Badge className={`${getStatusBadgeColor(idea.status)} capitalize`}>
               {idea.status}
             </Badge>
-            <Badge variant="outline" className={getStageBadgeColor(idea.stage)}>
+            <Badge
+              variant="outline"
+              className={`${getStageBadgeColor(idea.stage)} capitalize`}
+            >
               {idea.stage}
             </Badge>
           </div>

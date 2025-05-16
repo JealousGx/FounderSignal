@@ -1,17 +1,50 @@
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { cache, Suspense } from "react";
 
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getIdeaById } from "@/lib/api";
-// import IdeaAnalytics from "@/components/dashboard/ideas/idea-analytics";
+import FeedbackSection from "@/components/dashboard/ideas/single/feedback-section";
 import IdeaHeader from "@/components/dashboard/ideas/single/header";
 import MetricsOverview from "@/components/dashboard/ideas/single/metrics-overview";
+import { IdeaOverview } from "@/components/dashboard/ideas/single/overview";
+import { IdeaSettings } from "@/components/dashboard/ideas/single/settings";
 import SignupAnalytics from "@/components/dashboard/ideas/single/signup-analytics";
 import ValidationProgress from "@/components/dashboard/ideas/single/validation-progress";
-import FeedbackSection from "@/components/dashboard/ideas/single/feedback-section";
-import { IdeaSettings } from "@/components/dashboard/ideas/single/settings";
-import { IdeaOverview } from "@/components/dashboard/ideas/single/overview";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { api } from "@/lib/api";
+
+export const getIdea = cache(async (id: string) => {
+  try {
+    const response = await api.get(`/dashboard/ideas/user/${id}`, {
+      next: {
+        revalidate: 3600,
+        tags: [`idea-${id}`],
+      },
+    });
+
+    if (!response.ok) {
+      console.error(
+        "API error fetching getIdea:",
+        response.status,
+        response.statusText
+      );
+
+      return null;
+    }
+
+    const data = await response.json();
+
+    return data
+      ? {
+          idea: data.idea,
+          overview: data.analyticsData[0],
+        }
+      : null;
+  } catch (error) {
+    console.error("Error in getIdea:", error);
+    return null;
+  }
+});
 
 interface IdeaPageProps {
   params: {
@@ -21,20 +54,22 @@ interface IdeaPageProps {
 
 export default async function IdeaPage({ params }: IdeaPageProps) {
   const { id } = await params;
-  const idea = await getIdeaById(id);
 
-  if (!idea) {
+  const data = await getIdea(id);
+
+  if (!data || !data.idea) {
+    console.error("Idea not found or invalid data:", data);
     notFound();
   }
 
   return (
     <div className="space-y-6">
       <Suspense fallback={<Skeleton className="h-16 w-full" />}>
-        <IdeaHeader idea={idea} />
+        <IdeaHeader ideaId={id} />
       </Suspense>
 
       <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
-        <IdeaOverview idea={idea} />
+        <IdeaOverview idea={data.idea} />
       </Suspense>
 
       <div className="space-y-6">
@@ -47,29 +82,29 @@ export default async function IdeaPage({ params }: IdeaPageProps) {
 
           <TabsContent value="analytics" className="space-y-6">
             <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-              <MetricsOverview idea={idea} />
+              <MetricsOverview overview={data.overview} />
             </Suspense>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-                <SignupAnalytics idea={idea} />
+                <SignupAnalytics idea={data.idea} />
               </Suspense>
 
               <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-                <ValidationProgress idea={idea} />
+                <ValidationProgress idea={data.idea} />
               </Suspense>
             </div>
           </TabsContent>
 
           <TabsContent value="feedback" className="space-y-6">
             <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-              <FeedbackSection ideaId={idea.id} />
+              <FeedbackSection ideaId={id} />
             </Suspense>
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
             <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-              <IdeaSettings idea={idea} />
+              <IdeaSettings idea={data.idea} />
             </Suspense>
           </TabsContent>
         </Tabs>

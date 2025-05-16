@@ -13,7 +13,7 @@ export type SubmitState = {
   fieldErrors?: FieldError;
 };
 
-export const submit = async (
+export const submitReply = async (
   prevState: SubmitState | null,
   formData: FormData
 ): Promise<SubmitState> => {

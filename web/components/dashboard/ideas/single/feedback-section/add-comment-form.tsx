@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { submitReply, SubmitState } from "@/components/comments/actions";
 import { messageSchema, ReplyFormValues } from "@/components/comments/schema";
+import { Input } from "@/components/ui/input";
 
 export const AddCommentForm = ({
   userId,
@@ -70,46 +71,31 @@ export const AddCommentForm = ({
   };
 
   return (
-    <div className="p-4 md:p-6 bg-gray-50">
-      <h3 className="text-md font-medium mb-4">Leave a comment</h3>
+    <Form {...form}>
+      <form
+        ref={formRef}
+        className="flex gap-2"
+        action={handleAction}
+        noValidate
+      >
+        <FormField
+          control={form.control}
+          name="content"
+          render={({ field }) => (
+            <FormItem className="flex-1">
+              <FormControl>
+                <Input placeholder="Add a comment or question..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <Form {...form}>
-        <form
-          ref={formRef}
-          className="space-y-4"
-          id="comment-form"
-          action={handleAction}
-          noValidate
-        >
-          <FormField
-            control={form.control}
-            name="content"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Textarea
-                    className="w-full border border-gray-300 rounded-lg p-3 min-h-[100px]"
-                    placeholder="Share your thoughts on this idea..."
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="flex justify-end gap-2">
-            <Button
-              type="submit"
-              className="flex justify-end w-max"
-              disabled={isPending}
-            >
-              {isPending ? "Submitting..." : "Post comment"}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+        <Button type="submit" disabled={isPending}>
+          {isPending ? "Submitting..." : "Post"}
+        </Button>
+      </form>
+    </Form>
   );
 };
 
@@ -206,7 +192,7 @@ export const ReplyForm = ({
               <FormItem>
                 <FormControl>
                   <Textarea
-                    className="w-full border border-gray-300 rounded-lg p-2 min-h-[50px]"
+                    className="w-full border bg-gray-50 border-gray-300 rounded-lg p-2 min-h-[50px]"
                     placeholder="Write your reply..."
                     {...field}
                     ref={(e) => {

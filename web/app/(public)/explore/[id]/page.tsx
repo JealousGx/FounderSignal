@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import {
   ArrowLeft,
   Calendar,
@@ -12,6 +13,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
 
+import { ReactionButtons } from "@/components/reactions-btns";
 import { Link as CustomLink } from "@/components/ui/link";
 import { CommentsSection } from "./comments-section";
 
@@ -19,8 +21,6 @@ import { api } from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import { formatDate, getName } from "@/lib/utils";
 import { Idea } from "@/types/idea";
-import { auth } from "@clerk/nextjs/server";
-import { ReactionButtons } from "./reaction-btns";
 
 type IdeaExtended = Idea & {
   founder: {
