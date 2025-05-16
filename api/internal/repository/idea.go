@@ -104,7 +104,7 @@ func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryP
 		query = r.withCounts(query)
 	}
 
-	query = r.paginateAndOrder(query, queryParams.Limit, queryParams.Offset, orderClause)
+	query = paginateAndOrder(query, queryParams.Limit, queryParams.Offset, orderClause)
 
 	var ideas []*domain.Idea
 	if err := query.Find(&ideas).Error; err != nil {
@@ -128,10 +128,6 @@ func (r *ideaRepository) GetByID(ctx context.Context, id uuid.UUID, getRelatedId
 	if err := query.Find(idea).Error; err != nil {
 		fmt.Println("Error finding idea:", err)
 		return nil, nil, err
-	}
-
-	if idea.Status != string(domain.IdeaStatusActive) {
-		return nil, nil, gorm.ErrRecordNotFound
 	}
 
 	var relatedIdeas []*domain.Idea
@@ -251,24 +247,14 @@ func (r *ideaRepository) VerifyIdeaOwner(ctx context.Context, ideaID uuid.UUID, 
 	return idea.UserID == userID, nil
 }
 
-func (r *ideaRepository) paginateAndOrder(query *gorm.DB, limit, offset int, order string) *gorm.DB {
-	if limit > 0 {
-		query = query.Limit(limit)
-	}
-	if offset > 0 {
-		query = query.Offset(offset)
-	}
-	if order != "" {
-		query = query.Order(order)
-	}
-	return query
-}
-
 func (r *ideaRepository) getRelatedIdeas(ctx context.Context, idea domain.Idea) []*domain.Idea {
 	var relatedIdeas []*domain.Idea
 	baseQuery := r.db.WithContext(ctx).Model(&domain.Idea{}).
 		Preload("Signals").
-		Preload("AudienceMembers")
+		Preload("AudienceMembers").
+		Limit(3)
+
+	baseQuery = r.withCounts(baseQuery)
 
 	tokens := simpleTokenizer(idea.TargetAudience)
 
@@ -299,8 +285,7 @@ func (r *ideaRepository) getRelatedIdeas(ctx context.Context, idea domain.Idea) 
 			Select(finalSelect, queryArgs[:len(tokens)]...).
 			Where("ideas.id != ? AND ideas.status = ?", idea.ID, domain.IdeaStatusActive).
 			Where(whereSQL, queryArgs[len(tokens):]...).
-			Order("match_score DESC, COALESCE(s.signup_count, 0) DESC").
-			Limit(3)
+			Order("match_score DESC, COALESCE(s.signup_count, 0) DESC")
 
 		if err := relatedIdeasQuery.Find(&relatedIdeas).Error; err != nil {
 			fmt.Println("Error finding related ideas with tokenization:", err)
@@ -310,8 +295,7 @@ func (r *ideaRepository) getRelatedIdeas(ctx context.Context, idea domain.Idea) 
 		fallbackQuery := baseQuery.
 			Where("id != ? AND status = ?", idea.ID, domain.IdeaStatusActive).
 			Where("target_audience LIKE ?", "%"+idea.TargetAudience+"%").
-			Order("views DESC").
-			Limit(3)
+			Order("views DESC")
 
 		if err := fallbackQuery.Find(&relatedIdeas).Error; err != nil {
 			fmt.Println("Error finding related ideas (fallback):", err)

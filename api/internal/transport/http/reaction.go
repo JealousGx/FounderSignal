@@ -58,7 +58,7 @@ func (h *reactionHandler) FeedbackReaction(c *gin.Context) {
 		return
 	}
 
-	err := h.service.FeedbackReaction(c.Request.Context(), *parsedFbId, userIdStr, reaction.Type)
+	err := h.service.FeedbackReaction(c.Request.Context(), *parsedFbId, userIdStr, *reaction)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -101,7 +101,7 @@ func (h *reactionHandler) IdeaReaction(c *gin.Context) {
 		return
 	}
 
-	err := h.service.IdeaReaction(c.Request.Context(), *parsedIdeaId, userIdStr, reaction.Type)
+	err := h.service.IdeaReaction(c.Request.Context(), *parsedIdeaId, userIdStr, *reaction)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

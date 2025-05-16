@@ -122,18 +122,27 @@ func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUser
 	}
 }
 
-func FeedbackToIdeaComments(feedbacks []domain.Feedback, requestingUserID *string) []response.IdeaComment {
+func FeedbackToIdeaComments(feedbacks []domain.Feedback, requestingUserID *string, totalComments int64) *response.IdeaCommentResponse {
 	if len(feedbacks) == 0 {
 		return nil
 	}
 
-	ideaComments := make([]response.IdeaComment, 0, len(feedbacks))
-	commentMap := make(map[uuid.UUID]*response.IdeaComment)
+	return &response.IdeaCommentResponse{
+		Total:    totalComments,
+		Comments: mapFeedbackToIdeaComments(feedbacks, requestingUserID),
+	}
+}
 
-	for _, fb := range feedbacks {
+func mapFeedbackToIdeaComments(feedbacks []domain.Feedback, requestingUserID *string) []response.IdeaComment {
+	flatFeedbacks := flattenFeedbacks(feedbacks)
+	allCommentsMap := make(map[uuid.UUID]*response.IdeaComment)
+	rootComments := make([]response.IdeaComment, 0)
+
+	// Pass 1: Create all comment response objects and store pointers in a map.
+	// Initialize Replies as empty; they will be populated in Pass 2.
+	for _, fb := range flatFeedbacks {
 		var likedByUser, dislikedByUser bool
-
-		if requestingUserID != nil {
+		if requestingUserID != nil && fb.Reactions != nil {
 			for _, reaction := range fb.Reactions {
 				if reaction.UserID == *requestingUserID {
 					if reaction.ReactionType == string(request.LikeReaction) {
@@ -146,7 +155,7 @@ func FeedbackToIdeaComments(feedbacks []domain.Feedback, requestingUserID *strin
 			}
 		}
 
-		comment := response.IdeaComment{
+		commentNode := &response.IdeaComment{
 			ID:             fb.ID,
 			UserID:         fb.UserID,
 			Comment:        fb.Comment,
@@ -155,20 +164,84 @@ func FeedbackToIdeaComments(feedbacks []domain.Feedback, requestingUserID *strin
 			LikedByUser:    likedByUser,
 			DislikedByUser: dislikedByUser,
 			CreatedAt:      fb.CreatedAt.Format(time.RFC3339),
-			Replies:        FeedbackToIdeaComments(fb.Replies, requestingUserID),
+			Replies:        make([]response.IdeaComment, 0),
+		}
+		allCommentsMap[fb.ID] = commentNode
+	}
+
+	// Pass 2: Link replies to their parents.
+	// This pass populates the .Replies field of the commentNode structs *in the allCommentsMap*.
+	for _, fb := range flatFeedbacks {
+		// We are interested in comments that are replies (have a ParentID)
+		if fb.ParentID != nil && *fb.ParentID != uuid.Nil {
+			if parentNode, parentExists := allCommentsMap[*fb.ParentID]; parentExists {
+				// childNode is the current feedback item's representation from the map
+				if childNode, childExists := allCommentsMap[fb.ID]; childExists {
+					parentNode.Replies = append(parentNode.Replies, *childNode)
+				}
+			}
+			// If parentNode doesn't exist, this childNode is an orphan.
+			// It won't be added to any parent's Replies list.
+			// It will be picked up as a root comment in Pass 3 if its parent is missing.
+		}
+	}
+
+	// Pass 3: Populate rootComments.
+	// Iterate through the flat list again. A comment is a root if it has no parent
+	// or if its designated parent was not found in the current batch (making it an orphan root).
+	for _, fb := range flatFeedbacks {
+		isRoot := false
+		if fb.ParentID == nil || *fb.ParentID == uuid.Nil {
+			isRoot = true
+		} else {
+			// It has a ParentID, but check if the parent actually exists in our map.
+			// If the parent isn't in allCommentsMap (e.g., not part of this fetched batch),
+			// then this comment, despite having a ParentID, effectively becomes a root for this dataset.
+			if _, parentExistsInMap := allCommentsMap[*fb.ParentID]; !parentExistsInMap {
+				isRoot = true
+			}
 		}
 
-		if fb.ParentID != nil {
-			// If the feedback has a parent, find it in our map and add this as a reply
-			if parent, exists := commentMap[*fb.ParentID]; exists {
-				parent.Replies = append(parent.Replies, comment)
+		if isRoot {
+			if commentNode, exists := allCommentsMap[fb.ID]; exists {
+				rootComments = append(rootComments, *commentNode)
 			}
+		}
+	}
+
+	return rootComments
+}
+
+func flattenFeedbacks(nestedFeedbacks []domain.Feedback) []domain.Feedback {
+	var flatList []domain.Feedback
+	queue := make([]domain.Feedback, 0, len(nestedFeedbacks))
+	queue = append(queue, nestedFeedbacks...)
+
+	// Keep track of processed IDs to avoid duplicates if the input structure is complex
+	// or if items could appear in multiple places (though unlikely for comments).
+	processedIDs := make(map[uuid.UUID]struct{})
+
+	for len(queue) > 0 {
+		fb := queue[0]
+		queue = queue[1:]
+
+		if _, exists := processedIDs[fb.ID]; exists {
 			continue
 		}
+		processedIDs[fb.ID] = struct{}{}
 
-		ideaComments = append(ideaComments, comment)
+		// Add a copy of the current feedback item to the flat list.
+		// Its own 'Replies' field is set to nil because the hierarchy
+		// will be reconstructed based on 'ParentID' in the main mapping function.
+		flatItem := fb
+		flatItem.Replies = nil
+		flatList = append(flatList, flatItem)
 
-		commentMap[fb.ID] = &ideaComments[len(ideaComments)-1]
+		// Enqueue its nested replies for processing.
+		if fb.Replies != nil {
+			queue = append(queue, fb.Replies...)
+		}
 	}
-	return ideaComments
+
+	return flatList
 }

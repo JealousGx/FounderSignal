@@ -15,7 +15,7 @@ import (
 
 type FeedbackService interface {
 	Add(ctx context.Context, parsedIdeaId uuid.UUID, parsedParentId *uuid.UUID, userId string, fb *request.CreateFeedback) (uuid.UUID, error)
-	GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string) ([]response.IdeaComment, error)
+	GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string, queryParams domain.QueryParams) (*response.IdeaCommentResponse, error)
 }
 
 type fbService struct {
@@ -72,13 +72,13 @@ func (s *fbService) Add(ctx context.Context, ideaId uuid.UUID, parsedParentId *u
 	return feedback.ID, nil
 }
 
-func (s *fbService) GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string) ([]response.IdeaComment, error) {
-	feedbacks, err := s.repo.GetByIdea(ctx, ideaId)
+func (s *fbService) GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string, queryParams domain.QueryParams) (*response.IdeaCommentResponse, error) {
+	feedbacks, total, err := s.repo.GetByIdea(ctx, ideaId, &queryParams)
 	if err != nil {
 		return nil, err
 	}
 
-	comments := dto.FeedbackToIdeaComments(feedbacks, userId)
+	comments := dto.FeedbackToIdeaComments(feedbacks, userId, total)
 
 	return comments, nil
 }

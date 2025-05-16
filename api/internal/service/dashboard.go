@@ -19,6 +19,7 @@ import (
 type DashboardService interface {
 	GetDashboardData(ctx context.Context, userID string) (*response.DashboardResponse, error)
 	GetRecentActivityForUser(ctx context.Context, userId string) ([]response.ActivityItem, error)
+	GetIdea(ctx context.Context, id uuid.UUID, userId string) (*response.DashboardIdeaResponse, error)
 }
 
 type dashboardService struct {
@@ -109,6 +110,27 @@ func (s *dashboardService) GetDashboardData(ctx context.Context, userID string) 
 	dashboardData.AnalyticsData = analyticsData
 
 	return dashboardData, nil
+}
+
+func (s *dashboardService) GetIdea(ctx context.Context, id uuid.UUID, userId string) (*response.DashboardIdeaResponse, error) {
+	getRelatedIdeas := false
+	rawIdea, _, err := s.repo.GetByID(ctx, id, &getRelatedIdeas)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get idea by ID: %w", err)
+	}
+
+	now := time.Now()
+	thirtyDaysAgo := now.AddDate(0, -1, 0)
+
+	analyticsData, err := s.getAnalyticsData(ctx, thirtyDaysAgo, now, []*domain.Idea{rawIdea})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get analytics data: %w", err)
+	}
+
+	return &response.DashboardIdeaResponse{
+		Idea:          *rawIdea,
+		AnalyticsData: analyticsData,
+	}, nil
 }
 
 func (s *dashboardService) getAnalyticsMetrics(ctx context.Context, userID string, from, to time.Time, ideas []*domain.Idea) (response.Metrics, error) {

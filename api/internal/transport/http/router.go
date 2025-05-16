@@ -28,6 +28,7 @@ func registerProtectedRoutes(router *gin.RouterGroup, h *Handlers) {
 	ideasRouter.PUT("/:ideaId/reaction", h.Reaction.IdeaReaction)
 
 	ideasRouter.GET("/user", h.Idea.GetUserIdeas)
+	ideasRouter.GET("/user/:ideaId", h.Dashboard.GetIdea)
 
 	router.GET("/", h.Dashboard.GetDashboardData)
 	router.GET("/recent-activity", h.Dashboard.GetRecentActivity)

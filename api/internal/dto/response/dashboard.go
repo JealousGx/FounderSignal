@@ -13,6 +13,11 @@ type DashboardResponse struct {
 	AnalyticsData []AnalyticsData `json:"analyticsData"`
 }
 
+type DashboardIdeaResponse struct {
+	Idea          domain.Idea     `json:"idea"`
+	AnalyticsData []AnalyticsData `json:"analyticsData"`
+}
+
 // Metrics holds the overview metrics.
 type Metrics struct {
 	TotalSignups          int     `json:"totalSignups"`

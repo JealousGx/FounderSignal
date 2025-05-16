@@ -10,6 +10,7 @@ import (
 	"foundersignal/pkg/database"
 	"log"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,7 +23,7 @@ func main() {
 	defer http.GetLogger().Sync()
 
 	router := gin.Default()
-	router.Use(http.CORS(), http.ErrorHandler(), http.Logger())
+	router.Use(http.CORS(), http.ErrorHandler(), http.Logger(), gzip.Gzip(gzip.BestCompression))
 
 	// Initialize WebSocket Hub and run it in a goroutine
 	websocketHub := ws.NewHub()

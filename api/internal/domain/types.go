@@ -1,5 +1,11 @@
 package domain
 
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
 type DBConfig struct {
 	User string
 	Pass string
@@ -20,6 +26,9 @@ type QueryParams struct {
 	Order    string
 	SortBy   string
 	FilterBy string
+
+	LastCreatedAt time.Time
+	LastId        uuid.UUID
 }
 
 type EventType string

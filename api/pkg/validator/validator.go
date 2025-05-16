@@ -23,13 +23,19 @@ func Validate(s interface{}) error {
 
 func translateValidationErrors(err error) map[string]string {
 	errors := make(map[string]string)
-	for _, fieldErr := range err.(validator.ValidationErrors) {
-		errors[fieldErr.Field()] = fmt.Sprintf(
-			"Failed validation: '%s'='%v' | Rule: %s",
-			fieldErr.Field(),
-			fieldErr.Value(),
-			fieldErr.Tag(),
-		)
+
+	// Check if the error is of type validator.ValidationErrors
+	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+		for _, fieldErr := range validationErrors {
+			errors[fieldErr.Field()] = fmt.Sprintf(
+				"Failed validation: '%s'='%v' | Rule: %s",
+				fieldErr.Field(),
+				fieldErr.Value(),
+				fieldErr.Tag(),
+			)
+		}
+	} else {
+		errors["general"] = fmt.Sprintf("Unexpected validation error: %v", err)
 	}
 	return errors
 }

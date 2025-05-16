@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 type IdeaService interface {
@@ -68,6 +69,10 @@ func (s *ideaService) GetByID(ctx context.Context, id uuid.UUID, userId string) 
 	idea, relatedIdeas, err := s.repo.GetByID(ctx, id, &includeRelated)
 	if err != nil {
 		return nil, err
+	}
+
+	if idea.Status != string(domain.IdeaStatusActive) {
+		return nil, gorm.ErrRecordNotFound
 	}
 
 	// ideaJSON, err := json.MarshalIndent(idea, "", "  ") // Marshal to JSON with indentation

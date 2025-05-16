@@ -103,11 +103,13 @@ func (h *fbHandler) GetByIdea(c *gin.Context) {
 		}
 	}
 
-	feedbacks, err := h.service.GetByIdea(c.Request.Context(), parsedIdeaId, userIdStr)
+	queryParams := getProcessedQueryParams(c)
+
+	feedbacks, err := h.service.GetByIdea(c.Request.Context(), parsedIdeaId, userIdStr, queryParams)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"comments": feedbacks})
+	c.JSON(http.StatusOK, feedbacks)
 }

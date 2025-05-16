@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"foundersignal/internal/domain"
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/repository"
@@ -11,8 +12,8 @@ import (
 )
 
 type ReactionService interface {
-	FeedbackReaction(ctx context.Context, fbId uuid.UUID, userId string, reactionType request.ReactionType) error
-	IdeaReaction(ctx context.Context, ideaId uuid.UUID, userId string, reactionType request.ReactionType) error
+	FeedbackReaction(ctx context.Context, fbId uuid.UUID, userId string, req request.Reaction) error
+	IdeaReaction(ctx context.Context, ideaId uuid.UUID, userId string, req request.Reaction) error
 }
 
 type reactionService struct {
@@ -25,12 +26,13 @@ func NewReactionService(repo repository.ReactionRepository) *reactionService {
 	}
 }
 
-func (s *reactionService) FeedbackReaction(ctx context.Context, fbId uuid.UUID, userId string, reactionType request.ReactionType) error {
-	if err := validator.Validate(reactionType); err != nil {
+func (s *reactionService) FeedbackReaction(ctx context.Context, fbId uuid.UUID, userId string, req request.Reaction) error {
+	if err := validator.Validate(req); err != nil {
+		fmt.Println("validation error:", err)
 		return err
 	}
 
-	if reactionType == request.RemoveReaction {
+	if req.Type == request.RemoveReaction {
 		if err := s.repo.RemoveFeedbackReaction(ctx, fbId, userId); err != nil {
 			return err
 		}
@@ -41,7 +43,7 @@ func (s *reactionService) FeedbackReaction(ctx context.Context, fbId uuid.UUID, 
 	reaction := &domain.FeedbackReaction{
 		FeedbackID:   fbId,
 		UserID:       userId,
-		ReactionType: string(reactionType),
+		ReactionType: string(req.Type),
 	}
 
 	if err := s.repo.AddFeedbackReaction(ctx, reaction); err != nil {
@@ -51,12 +53,12 @@ func (s *reactionService) FeedbackReaction(ctx context.Context, fbId uuid.UUID, 
 	return nil
 }
 
-func (s *reactionService) IdeaReaction(ctx context.Context, ideaId uuid.UUID, userId string, reactionType request.ReactionType) error {
-	if err := validator.Validate(reactionType); err != nil {
+func (s *reactionService) IdeaReaction(ctx context.Context, ideaId uuid.UUID, userId string, req request.Reaction) error {
+	if err := validator.Validate(req); err != nil {
 		return err
 	}
 
-	if reactionType == request.RemoveReaction {
+	if req.Type == request.RemoveReaction {
 		if err := s.repo.RemoveIdeaReaction(ctx, ideaId, userId); err != nil {
 			return err
 		}
@@ -67,7 +69,7 @@ func (s *reactionService) IdeaReaction(ctx context.Context, ideaId uuid.UUID, us
 	reaction := &domain.IdeaReaction{
 		IdeaID:       ideaId,
 		UserID:       userId,
-		ReactionType: string(reactionType),
+		ReactionType: string(req.Type),
 	}
 
 	if err := s.repo.AddIdeaReaction(ctx, reaction); err != nil {

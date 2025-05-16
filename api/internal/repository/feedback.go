@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"foundersignal/internal/domain"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -11,7 +12,7 @@ import (
 
 type FeedbackRepository interface {
 	Add(ctx context.Context, feedback *domain.Feedback) (*domain.Feedback, error)
-	GetByIdea(ctx context.Context, ideaId uuid.UUID) ([]domain.Feedback, error)
+	GetByIdea(ctx context.Context, ideaId uuid.UUID, queryParams *domain.QueryParams) ([]domain.Feedback, int64, error)
 	GetForUser(ctx context.Context, userId string, limit int) ([]domain.Feedback, error)
 }
 
@@ -48,18 +49,59 @@ func (r *fbRepository) Add(ctx context.Context, feedback *domain.Feedback) (*dom
 	return feedback, nil
 }
 
-func (r *fbRepository) GetByIdea(ctx context.Context, ideaId uuid.UUID) ([]domain.Feedback, error) {
+func (r *fbRepository) GetByIdea(ctx context.Context, ideaId uuid.UUID, queryParams *domain.QueryParams) ([]domain.Feedback, int64, error) {
 	var feedbacks []domain.Feedback
 
-	if err := r.db.Model(&domain.Feedback{}).WithContext(ctx).
-		Where("idea_id = ?", ideaId).
-		Preload("Reactions").
-		Find(&feedbacks).Error; err != nil {
-		fmt.Println("Error fetching feedbacks:", err)
-		return nil, err
+	query := r.db.Model(&domain.Feedback{}).WithContext(ctx).
+		Where("idea_id = ? AND parent_id IS NULL", ideaId)
+
+	var totalComments int64
+	err := query.Count(&totalComments).Error
+	if err != nil {
+		fmt.Printf("Error counting feedbacks for idea %s: %v\n", ideaId, err)
+		return nil, 0, err
 	}
 
-	return feedbacks, nil
+	query = query.Preload("Reactions").
+		Preload("Replies")
+
+	isDescending := true // Default sort direction
+	if queryParams.SortBy != "" && strings.HasSuffix(strings.ToLower(queryParams.SortBy), "asc") {
+		isDescending = false
+	}
+
+	if isDescending {
+		query = query.Order("created_at DESC, id DESC")
+	} else {
+		query = query.Order("created_at ASC, id ASC")
+	}
+
+	// Apply if LastCreatedAt and LastID are provided (i.e., not the first page)
+	if !queryParams.LastCreatedAt.IsZero() && queryParams.LastId.String() != "" {
+		if isDescending {
+			query = query.Where(
+				"(created_at < ?) OR (created_at = ? AND id < ?)",
+				queryParams.LastCreatedAt, queryParams.LastCreatedAt, queryParams.LastId,
+			)
+		} else {
+			query = query.Where(
+				"(created_at > ?) OR (created_at = ? AND id > ?)",
+				queryParams.LastCreatedAt, queryParams.LastCreatedAt, queryParams.LastId,
+			)
+		}
+	}
+
+	if queryParams.Limit > 0 {
+		query = query.Limit(queryParams.Limit)
+	}
+
+	err = query.Find(&feedbacks).Error
+	if err != nil {
+		fmt.Println("Error fetching feedbacks:", err)
+		return nil, 0, err
+	}
+
+	return feedbacks, totalComments, nil
 }
 
 func (r *fbRepository) GetForUser(ctx context.Context, userId string, limit int) ([]domain.Feedback, error) {

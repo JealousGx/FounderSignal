@@ -31,3 +31,16 @@ func selectFields(fields []string) func(db *gorm.DB) *gorm.DB {
 		return db.Select(fields)
 	}
 }
+
+func paginateAndOrder(query *gorm.DB, limit, offset int, order string) *gorm.DB {
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+	if order != "" {
+		query = query.Order(order)
+	}
+	return query
+}

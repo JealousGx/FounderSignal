@@ -50,6 +50,11 @@ type PublicIdea struct {
 	FeedbackHighlights []string        `json:"feedbackHighlights"`
 }
 
+type IdeaCommentResponse struct {
+	Comments []IdeaComment `json:"comments"`
+	Total    int64         `json:"total"`
+}
+
 type IdeaComment struct {
 	ID             uuid.UUID     `json:"id"`
 	UserID         string        `json:"userId"`
