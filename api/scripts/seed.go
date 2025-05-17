@@ -14,6 +14,7 @@ import (
 	"foundersignal/pkg/database"
 
 	"github.com/google/uuid"
+	"github.com/gosimple/slug"
 	"github.com/joho/godotenv"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -118,7 +119,7 @@ var (
 	}
 
 	statuses = []string{"active", "paused", "completed", "draft", "archived"}
-	stages   = []string{"ideation", "validation", "mvp", "launched", "pivoting"}
+	stages   = []string{"ideation", "validation", "mvp"}
 
 	ctaButtons = []string{
 		"Get Started", "Join Now", "Sign Up Free", "Learn More", "Explore Features",
@@ -185,19 +186,29 @@ func main() {
 
 	ctx := context.Background()
 
+	// Shuffle titles to ensure each is used uniquely and in a random order
+	shuffledTitles := make([]string, len(titles))
+	copy(shuffledTitles, titles)
+	rand.Shuffle(len(shuffledTitles), func(i, j int) {
+		shuffledTitles[i], shuffledTitles[j] = shuffledTitles[j], shuffledTitles[i]
+	})
+
+	// Seed exactly the number of unique titles available.
+	numIdeasToSeed := len(shuffledTitles)
+
 	// Generate and insert ideas
-	if err := seedIdeas(ctx, db, 150); err != nil {
+	if err := seedIdeas(ctx, db, shuffledTitles, numIdeasToSeed); err != nil {
 		log.Fatalf("Failed to seed ideas: %v", err)
 	}
 
 	fmt.Println("Successfully seeded ideas, feedback, and reactions into the database!")
 }
 
-func seedIdeas(ctx context.Context, db *gorm.DB, count int) error {
+func seedIdeas(ctx context.Context, db *gorm.DB, uniqueIdeaTitles []string, count int) error {
 	fmt.Printf("Seeding %d ideas...\n", count)
 
 	for i := 0; i < count; i++ {
-		titleIdx := rand.Intn(len(titles))
+		currentTitle := uniqueIdeaTitles[i]
 		descIdx := rand.Intn(len(descriptions))
 		audienceIdx := rand.Intn(len(targetAudiences))
 
@@ -207,6 +218,18 @@ func seedIdeas(ctx context.Context, db *gorm.DB, count int) error {
 		numIdeaReactions := randomInt(0, 30) // Max 30 reactions per idea
 		generatedIdeaReactions, ideaLikes, ideaDislikes := generateIdeaReactions(ideaID, ideaCreatedAt, numIdeaReactions)
 
+		// unique slug for the idea, include last part of userId at the end of the slug
+		ideaSlug := slug.Make(currentTitle)
+
+		var userIdSuffix string
+		if len(ideaOwnerUserID) >= 4 {
+			userIdSuffix = strings.ToLower(ideaOwnerUserID[len(ideaOwnerUserID)-4:]) // get last 4 chars and lowercase
+		} else if len(ideaOwnerUserID) > 0 {
+			userIdSuffix = strings.ToLower(ideaOwnerUserID) // If userId is shorter than 4 chars, use the whole thing
+		}
+
+		ideaSlug = fmt.Sprintf("%s-%s", ideaSlug, userIdSuffix)
+
 		idea := &domain.Idea{
 			Base: domain.Base{
 				ID:        ideaID,
@@ -214,7 +237,8 @@ func seedIdeas(ctx context.Context, db *gorm.DB, count int) error {
 				UpdatedAt: randomRecentTime(ideaCreatedAt, 30),
 			},
 			UserID:         ideaOwnerUserID,
-			Title:          titles[titleIdx],
+			Slug:           ideaSlug,
+			Title:          currentTitle,
 			Description:    descriptions[descIdx],
 			TargetAudience: targetAudiences[audienceIdx],
 			Status:         randomElement(statuses, "active", 75),

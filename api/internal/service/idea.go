@@ -11,9 +11,11 @@ import (
 	"foundersignal/internal/repository"
 	"foundersignal/pkg/validator"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/gosimple/slug"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -49,11 +51,28 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		return uuid.Nil, err
 	}
 
+	if userId == "" {
+		return uuid.Nil, fmt.Errorf("userId is required")
+	}
+
+	// unique slug for the idea, include last part of userId at the end of the slug
+	ideaSlug := slug.Make(req.Title)
+
+	var userIdSuffix string
+	if len(userId) >= 4 {
+		userIdSuffix = strings.ToLower(userId[len(userId)-4:]) // get last 4 chars and lowercase
+	} else if len(userId) > 0 {
+		userIdSuffix = strings.ToLower(userId) // If userId is shorter than 4 chars, use the whole thing
+	}
+
+	ideaSlug = fmt.Sprintf("%s-%s", ideaSlug, userIdSuffix)
+
 	idea := &domain.Idea{
 		UserID:         userId,
 		Title:          req.Title,
 		Description:    req.Description,
 		TargetAudience: req.TargetAudience,
+		Slug:           ideaSlug,
 	}
 
 	mvp := &domain.MVPSimulator{

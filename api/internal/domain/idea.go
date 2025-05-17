@@ -1,22 +1,16 @@
 package domain
 
 import (
-	"errors"
-
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
-var (
-	ErrInvalidIdeaTitle       = errors.New("invalid idea title")
-	ErrInvalidIdeaDescription = errors.New("invalid idea description")
-)
-
 type Idea struct {
 	Base
-	UserID         string `gorm:"not null;index" json:"userId"`
-	Title          string `gorm:"not null" json:"title"`
+	UserID         string `gorm:"not null;index;uniqueIndex:idx_user_idea_title" json:"userId"`
+	Title          string `gorm:"not null;uniqueIndex:idx_user_idea_title" json:"title"`
+	Slug           string `gorm:"not null;uniqueIndex;index" json:"slug"`
 	Description    string `gorm:"type:text;not null" json:"description"`
 	TargetAudience string `gorm:"not null" json:"targetAudience"`
 	Status         string `gorm:"not null;default:'active';index" json:"status"` // status defined in ./types.go file
