@@ -244,6 +244,7 @@ func (s *ideaService) getUserDashboardStats(ctx context.Context, userId string) 
 	now := time.Now()
 	currentMonthStart, currentMonthEnd, prevMonthStart, prevMonthEnd, _ := getTrendDateRanges(now)
 
+	var totalActiveIdeas int64
 	var currentTotalIdeas, prevMonthTotalIdeas int64
 	var currentActiveIdeas, prevMonthActiveIdeas int64
 	var currentMonthSignups, prevMonthSignups int64
@@ -254,6 +255,13 @@ func (s *ideaService) getUserDashboardStats(ctx context.Context, userId string) 
 	pageViewEventType := domain.EventTypePageView
 
 	g, gCtx := errgroup.WithContext(ctx)
+
+	// get active ideas count
+	g.Go(func() error {
+		var err error
+		totalActiveIdeas, err = s.repo.GetCountForUser(gCtx, userId, nil, nil, &activeStatus)
+		return err
+	})
 
 	// get total ideas count for this month
 	g.Go(func() error {
@@ -342,7 +350,7 @@ func (s *ideaService) getUserDashboardStats(ctx context.Context, userId string) 
 	totalIdeasChange := calculateTrendRatio(float64(currentTotalIdeas), float64(prevMonthTotalIdeas))
 
 	return &response.UserDashboardStats{
-		ActiveIdeas:       currentActiveIdeas,
+		ActiveIdeas:       totalActiveIdeas,
 		TotalSignups:      totalSignups,
 		TotalViews:        totalViews,
 		TotalIdeasChange:  totalIdeasChange,
