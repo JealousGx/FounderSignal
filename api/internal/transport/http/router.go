@@ -36,6 +36,8 @@ func registerProtectedRoutes(router *gin.RouterGroup, h *Handlers) {
 
 	router.GET("/", h.Dashboard.GetDashboardData)
 	router.GET("/recent-activity", h.Dashboard.GetRecentActivity)
+
+	router.GET("/audience", h.Dashboard.GetAudience)
 }
 
 func registerPublicRoutes(router *gin.RouterGroup, h *Handlers) {

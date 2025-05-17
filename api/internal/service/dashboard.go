@@ -20,6 +20,7 @@ type DashboardService interface {
 	GetDashboardData(ctx context.Context, userID string) (*response.DashboardResponse, error)
 	GetRecentActivityForUser(ctx context.Context, userId string) ([]response.ActivityItem, error)
 	GetIdea(ctx context.Context, id uuid.UUID, userId string, specs DashboardIdeaSpecs) (*response.DashboardIdeaResponse, error)
+	GetAudienceForFounder(ctx context.Context, founderId string, withStats bool, queryParams domain.QueryParams) (response.AudienceResponse, error)
 }
 
 type dashboardService struct {
@@ -159,6 +160,112 @@ func (s *dashboardService) GetIdea(ctx context.Context, id uuid.UUID, userId str
 	}, nil
 }
 
+func (s *dashboardService) GetAudienceForFounder(ctx context.Context, founderId string, withStats bool, queryParams domain.QueryParams) (response.AudienceResponse, error) {
+	audienceMembersDomain, total, err := s.audienceRepo.GetForFounder(ctx, founderId, queryParams)
+	if err != nil {
+		return response.AudienceResponse{}, err
+	}
+
+	audiencesDto := make([]*response.Audience, 0, len(audienceMembersDomain))
+	for _, am := range audienceMembersDomain {
+		audiencesDto = append(audiencesDto, &response.Audience{
+			UserID:     am.UserID,
+			IdeaID:     am.IdeaID,
+			IdeaTitle:  am.Idea.Title,
+			SignupTime: am.SignupTime.Format(time.RFC3339), // standard time format
+		})
+	}
+
+	audienceStats := &response.AudienceStats{}
+	var metrics []response.AudienceMetrics
+
+	if withStats {
+		_ideas := make(map[string]*domain.Idea)
+		for _, audience := range audienceMembersDomain {
+			_ideas[audience.IdeaID.String()] = nil
+		}
+
+		userIdeas, _, err := s.repo.GetIdeas(ctx, domain.QueryParams{}, repository.IdeaQuerySpec{
+			ByUserId:   founderId,
+			WithCounts: true,
+		})
+		if err != nil {
+			// This error is from fetching userIdeas, which is critical.
+			fmt.Printf("Failed to get dashboard prerequisites: %v\n", err)
+			return response.AudienceResponse{}, err
+		}
+
+		ideaTitlesMap := make(map[string]string)
+		signupsByIdeaTitle := make(map[string]int64)
+		for _, i := range userIdeas {
+			ideaTitlesMap[i.ID.String()] = i.Title
+
+			title := "Unknown Idea" // Default title
+			if i.Title != "" {
+				title = i.Title
+			}
+			signupsByIdeaTitle[title] = int64(i.Signups)
+		}
+
+		type tempIdeaMetric struct {
+			Name  string
+			Value int64
+		}
+		var allIdeaMetrics []tempIdeaMetric
+		for name, value := range signupsByIdeaTitle {
+			allIdeaMetrics = append(allIdeaMetrics, tempIdeaMetric{Name: name, Value: value})
+		}
+
+		sort.Slice(allIdeaMetrics, func(i, j int) bool {
+			return allIdeaMetrics[i].Value > allIdeaMetrics[j].Value
+		})
+
+		if len(allIdeaMetrics) <= 3 {
+			for _, m := range allIdeaMetrics {
+				metrics = append(metrics, response.AudienceMetrics{IdeaTitle: m.Name, Count: m.Value})
+			}
+		} else {
+			for i := 0; i < 3; i++ {
+				metrics = append(metrics, response.AudienceMetrics{IdeaTitle: allIdeaMetrics[i].Name, Count: allIdeaMetrics[i].Value})
+			}
+			otherIdeasSignups := int64(0)
+			for i := 3; i < len(allIdeaMetrics); i++ {
+				otherIdeasSignups += allIdeaMetrics[i].Value
+			}
+			if otherIdeasSignups > 0 {
+				metrics = append(metrics, response.AudienceMetrics{IdeaTitle: "Others", Count: otherIdeasSignups})
+			}
+		}
+
+		now := time.Now()
+		thirtyDaysAgo := now.AddDate(0, -1, 0)
+
+		// activity data for current and previous periods
+		currentPeriodIdeasWithActivity, err := s.repo.GetIdeasWithActivity(ctx, founderId, thirtyDaysAgo, now)
+		if err != nil {
+			return response.AudienceResponse{}, fmt.Errorf("failed to get current period ideas activity for stats: %w", err)
+		}
+
+		previousPeriodEnd := thirtyDaysAgo.Add(-time.Nanosecond)
+		duration := now.Sub(thirtyDaysAgo)
+		previousPeriodStart := thirtyDaysAgo.Add(-duration) // subtract the same duration for the previous period
+
+		previousPeriodIdeasWithActivity, err := s.repo.GetIdeasWithActivity(ctx, founderId, previousPeriodStart, previousPeriodEnd)
+		if err != nil {
+			return response.AudienceResponse{}, fmt.Errorf("failed to get previous period ideas activity for stats: %w", err)
+		}
+
+		audienceStats = s.getAudienceStats(userIdeas, total, currentPeriodIdeasWithActivity, previousPeriodIdeasWithActivity)
+	}
+
+	return response.AudienceResponse{
+		Audiences: audiencesDto,
+		Stats:     audienceStats,
+		Total:     total,
+		Metrics:   metrics,
+	}, nil
+}
+
 func (s *dashboardService) getAnalyticsMetrics(ctx context.Context, userID string, from, to time.Time, ideas []*domain.Idea) (response.Metrics, error) {
 	currentPeriodIdeas, err := s.repo.GetIdeasWithActivity(ctx, userID, from, to)
 	if err != nil {
@@ -166,100 +273,55 @@ func (s *dashboardService) getAnalyticsMetrics(ctx context.Context, userID strin
 	}
 
 	previousPeriodEnd := from.Add(-time.Nanosecond)
-	previousPeriodStart := from.AddDate(0, 0, -int(to.Sub(from).Hours()/24)) // Calculate duration of 'from'-'to' and subtract
+	previousPeriodStart := from.AddDate(0, 0, -int(to.Sub(from).Hours()/24))
 
 	previousPeriodIdeas, err := s.repo.GetIdeasWithActivity(ctx, userID, previousPeriodStart, previousPeriodEnd)
 	if err != nil {
 		return response.Metrics{}, err
 	}
 
-	var totalSignups, totalViews, ideasValidated int
-	var totalConversionRate float64
-	var currentGloballyValidatedIdeasCount int
 	var totalGlobalSignupsAcrossAllIdeas int64
-	ideasWithData := 0
-
 	for _, idea := range ideas {
 		totalGlobalSignupsAcrossAllIdeas += int64(idea.Signups)
-
-		if idea.TargetSignups > 0 && idea.Signups >= idea.TargetSignups {
-			currentGloballyValidatedIdeasCount++
-		}
 	}
 
-	for _, idea := range currentPeriodIdeas {
-		totalSignups += idea.Signups
-		totalViews += idea.Views
+	audienceStats := s.getAudienceStats(ideas, totalGlobalSignupsAcrossAllIdeas, currentPeriodIdeas, previousPeriodIdeas)
 
-		if idea.Signups >= idea.TargetSignups {
+	metrics := response.Metrics{
+		TotalSignups:     int(audienceStats.NewSubscribers),
+		SignupsChange:    audienceStats.NewSubscribersChange,
+		AvgConversion:    audienceStats.AverageConversionRate,
+		ConversionChange: audienceStats.ConversionRateChange,
+	}
+
+	var ideasValidated int
+	for _, idea := range currentPeriodIdeas {
+		if idea.TargetSignups > 0 && idea.Signups >= idea.TargetSignups {
 			ideasValidated++
 		}
-
-		if idea.Views > 0 {
-			totalConversionRate += float64(idea.Signups) / float64(idea.Views) * 100
-			ideasWithData++
-		}
 	}
+	metrics.IdeasValidated = ideasValidated
 
-	var prevTotalSignups, prevIdeasValidated int
-	var prevTotalConversionRate float64
-	prevIdeasWithData := 0
-
+	var prevIdeasValidated int
 	for _, idea := range previousPeriodIdeas {
-		prevTotalSignups += idea.Signups
-		if idea.Signups >= idea.TargetSignups {
+		if idea.TargetSignups > 0 && idea.Signups >= idea.TargetSignups {
 			prevIdeasValidated++
 		}
-		if idea.Views > 0 {
-			prevTotalConversionRate += float64(idea.Signups) / float64(idea.Views) * 100
-			prevIdeasWithData++
-		}
 	}
 
-	avgConversion := 0.0
-	if ideasWithData > 0 {
-		avgConversion = totalConversionRate / float64(ideasWithData)
-	}
-
-	prevAvgConversion := 0.0
-	if prevIdeasWithData > 0 {
-		prevAvgConversion = prevTotalConversionRate / float64(prevIdeasWithData)
-	}
-
-	signupsChange := 0.0
-	if prevTotalSignups > 0 {
-		signupsChange = (float64(totalSignups-prevTotalSignups) / float64(prevTotalSignups)) * 100
-	} else if totalSignups > 0 {
-		signupsChange = 100.0
-	}
-
-	conversionChange := 0.0
-	if prevAvgConversion > 0 {
-		conversionChange = (avgConversion - prevAvgConversion) / prevAvgConversion * 100
-	} else if avgConversion > 0 {
-		conversionChange = 100.0
-	}
-
-	ideasChange := 0.0
 	if prevIdeasValidated > 0 {
-		ideasChange = (float64(ideasValidated-prevIdeasValidated) / float64(prevIdeasValidated)) * 100
+		metrics.IdeasChange = (float64(ideasValidated-prevIdeasValidated) / float64(prevIdeasValidated)) * 100
 	} else if ideasValidated > 0 {
-		ideasChange = 100.0
+		metrics.IdeasChange = 100.0
+	} else {
+		metrics.IdeasChange = 0.0
 	}
 
-	var averageSignupsPerIdea float64
 	if len(ideas) > 0 {
-		averageSignupsPerIdea = float64(totalGlobalSignupsAcrossAllIdeas) / float64(len(ideas))
+		metrics.AverageSignupsPerIdea = float64(totalGlobalSignupsAcrossAllIdeas) / float64(len(ideas))
 	}
-	return response.Metrics{
-		TotalSignups:          totalSignups,
-		SignupsChange:         signupsChange,
-		AvgConversion:         avgConversion,
-		ConversionChange:      conversionChange,
-		IdeasValidated:        ideasValidated,
-		IdeasChange:           ideasChange,
-		AverageSignupsPerIdea: averageSignupsPerIdea,
-	}, nil
+
+	return metrics, nil
 }
 
 func (s *dashboardService) getRecentIdeas(ideas []*domain.Idea) ([]domain.Idea, error) {
@@ -396,6 +458,80 @@ func (s *dashboardService) getAnalyticsData(
 	}
 
 	return result, nil
+}
+
+func (s *dashboardService) getAudienceStats(
+	allUserIdeas []*domain.Idea,
+	totalGlobalSubscribers int64,
+	currentPeriodIdeasWithActivity []*response.IdeaWithActivity,
+	previousPeriodIdeasWithActivity []*response.IdeaWithActivity,
+) *response.AudienceStats {
+	stats := &response.AudienceStats{
+		TotalSubscribers: totalGlobalSubscribers,
+	}
+
+	var activeIdeas int64
+	var currentPeriodSignups int
+	var currentPeriodConversionRateSum float64
+	var currentPeriodIdeasWithViews int
+
+	for _, idea := range allUserIdeas {
+		if idea.Status == string(domain.IdeaStatusActive) {
+			activeIdeas++
+		}
+	}
+
+	stats.ActiveIdeas = activeIdeas
+
+	for _, idea := range currentPeriodIdeasWithActivity {
+		currentPeriodSignups += idea.Signups // signups within the current period
+		if idea.Views > 0 {
+			currentPeriodConversionRateSum += float64(idea.Signups) / float64(idea.Views) * 100
+			currentPeriodIdeasWithViews++
+		}
+	}
+	stats.NewSubscribers = int64(currentPeriodSignups)
+
+	if currentPeriodIdeasWithViews > 0 {
+		stats.AverageConversionRate = currentPeriodConversionRateSum / float64(currentPeriodIdeasWithViews)
+	}
+
+	var previousPeriodSignups int
+	var previousPeriodConversionRateSum float64
+	var previousPeriodIdeasWithViews int
+
+	for _, idea := range previousPeriodIdeasWithActivity {
+		previousPeriodSignups += idea.Signups // signups in the previous period
+		if idea.Views > 0 {
+			previousPeriodConversionRateSum += float64(idea.Signups) / float64(idea.Views) * 100
+			previousPeriodIdeasWithViews++
+		}
+	}
+
+	// calculate NewSubscribersChange
+	if previousPeriodSignups > 0 {
+		stats.NewSubscribersChange = (float64(currentPeriodSignups-previousPeriodSignups) / float64(previousPeriodSignups)) * 100
+	} else if currentPeriodSignups > 0 {
+		stats.NewSubscribersChange = 100.0
+	} else {
+		stats.NewSubscribersChange = 0.0
+	}
+
+	var previousAvgConversionRate float64
+	if previousPeriodIdeasWithViews > 0 {
+		previousAvgConversionRate = previousPeriodConversionRateSum / float64(previousPeriodIdeasWithViews)
+	}
+
+	// calculate ConversionRateChange
+	if previousAvgConversionRate > 0 {
+		stats.ConversionRateChange = (stats.AverageConversionRate - previousAvgConversionRate) / previousAvgConversionRate * 100
+	} else if stats.AverageConversionRate > 0 {
+		stats.ConversionRateChange = 100.0
+	} else {
+		stats.ConversionRateChange = 0.0
+	}
+
+	return stats
 }
 
 func (s *dashboardService) GetRecentActivityForUser(

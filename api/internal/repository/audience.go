@@ -11,6 +11,7 @@ import (
 )
 
 type AudienceRepository interface {
+	GetForFounder(ctx context.Context, founderId string, queryParams domain.QueryParams) ([]*domain.AudienceMember, int64, error)
 	Upsert(ctx context.Context, ideaID uuid.UUID, userID string) (*domain.AudienceMember, error)
 	GetByIdeaId(ctx context.Context, ideaId uuid.UUID) ([]*domain.AudienceMember, error)
 	GetSignupsByIdeaIds(ctx context.Context, ideaIds []uuid.UUID, from, to time.Time) (map[uuid.UUID]map[string]int, error)
@@ -25,6 +26,45 @@ type audienceRepository struct {
 
 func NewAudienceRepo(db *gorm.DB) *audienceRepository {
 	return &audienceRepository{db: db}
+}
+
+func (r *audienceRepository) GetForFounder(ctx context.Context, founderId string, queryParams domain.QueryParams) ([]*domain.AudienceMember, int64, error) {
+	var audienceMembers []*domain.AudienceMember
+
+	query := r.db.WithContext(ctx).
+		Model(&domain.AudienceMember{}).
+		Joins("JOIN ideas ON ideas.id = audience_members.idea_id").
+		Where("ideas.user_id = ?", founderId).
+		Preload("Idea")
+
+	if queryParams.FilterBy != "" {
+		query = query.Where("audience_members.idea_id = ?", queryParams.FilterBy)
+	}
+
+	var count int64
+	err := query.Count(&count).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	orderClause := "audience_members.signup_time DESC"
+	switch queryParams.SortBy {
+	case "newest":
+		orderClause = "audience_members.signup_time DESC"
+	case "oldest":
+		orderClause = "audience_members.signup_time ASC"
+	default:
+		// default already set;
+	}
+
+	query = paginateAndOrder(query, queryParams.Limit, queryParams.Offset, orderClause)
+
+	err = query.Find(&audienceMembers).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return audienceMembers, count, nil
 }
 
 func (r *audienceRepository) Upsert(ctx context.Context, ideaID uuid.UUID, userID string) (*domain.AudienceMember, error) {

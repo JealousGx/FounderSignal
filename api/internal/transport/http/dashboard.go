@@ -12,6 +12,7 @@ type DashboardHandler interface {
 	GetDashboardData(c *gin.Context)
 	GetRecentActivity(c *gin.Context)
 	GetIdea(c *gin.Context)
+	GetAudience(c *gin.Context)
 }
 
 type dashboardHandler struct {
@@ -74,6 +75,32 @@ func (h *dashboardHandler) GetIdea(c *gin.Context) {
 	}
 
 	data, err := h.service.GetIdea(c.Request.Context(), uuid.MustParse(ideaId), userIDStr, specs)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, data)
+}
+
+func (h *dashboardHandler) GetAudience(c *gin.Context) {
+	userID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userIDStr, ok := userID.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	queryParams := getProcessedQueryParams(c)
+
+	getStats := c.Query("getStats")
+
+	data, err := h.service.GetAudienceForFounder(c.Request.Context(), userIDStr, getStats == "true", queryParams)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
