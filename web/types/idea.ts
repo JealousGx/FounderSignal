@@ -4,6 +4,7 @@ export interface Idea {
   id: string;
   userId: string;
   title: string;
+  slug: string;
   description: string;
   targetAudience: string;
   status: "active" | "paused" | "completed" | "draft" | "archived";
