@@ -32,6 +32,7 @@ type Idea struct {
 	Feedback        []Feedback       `gorm:"foreignKey:IdeaID" json:"comments,omitempty"`
 	AudienceMembers []AudienceMember `gorm:"foreignKey:IdeaID" json:"audience,omitempty"`
 	Reactions       []IdeaReaction   `gorm:"foreignKey:IdeaID" json:"reactions,omitempty"`
+	Reports         []Report         `gorm:"foreignKey:IdeaID" json:"reports,omitempty"`
 }
 
 func (i *Idea) AfterFind(tx *gorm.DB) (err error) {
@@ -100,12 +101,13 @@ type Signal struct {
 // Feedback represents user feedback on an idea
 type Feedback struct {
 	Base
-	IdeaID   uuid.UUID  `gorm:"type:uuid;not null;index" json:"ideaId"`
-	UserID   string     `gorm:"not null;index" json:"userId"`
-	Comment  string     `gorm:"type:text" json:"comment"`
-	ParentID *uuid.UUID `gorm:"type:uuid;null;index" json:"parentId,omitempty"` // For nested replies
-	Likes    int        `gorm:"default:0" json:"likes"`
-	Dislikes int        `gorm:"default:0" json:"dislikes"`
+	IdeaID         uuid.UUID  `gorm:"type:uuid;not null;index" json:"ideaId"`
+	UserID         string     `gorm:"not null;index" json:"userId"`
+	Comment        string     `gorm:"type:text" json:"comment"`
+	SentimentScore float64    `gorm:"default:0.5" json:"sentimentScore"`              // Normalized score (e.g., 0.0 to 1.0)
+	ParentID       *uuid.UUID `gorm:"type:uuid;null;index" json:"parentId,omitempty"` // For nested replies
+	Likes          int        `gorm:"default:0" json:"likes"`
+	Dislikes       int        `gorm:"default:0" json:"dislikes"`
 
 	// Relationships
 	Idea      Idea               `gorm:"foreignKey:IdeaID" json:"-"`

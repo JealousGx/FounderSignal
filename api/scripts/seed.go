@@ -380,17 +380,20 @@ func generateFeedbacksAndTheirReactions(ideaID uuid.UUID, ideaCreatedAt time.Tim
 		currentFeedbackReactions, fbLikes, fbDislikes := generateSingleFeedbackReactions(feedbackID, feedbackCreatedAt, numFeedbackReactions)
 		allFeedbackReactions = append(allFeedbackReactions, currentFeedbackReactions...)
 
+		mainComment := randomElement(feedbackComments, "Great idea!", 100)
+
 		feedback := domain.Feedback{
 			Base: domain.Base{
 				ID:        feedbackID,
 				CreatedAt: feedbackCreatedAt,
 				UpdatedAt: randomRecentTime(feedbackCreatedAt, 10),
 			},
-			IdeaID:   ideaID,
-			UserID:   commenterID,
-			Comment:  randomElement(feedbackComments, "Great idea!", 100),
-			Likes:    fbLikes,
-			Dislikes: fbDislikes,
+			IdeaID:         ideaID,
+			UserID:         commenterID,
+			SentimentScore: calculateSentiment(mainComment),
+			Comment:        mainComment,
+			Likes:          fbLikes,
+			Dislikes:       fbDislikes,
 		}
 		allFeedbacks = append(allFeedbacks, feedback)
 
@@ -405,6 +408,8 @@ func generateFeedbacksAndTheirReactions(ideaID uuid.UUID, ideaCreatedAt time.Tim
 				currentReplyReactions, replyLikes, replyDislikes := generateSingleFeedbackReactions(replyID, replyCreatedAt, numReplyReactions)
 				allFeedbackReactions = append(allFeedbackReactions, currentReplyReactions...)
 
+				childComment := randomElement(feedbackComments, "I agree with this point!", 100)
+
 				parentID := feedback.ID
 				reply := domain.Feedback{
 					Base: domain.Base{
@@ -412,12 +417,13 @@ func generateFeedbacksAndTheirReactions(ideaID uuid.UUID, ideaCreatedAt time.Tim
 						CreatedAt: replyCreatedAt,
 						UpdatedAt: randomRecentTime(replyCreatedAt, 5),
 					},
-					IdeaID:   ideaID,
-					UserID:   replyCommenterID,
-					Comment:  "Reply: " + randomElement(feedbackComments, "Interesting point.", 100),
-					ParentID: &parentID,
-					Likes:    replyLikes,
-					Dislikes: replyDislikes,
+					IdeaID:         ideaID,
+					UserID:         replyCommenterID,
+					SentimentScore: calculateSentiment(childComment),
+					Comment:        childComment,
+					ParentID:       &parentID,
+					Likes:          replyLikes,
+					Dislikes:       replyDislikes,
 				}
 				allFeedbacks = append(allFeedbacks, reply)
 			}
@@ -679,4 +685,34 @@ func randomTrafficSource() string {
 		return "direct"
 	}
 	return trafficSourcePool[rand.Intn(len(trafficSourcePool))]
+}
+
+func calculateSentiment(comment string) float64 {
+	source := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(source)
+
+	lowerComment := strings.ToLower(comment)
+	positiveKeywords := []string{"great", "love", "excellent", "good", "amazing"}
+	negativeKeywords := []string{"bad", "terrible", "hate", "poor", "awful"}
+	score := 0.5 // Start neutral
+
+	for _, pk := range positiveKeywords {
+		if strings.Contains(lowerComment, pk) {
+			score += 0.1
+		}
+	}
+	for _, nk := range negativeKeywords {
+		if strings.Contains(lowerComment, nk) {
+			score -= 0.1
+		}
+	}
+	// Clamp score between 0.0 and 1.0
+	if score > 1.0 {
+		return 0.5 + r.Float64()*0.5
+	}
+	if score < 0.0 {
+		return r.Float64() * 0.49
+	}
+
+	return score
 }
