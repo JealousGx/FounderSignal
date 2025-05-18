@@ -9,6 +9,9 @@ import (
 	"foundersignal/internal/repository"
 	"foundersignal/internal/websocket"
 	"log"
+	"math/rand"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -16,6 +19,7 @@ import (
 type FeedbackService interface {
 	Add(ctx context.Context, parsedIdeaId uuid.UUID, parsedParentId *uuid.UUID, userId string, fb *request.CreateFeedback) (uuid.UUID, error)
 	GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string, queryParams domain.QueryParams) (*response.IdeaCommentResponse, error)
+	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID) (int64, error)
 }
 
 type fbService struct {
@@ -35,9 +39,10 @@ func NewFeedbackService(repo repository.FeedbackRepository, ideaRepo repository.
 
 func (s *fbService) Add(ctx context.Context, ideaId uuid.UUID, parsedParentId *uuid.UUID, userId string, req *request.CreateFeedback) (uuid.UUID, error) {
 	fb := &domain.Feedback{
-		IdeaID:  ideaId,
-		UserID:  userId,
-		Comment: req.Comment,
+		IdeaID:         ideaId,
+		UserID:         userId,
+		Comment:        req.Comment,
+		SentimentScore: calculateSentiment(req.Comment),
 	}
 
 	if parsedParentId != nil && *parsedParentId != uuid.Nil {
@@ -81,4 +86,44 @@ func (s *fbService) GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *str
 	comments := dto.FeedbackToIdeaComments(feedbacks, userId, total)
 
 	return comments, nil
+}
+
+func (s *fbService) GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID) (int64, error) {
+	count, err := s.repo.GetCountByIdeaId(ctx, ideaId)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+// example of a very naive keyword-based approach (for illustration only)
+func calculateSentiment(comment string) float64 {
+	source := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(source)
+
+	lowerComment := strings.ToLower(comment)
+	positiveKeywords := []string{"great", "love", "excellent", "good", "amazing"}
+	negativeKeywords := []string{"bad", "terrible", "hate", "poor", "awful"}
+	score := 0.5 // Start neutral
+
+	for _, pk := range positiveKeywords {
+		if strings.Contains(lowerComment, pk) {
+			score += 0.1
+		}
+	}
+	for _, nk := range negativeKeywords {
+		if strings.Contains(lowerComment, nk) {
+			score -= 0.1
+		}
+	}
+	// Clamp score between 0.0 and 1.0
+	if score > 1.0 {
+		return 0.5 + r.Float64()*0.5
+	}
+	if score < 0.0 {
+		return r.Float64() * 0.49
+	}
+
+	return score
 }
