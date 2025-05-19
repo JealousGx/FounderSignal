@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -9,22 +11,23 @@ type ReportType string
 
 // Report types
 const (
-	ReportTypeWeekly    ReportType = "Weekly"
-	ReportTypeMonthly   ReportType = "Monthly"
-	ReportTypeMilestone ReportType = "Milestone"
-	ReportTypeFinal     ReportType = "Final"
+	ReportTypeWeekly    ReportType = "weekly"
+	ReportTypeMonthly   ReportType = "monthly"
+	ReportTypeMilestone ReportType = "milestone"
+	ReportTypeFinal     ReportType = "final"
 )
 
 // Report represents a validation report for an idea
 type Report struct {
 	Base
 	IdeaID    uuid.UUID  `gorm:"type:uuid;not null;index" json:"ideaId"`
+	Date      time.Time  `gorm:"not null" json:"date"`
 	Type      ReportType `gorm:"type:varchar(20);not null;index" json:"type"`
-	Views     int        `gorm:"not null;default:0" json:"views"`
-	Signups   int        `gorm:"not null;default:0" json:"signups"`
+	Views     int64      `gorm:"not null;default:0" json:"views"`
+	Signups   int64      `gorm:"not null;default:0" json:"signups"`
 	Validated bool       `gorm:"not null;default:false;index" json:"validated"`
 	Sentiment float64    `gorm:"not null;default:0" json:"sentiment"`
 
 	// Relationships
-	Idea Idea `gorm:"foreignKey:IdeaID" json:"-"`
+	Idea Idea `gorm:"foreignKey:IdeaID;references:ID" json:"idea,omitempty"`
 }

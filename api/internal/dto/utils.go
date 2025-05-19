@@ -13,8 +13,8 @@ type sessionActivity struct {
 	hasInteraction bool
 }
 
-func calculateEngagementRate(views, signups int) float64 {
-	if signups == 0 {
+func CalculateConversionRate(views, signups int) float64 {
+	if views == 0 {
 		return 0
 	}
 

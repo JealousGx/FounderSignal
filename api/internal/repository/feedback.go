@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"foundersignal/internal/domain"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -14,6 +15,8 @@ type FeedbackRepository interface {
 	Add(ctx context.Context, feedback *domain.Feedback) (*domain.Feedback, error)
 	GetByIdea(ctx context.Context, ideaId uuid.UUID, queryParams *domain.QueryParams) ([]domain.Feedback, int64, error)
 	GetForUser(ctx context.Context, userId string, limit int) ([]domain.Feedback, error)
+	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID) (int64, error)
+	GetByIdeaWithTimeRange(ctx context.Context, ideaId uuid.UUID, startDate, endDate time.Time) ([]domain.Feedback, error)
 }
 
 type fbRepository struct {
@@ -117,6 +120,34 @@ func (r *fbRepository) GetForUser(ctx context.Context, userId string, limit int)
 
 	if err != nil {
 		fmt.Printf("Error fetching recent feedback by user ID %s: %v\n", userId, err)
+		return nil, err
+	}
+
+	return feedbacks, nil
+}
+
+func (r *fbRepository) GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&domain.Feedback{}).
+		Where("idea_id = ?", ideaId).
+		Count(&count).Error
+	if err != nil {
+		fmt.Printf("Error counting feedbacks for idea %s: %v\n", ideaId, err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *fbRepository) GetByIdeaWithTimeRange(ctx context.Context, ideaId uuid.UUID, startDate, endDate time.Time) ([]domain.Feedback, error) {
+	var feedbacks []domain.Feedback
+
+	err := r.db.WithContext(ctx).
+		Where("idea_id = ? AND created_at BETWEEN ? AND ?", ideaId, startDate, endDate).
+		Find(&feedbacks).Error
+	if err != nil {
+		fmt.Printf("Error fetching feedbacks for idea %s: %v\n", ideaId, err)
 		return nil, err
 	}
 

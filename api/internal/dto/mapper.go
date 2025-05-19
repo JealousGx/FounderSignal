@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"fmt"
 	"foundersignal/internal/domain"
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/dto/response"
@@ -26,8 +27,6 @@ func ToIdeasListResponse(ideas []*domain.Idea, count int64, stats *response.User
 	}
 
 	for _, idea := range ideas {
-		engagementRate := calculateEngagementRate(idea.Views, idea.Signups)
-
 		res.Ideas = append(res.Ideas, response.IdeaList{
 			ID:             idea.ID,
 			Title:          idea.Title,
@@ -39,7 +38,7 @@ func ToIdeasListResponse(ideas []*domain.Idea, count int64, stats *response.User
 			ImageURL:       idea.ImageURL,
 			Views:          idea.Views,
 			Signups:        idea.Signups,
-			EngagementRate: engagementRate,
+			EngagementRate: CalculateConversionRate(int(idea.Views), int(idea.Signups)),
 			CreatedAt:      idea.CreatedAt.Format("2006-01-02"),
 			UpdatedAt:      idea.UpdatedAt.Format("2006-01-02"),
 		})
@@ -56,8 +55,6 @@ func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUser
 	if idea == nil {
 		return nil
 	}
-
-	engagementRate := calculateEngagementRate(idea.Views, idea.Signups)
 
 	// Determine LikedByUser / DislikedByUser for the idea
 	var likedByUser, dislikedByUser bool
@@ -94,7 +91,7 @@ func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUser
 		CreatedAt:          idea.CreatedAt.Format(time.RFC3339),
 		Stage:              idea.Stage,
 		Status:             idea.Status,
-		EngagementRate:     engagementRate,
+		EngagementRate:     CalculateConversionRate(int(idea.Views), int(idea.Signups)),
 		Views:              idea.Views,
 		Likes:              idea.Likes,
 		Dislikes:           idea.Dislikes,
@@ -111,7 +108,7 @@ func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUser
 			ID:             relatedIdea.ID,
 			Title:          relatedIdea.Title,
 			Description:    relatedIdea.Description,
-			EngagementRate: calculateEngagementRate(relatedIdea.Views, relatedIdea.Signups),
+			EngagementRate: CalculateConversionRate(int(relatedIdea.Views), int(relatedIdea.Signups)),
 			ImageUrl:       relatedIdea.ImageURL,
 		})
 	}
@@ -131,6 +128,37 @@ func FeedbackToIdeaComments(feedbacks []domain.Feedback, requestingUserID *strin
 		Total:    totalComments,
 		Comments: mapFeedbackToIdeaComments(feedbacks, requestingUserID),
 	}
+}
+
+func ToReportListResponse(reports []domain.Report) response.ReportListResponse {
+	return response.ReportListResponse{
+		Reports: ToReportsResponse(reports),
+	}
+}
+
+func ToReportsResponse(reports []domain.Report) []response.ReportResponse {
+	var reportsResponse []response.ReportResponse
+	for _, report := range reports {
+		reportsResponse = append(reportsResponse, response.ReportResponse{
+			ID:              report.ID,
+			Date:            report.Date,
+			Type:            report.Type,
+			Views:           report.Views,
+			Signups:         report.Signups,
+			ConversionRate:  CalculateConversionRate(int(report.Views), int(report.Signups)),
+			Validated:       report.Validated,
+			Sentiment:       report.Sentiment,
+			CreatedAt:       report.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:       report.UpdatedAt.Format(time.RFC3339),
+			Recommendations: generateReportRecommendations(report),
+			Idea: response.ReportIdea{
+				ID:    report.Idea.ID,
+				Title: report.Idea.Title,
+			},
+		})
+	}
+
+	return reportsResponse
 }
 
 func mapFeedbackToIdeaComments(feedbacks []domain.Feedback, requestingUserID *string) []response.IdeaComment {
@@ -244,4 +272,113 @@ func flattenFeedbacks(nestedFeedbacks []domain.Feedback) []domain.Feedback {
 	}
 
 	return flatList
+}
+
+func generateReportRecommendations(report domain.Report) []string {
+	recommendations := []string{}
+
+	lowConversionThreshold := 10.0
+	criticalConversionThreshold := 5.0
+	decentViewsThreshold := int64(50)
+	lowSignupsThreshold := int64(20)
+
+	goodConversionThreshold := 15.0
+	lowViewsForGoodConversion := int64(100)
+	lowSentimentThreshold := 0.6
+	criticalSentimentThreshold := 0.4
+
+	sufficientSignupsForSentiment := int64(10)
+	minimalSignupsForCriticalSentiment := int64(5)
+
+	targetSignupsForValidation := int64(report.Idea.TargetSignups)
+
+	conversionRate := CalculateConversionRate(int(report.Views), int(report.Signups))
+
+	// rule: low conversion rate
+	if conversionRate < criticalConversionThreshold && report.Views > decentViewsThreshold {
+		recommendations = append(recommendations, fmt.Sprintf(
+			"Critically low conversion rate (%.1f%%) despite good views. Urgently A/B test your landing page headline, call-to-action, or value proposition.",
+			conversionRate,
+		))
+	} else if conversionRate < lowConversionThreshold && report.Views > decentViewsThreshold {
+		recommendations = append(recommendations, fmt.Sprintf(
+			"Conversion rate (%.1f%%) is low. Consider simplifying the signup form or clarifying your offer.",
+			conversionRate,
+		))
+	} else if conversionRate < lowConversionThreshold && report.Views <= decentViewsThreshold && report.Views > 0 {
+		recommendations = append(recommendations, fmt.Sprintf(
+			"Both views and conversion rate (%.1f%%) are low. Focus on increasing targeted traffic first, then optimize for conversions.",
+			conversionRate,
+		))
+	}
+
+	// rule: low signups despite good views (implies low views)
+	if report.Signups < lowSignupsThreshold && conversionRate > goodConversionThreshold && report.Views < lowViewsForGoodConversion {
+		recommendations = append(recommendations, fmt.Sprintf(
+			"Good conversion rate (%.1f%%), but low total signups. Aim to increase visitor traffic to your page.",
+			conversionRate,
+		))
+	}
+
+	// rule: low sentiment
+	if report.Sentiment < criticalSentimentThreshold && report.Signups >= minimalSignupsForCriticalSentiment {
+		recommendations = append(recommendations, fmt.Sprintf(
+			"User sentiment (%.1f%%) is critically low. Prioritize reviewing and addressing user feedback immediately.",
+			report.Sentiment*100,
+		))
+	} else if report.Sentiment < lowSentimentThreshold && report.Signups >= sufficientSignupsForSentiment {
+		recommendations = append(recommendations, fmt.Sprintf(
+			"User sentiment (%.1f%%) is low. Dig into feedback to understand concerns and improve user experience.",
+			report.Sentiment*100,
+		))
+	}
+
+	// rule: validated but sentiment could be improved
+	if report.Validated && report.Sentiment >= lowSentimentThreshold && report.Sentiment < 0.75 {
+		recommendations = append(recommendations, fmt.Sprintf(
+			"Congrats on validation! To boost user satisfaction, consider addressing feedback to improve sentiment from its current level of %.1f%%.",
+			report.Sentiment*100,
+		))
+	}
+
+	// rule: not validated
+	if !report.Validated {
+		if conversionRate < lowConversionThreshold && report.Signups < targetSignupsForValidation {
+			recommendations = append(recommendations, "Idea not yet validated. Focus on improving conversion and increasing signups. Experiment with messaging or target audiences.")
+		} else if report.Signups < targetSignupsForValidation {
+			recommendations = append(recommendations, "Validation is close but signups are below target. Explore new marketing channels or refine existing ones to get more users.")
+		}
+	}
+
+	// rule: general advice based on report type
+	switch report.Type {
+	case domain.ReportTypeWeekly:
+		if len(recommendations) < 2 {
+			recommendations = append(recommendations, "For this weekly report, identify one key metric to improve for next week. Small, consistent improvements add up.")
+		}
+	case domain.ReportTypeMonthly:
+		if len(recommendations) < 2 {
+			recommendations = append(recommendations, "Review monthly trends. Are key metrics consistently improving? Plan your next month's focus based on these insights.")
+		}
+	}
+
+	// fallback / generic recommendations if few or no specific rules met
+	if len(recommendations) == 0 {
+		recommendations = append(recommendations,
+			"Deeply analyze your report data to uncover specific areas for improvement or opportunities.",
+		)
+		recommendations = append(recommendations,
+			"Consider running a small survey with your existing signups to gather direct qualitative feedback.",
+		)
+	} else if len(recommendations) == 1 {
+		recommendations = append(recommendations,
+			"Continue monitoring user feedback for ongoing insights.",
+		)
+	}
+
+	if len(recommendations) > 2 {
+		return recommendations[:2]
+	}
+
+	return recommendations
 }

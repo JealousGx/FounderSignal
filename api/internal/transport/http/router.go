@@ -38,6 +38,10 @@ func registerProtectedRoutes(router *gin.RouterGroup, h *Handlers) {
 	router.GET("/recent-activity", h.Dashboard.GetRecentActivity)
 
 	router.GET("/audience", h.Dashboard.GetAudience)
+
+	router.POST("/reports/generate", h.Report.GenerateReport)
+	router.GET("/reports", h.Report.GetReportsList)
+	// router.GET("/reports/:reportId", h.Report.GetReportDetails)
 }
 
 func registerPublicRoutes(router *gin.RouterGroup, h *Handlers) {

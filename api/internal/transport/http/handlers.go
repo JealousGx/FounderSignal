@@ -17,6 +17,7 @@ type Handlers struct {
 	Reaction  ReactionHandler
 	MVP       MVPHandler
 	Signal    SignalHandler
+	Report    ReportHandler
 	Dashboard DashboardHandler
 }
 
@@ -27,6 +28,7 @@ func NewHandlers(services *service.Services) *Handlers {
 		Reaction:  NewReactionHandler(services.Reaction),
 		MVP:       NewMVPHandler(services.MVP),
 		Signal:    NewSignalHandler(services.Idea),
+		Report:    NewReportHandler(services.Report),
 		Dashboard: NewDashboardHandler(services.Dashboard),
 	}
 }

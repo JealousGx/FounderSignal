@@ -11,6 +11,7 @@ type Repositories struct {
 	Feedback FeedbackRepository
 	Reaction ReactionRepository
 	MVP      MVPRepository
+	Report   ReportRepository
 }
 
 func NewRepositories(db *gorm.DB) *Repositories {
@@ -21,16 +22,11 @@ func NewRepositories(db *gorm.DB) *Repositories {
 		Feedback: NewFeedbackRepo(db),
 		Reaction: NewReactionRepo(db),
 		MVP:      NewMVPRepo(db),
+		Report:   NewReportRepository(db),
 	}
 }
 
 type QueryOption func(*gorm.DB) *gorm.DB
-
-func selectFields(fields []string) func(db *gorm.DB) *gorm.DB {
-	return func(db *gorm.DB) *gorm.DB {
-		return db.Select(fields)
-	}
-}
 
 func paginateAndOrder(query *gorm.DB, limit, offset int, order string) *gorm.DB {
 	if limit > 0 {
