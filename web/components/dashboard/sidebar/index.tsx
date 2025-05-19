@@ -1,11 +1,11 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { SignOutButton } from "@clerk/nextjs";
+import { LogOut, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { LogOut, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { SignOutButton } from "@clerk/nextjs";
 import { NavItems } from "./navi-items";
 
 export default function DashboardSidebar() {
@@ -30,28 +30,35 @@ export default function DashboardSidebar() {
 
       <div className="flex-1 overflow-y-auto">
         <nav className="space-y-1 px-3">
-          {NavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center px-3 py-2 text-sm rounded-md group transition-colors",
-                pathname === item.href
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-gray-700 hover:bg-gray-100"
-              )}
-            >
-              <item.icon
+          {NavItems.map((item) => {
+            const isActive =
+              item.href === "/dashboard"
+                ? pathname === item.href
+                : pathname.startsWith(item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
                 className={cn(
-                  "w-5 h-5 mr-3",
-                  pathname === item.href
-                    ? "text-primary"
-                    : "text-gray-500 group-hover:text-gray-700"
+                  "flex items-center px-3 py-2 text-sm rounded-md group transition-colors",
+                  isActive
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
                 )}
-              />
-              {item.name}
-            </Link>
-          ))}
+              >
+                <item.icon
+                  className={cn(
+                    "w-5 h-5 mr-3",
+                    isActive
+                      ? "text-primary"
+                      : "text-gray-500 group-hover:text-gray-700"
+                  )}
+                />
+                {item.name}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 

@@ -1,10 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Menu, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -12,6 +7,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { Menu, Plus, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { NavItems } from "./navi-items";
 
 export default function MobileDashboardNav() {
@@ -55,29 +55,36 @@ export default function MobileDashboardNav() {
               </div>
 
               <nav className="space-y-1 px-2 py-3 flex-1">
-                {NavItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center px-3 py-3 text-sm rounded-md group transition-colors",
-                      pathname === item.href
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    )}
-                    onClick={() => setOpen(false)}
-                  >
-                    <item.icon
+                {NavItems.map((item) => {
+                  const isActive =
+                    item.href === "/dashboard"
+                      ? pathname === item.href
+                      : pathname.startsWith(item.href);
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
                       className={cn(
-                        "w-5 h-5 mr-3",
-                        pathname === item.href
-                          ? "text-primary"
-                          : "text-gray-500 group-hover:text-gray-700"
+                        "flex items-center px-3 py-3 text-sm rounded-md group transition-colors",
+                        isActive
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "text-gray-700 hover:bg-gray-100"
                       )}
-                    />
-                    {item.name}
-                  </Link>
-                ))}
+                      onClick={() => setOpen(false)}
+                    >
+                      <item.icon
+                        className={cn(
+                          "w-5 h-5 mr-3",
+                          isActive
+                            ? "text-primary"
+                            : "text-gray-500 group-hover:text-gray-700"
+                        )}
+                      />
+                      {item.name}
+                    </Link>
+                  );
+                })}
               </nav>
 
               <div className="px-2 py-4 mt-auto border-t border-gray-200">
