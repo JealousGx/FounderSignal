@@ -1,65 +1,60 @@
 "use client";
 
 import {
+  ArrowRight,
+  MousePointerClick,
+  Target,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+import { Badge } from "@/components/ui/badge";
+import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts";
-import { formatDate } from "@/lib/utils";
-import {
-  ArrowRight,
-  TrendingUp,
-  Users,
-  MousePointerClick,
-  Target,
-} from "lucide-react";
 import { Link } from "@/components/ui/link";
+
+import { formatDate } from "@/lib/utils";
 import { Report } from "@/types/report";
 
 interface InsightsSectionProps {
-  reports: Report[];
+  recentInsights: Report[];
+  successData: {
+    name: string;
+    value: number;
+  }[];
+  conversionData: {
+    id: string;
+    title: string;
+    value: number;
+  }[];
+  totalReports: number;
 }
 
-export default function InsightsSection({ reports }: InsightsSectionProps) {
-  // Process reports data for charts
-  const conversionData = reports
-    .map((report) => ({
-      name: formatShortTitle(report.idea?.title as string),
-      value: report.conversionRate,
-      id: report.ideaId,
-      fullTitle: report.idea?.title,
-    }))
-    .sort((a, b) => b.value - a.value);
-
-  const successData = [
-    { name: "Validated", value: reports.filter((r) => r.validated).length },
-    {
-      name: "Not Validated",
-      value: reports.filter((r) => !r.validated).length,
-    },
-  ];
-
+export default function InsightsSection({
+  recentInsights,
+  successData,
+  conversionData,
+  totalReports,
+}: InsightsSectionProps) {
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
-
-  const recentInsights = reports
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -95,10 +90,13 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                   <CartesianGrid strokeDasharray="3 3" />
 
                   <XAxis
-                    dataKey="name"
+                    dataKey="title"
                     angle={-45}
                     textAnchor="end"
                     height={70}
+                    tickFormatter={(tick) =>
+                      tick.length > 15 ? `${tick.substring(0, 15)}...` : tick
+                    }
                   />
 
                   <YAxis
@@ -113,7 +111,7 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                   <Tooltip
                     formatter={(value) => [`${value}%`, "Conversion Rate"]}
                     labelFormatter={(label, data) =>
-                      data[0]?.payload?.fullTitle || label
+                      data[0]?.payload?.title || label
                     }
                   />
 
@@ -148,7 +146,7 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
           </CardHeader>
 
           <CardContent className="flex flex-col items-center">
-            <div className="h-64">
+            <div className="h-64 block w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -179,7 +177,7 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                         <text
                           x={x}
                           y={y}
-                          fill="white"
+                          fill="#000"
                           textAnchor={x > cx ? "start" : "end"}
                           dominantBaseline="central"
                           fontSize={12}
@@ -189,10 +187,12 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                       );
                     }}
                   >
-                    {successData.map((entry, index) => (
+                    {successData.map((entry) => (
                       <Cell
-                        key={`cell-${index}`}
-                        fill={index === 0 ? "#22c55e" : "#94a3b8"}
+                        key={`cell-${entry.name}`}
+                        fill={
+                          entry.name === "Validated" ? "#22c55e" : "#94a3b8"
+                        }
                       />
                     ))}
                   </Pie>
@@ -206,7 +206,7 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
 
             <div className="text-center mt-4">
               <p className="text-sm text-muted-foreground">
-                Based on {reports.length} validation reports
+                Based on {totalReports} validation reports
               </p>
             </div>
           </CardContent>
@@ -241,7 +241,7 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h3 className="font-medium text-base mb-1">
+                        <h3 className="font-medium text-base mb-1 capitalize">
                           {getInsightTitle(insight)}
                         </h3>
 
@@ -253,7 +253,9 @@ export default function InsightsSection({ reports }: InsightsSectionProps) {
 
                       <Badge
                         variant="outline"
-                        className={getInsightBadgeColor(insight)}
+                        className={`${getInsightBadgeColor(
+                          insight
+                        )} capitalize`}
                       >
                         {insight.type} Report
                       </Badge>
@@ -374,8 +376,4 @@ function generateInsightDescription(insight: Partial<Report>) {
     default:
       return `This report contains important metrics and insights about your idea's performance, including ${insight.signups} total signups and a ${insight.conversionRate}% conversion rate.`;
   }
-}
-
-function formatShortTitle(title: string) {
-  return title.length > 12 ? title.substring(0, 12) + "..." : title;
 }

@@ -5,7 +5,7 @@ export interface Report {
   ideaId: string;
   idea?: Partial<Idea>;
   date: string;
-  type: "Weekly" | "Monthly" | "Milestone" | "Final";
+  type: ReportType;
   views: number;
   signups: number;
   conversionRate: number;
@@ -14,3 +14,5 @@ export interface Report {
   createdAt: string;
   updatedAt: string;
 }
+
+export type ReportType = "weekly" | "monthly" | "milestone" | "final";

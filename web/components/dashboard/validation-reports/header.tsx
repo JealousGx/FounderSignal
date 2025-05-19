@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Download, FileText } from "lucide-react";
+import GenerateReports from "../reports/generate";
 
 interface PageHeaderProps {
   reportsCount: number;
@@ -15,11 +16,12 @@ export default function PageHeader({ reportsCount }: PageHeaderProps) {
         </h1>
 
         <p className="text-muted-foreground">
-          {reportsCount} reports across your validation projects
+          {reportsCount} report(s) across your validation projects
         </p>
       </div>
 
       <div className="flex gap-2">
+        <GenerateReports />
         <Button variant="outline">
           <Download className="mr-2 h-4 w-4" />
           Export Reports

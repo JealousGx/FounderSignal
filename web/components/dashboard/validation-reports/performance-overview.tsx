@@ -7,32 +7,36 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowUpRight, Users, MousePointerClick, ThumbsUp } from "lucide-react";
-import { Report } from "@/types/report";
 import { CircularProgressIndicator } from "@/components/ui/circular-progress-indicator";
+import { ArrowUpRight, MousePointerClick, ThumbsUp, Users } from "lucide-react";
 
 interface PerformanceOverviewProps {
-  reports: Report[];
+  overview: {
+    totalSignups: number;
+    totalViews: number;
+    avgSentiment: number;
+    totalSignupsChange: number;
+    totalViewsChange: number;
+    avgSentimentChange: number;
+    successRate: number;
+    totalReports: number;
+  };
+  totalReports: number;
 }
 
 export default function PerformanceOverview({
-  reports,
+  overview,
 }: PerformanceOverviewProps) {
-  // Calculate overall metrics across all reports
-  const totalSignups = reports.reduce((sum, report) => sum + report.signups, 0);
-  const totalViews = reports.reduce((sum, report) => sum + report.views, 0);
-  const avgSentiment =
-    reports.length > 0
-      ? reports.reduce((sum, report) => sum + report.sentiment, 0) /
-        reports.length
-      : 0;
-
-  // Percentage of reports with positive validation outcomes
-  const successRate =
-    reports.length > 0
-      ? (reports.filter((r) => r.validated).length / reports.length) * 100
-      : 0;
-
+  const {
+    totalReports,
+    totalSignups,
+    totalViews,
+    avgSentiment,
+    successRate,
+    totalSignupsChange,
+    totalViewsChange,
+    avgSentimentChange,
+  } = overview;
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <Card>
@@ -55,7 +59,7 @@ export default function PerformanceOverview({
           </div>
 
           <p className="text-xs text-muted-foreground text-center mt-2">
-            Based on {reports.length} total reports
+            Based on {totalReports} total reports
           </p>
         </CardContent>
       </Card>
@@ -64,7 +68,7 @@ export default function PerformanceOverview({
         title="Total Signups"
         description="Across all campaigns"
         value={totalSignups}
-        trend={12}
+        trend={totalSignupsChange}
         icon={<Users className="h-4 w-4" />}
         color="green"
       />
@@ -73,7 +77,7 @@ export default function PerformanceOverview({
         title="Page Views"
         description="Landing page impressions"
         value={totalViews}
-        trend={8}
+        trend={totalViewsChange}
         icon={<MousePointerClick className="h-4 w-4" />}
         color="blue"
       />
@@ -82,7 +86,7 @@ export default function PerformanceOverview({
         title="Average Sentiment"
         description="User feedback rating"
         value={`${(avgSentiment * 100).toFixed(0)}%`}
-        trend={3}
+        trend={avgSentimentChange}
         icon={<ThumbsUp className="h-4 w-4" />}
         color="amber"
       />

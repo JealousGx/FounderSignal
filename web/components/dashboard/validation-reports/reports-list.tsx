@@ -1,7 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { ChevronDown, Download, ExternalLink, Search } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Link as CustomLink } from "@/components/ui/link";
 import {
   Table,
   TableBody,
@@ -10,39 +30,96 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Link as CustomLink } from "@/components/ui/link";
-import { ChevronDown, Search, Download, ExternalLink } from "lucide-react";
-import { formatDate } from "@/lib/utils";
-import { Report } from "@/types/report";
+
+import { getReports } from "@/app/dashboard/reports/get-reports";
+import { Pagination } from "@/components/ui/pagination";
+import { cn, formatDate } from "@/lib/utils";
+import { Report, ReportType } from "@/types/report";
 
 interface ReportsListProps {
   reports: Report[];
+  totalReports: number;
+  itemsPerPage: number;
 }
 
-export default function ReportsList({ reports }: ReportsListProps) {
+export default function ReportsList({
+  reports: initialReports,
+  totalReports: _totalReports,
+  itemsPerPage,
+}: ReportsListProps) {
+  const [reports, setReports] = useState(initialReports);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalReports, setTotalReports] = useState(_totalReports);
+
+  const totalPages = Math.ceil(totalReports / itemsPerPage);
+
+  const fetchReports = async ({
+    page,
+    pageSize,
+    sortBy,
+    filterBy,
+  }: {
+    page: number;
+    pageSize: number;
+    sortBy?: string;
+    filterBy?: string;
+  }) => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const offset = (page - 1) * pageSize;
+      const result = await getReports(false, {
+        limit: pageSize,
+        offset,
+        sortBy,
+        filterBy,
+      });
+
+      if (!result) {
+        setReports([]);
+        setTotalReports(0);
+      }
+
+      if (result && "reports" in result && Array.isArray(result.reports)) {
+        setReports(result.reports);
+      }
+      if ("total" in result) {
+        setTotalReports(result.total);
+      }
+
+      if (typeof result.total !== "number") {
+        setTotalReports(0);
+      }
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      setReports([]);
+      setTotalReports(0);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchReports({
+      page,
+      pageSize: itemsPerPage,
+    });
+  };
 
   const filteredReports = reports.filter(
     (report) =>
       report.idea?.title!.toLowerCase().includes(searchQuery.toLowerCase()) ||
       report.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  useEffect(() => {
+    setReports(initialReports);
+    setTotalReports(_totalReports);
+  }, [initialReports, _totalReports]);
 
   return (
     <Card>
@@ -110,11 +187,20 @@ export default function ReportsList({ reports }: ReportsListProps) {
             </TableHeader>
 
             <TableBody>
-              {filteredReports.length === 0 ? (
+              {isLoading ? (
                 <TableRow>
                   <TableCell
                     colSpan={6}
-                    className="text-center py-8 text-muted-foreground"
+                    className="text-center py-8 text-muted-foreground h-[490px]"
+                  >
+                    Loading reports...
+                  </TableCell>
+                </TableRow>
+              ) : filteredReports.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-8 text-muted-foreground h-[490px]"
                   >
                     {searchQuery
                       ? "No reports match your search"
@@ -171,26 +257,30 @@ export default function ReportsList({ reports }: ReportsListProps) {
           </Table>
         </div>
       </CardContent>
+
+      <CardFooter>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      </CardFooter>
     </Card>
   );
 }
 
-function ReportTypeBadge({
-  type,
-}: {
-  type: "Weekly" | "Monthly" | "Milestone" | "Final";
-}) {
+function ReportTypeBadge({ type }: { type: ReportType }) {
   const colors = {
-    Weekly: "bg-blue-100 text-blue-800",
-    Monthly: "bg-purple-100 text-purple-800",
-    Milestone: "bg-green-100 text-green-800",
-    Final: "bg-amber-100 text-amber-800",
+    weekly: "bg-blue-100 text-blue-800",
+    monthly: "bg-purple-100 text-purple-800",
+    milestone: "bg-green-100 text-green-800",
+    final: "bg-amber-100 text-amber-800",
   };
 
   return (
     <Badge
       variant="outline"
-      className={colors[type] || "bg-gray-100 text-gray-800"}
+      className={cn(colors[type] || "bg-gray-100 text-gray-800", "capitalize")}
     >
       {type}
     </Badge>

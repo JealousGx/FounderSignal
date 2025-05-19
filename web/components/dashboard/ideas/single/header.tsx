@@ -1,5 +1,7 @@
-import { Link } from "@/components/ui/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
+
+import { Link } from "@/components/ui/link";
+import GenerateReports from "../../reports/generate";
 interface IdeaHeaderProps {
   ideaId: string;
 }
@@ -23,6 +25,9 @@ export default function IdeaHeader({ ideaId }: IdeaHeaderProps) {
         >
           Edit Idea
         </Link>
+
+        <GenerateReports ideaId={ideaId} triggerSize="sm" />
+
         <Link href={`/mvp/${ideaId}`} target="_blank" size="sm">
           <ExternalLink className="h-4 w-4 mr-1" />
           View Landing Page

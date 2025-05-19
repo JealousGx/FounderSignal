@@ -1,5 +1,3 @@
-import { AnalyticsDataPoint } from "./analytics";
-
 export interface Idea {
   id: string;
   userId: string;
@@ -30,16 +28,9 @@ export interface LandingPage {
   ctaButtonText: string;
 }
 
-export interface IdeaAnalytics {
-  ideaId: string;
-  idea: Partial<Idea>;
-  timeframe: "day" | "week" | "month" | "year";
-  startDate: string;
-  endDate: string;
-  dataPoints: AnalyticsDataPoint[];
-  totals: {
-    views: number;
-    signups: number;
-    averageConversionRate: number;
-  };
-}
+export type IdeaStatus =
+  | "active"
+  | "paused"
+  | "completed"
+  | "draft"
+  | "archived";
