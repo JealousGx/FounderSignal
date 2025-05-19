@@ -21,9 +21,6 @@ type IdeaRepository interface {
 	GetByIds(ctx context.Context, ids []uuid.UUID) ([]*domain.Idea, error)
 	GetIdeasWithActivity(ctx context.Context, userID string, from, to time.Time, options ...QueryOption) ([]*response.IdeaWithActivity, error)
 	GetCountForUser(ctx context.Context, userId string, start, end *time.Time, status *domain.IdeaStatus) (int64, error)
-
-	// utils
-	VerifyIdeaOwner(ctx context.Context, ideaID uuid.UUID, userID string) (bool, error)
 }
 
 type IdeaQuerySpec struct {
@@ -249,23 +246,6 @@ func (r *ideaRepository) GetCountForUser(ctx context.Context, userId string, sta
 	}
 
 	return count, nil
-}
-
-func (r *ideaRepository) VerifyIdeaOwner(ctx context.Context, ideaID uuid.UUID, userID string) (bool, error) {
-	var idea domain.Idea
-
-	err := r.db.WithContext(ctx).
-		Select("user_id").
-		First(&idea, "id = ?", ideaID).Error
-
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return false, nil
-		}
-		return false, err
-	}
-
-	return idea.UserID == userID, nil
 }
 
 func (r *ideaRepository) getRelatedIdeas(ctx context.Context, idea domain.Idea) []*domain.Idea {
