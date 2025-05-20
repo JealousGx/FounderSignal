@@ -64,6 +64,11 @@ export default function Ideas({
     fetchIdeas(1, newPageSize);
   };
 
+  useEffect(() => {
+    setIdeas(initialIdeas ?? []);
+    setTotalItems(initialTotalCount ?? 0);
+  }, [initialIdeas, initialTotalCount]);
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
