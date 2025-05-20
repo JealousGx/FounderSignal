@@ -1,32 +1,39 @@
 "use client";
 
 import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { Report } from "@/types/report";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
 
 interface ReportOverviewProps {
   report: Report;
+  overview: {
+    date: string;
+    views: number;
+    signups: number;
+  }[];
 }
 
-export default function ReportOverview({ report }: ReportOverviewProps) {
-  // Generate sample data for the past 14 days
-  const chartData = generateTimelineData(report);
-
+export default function ReportOverview({
+  report,
+  overview,
+}: ReportOverviewProps) {
   return (
     <Card>
       <CardHeader>
@@ -39,7 +46,7 @@ export default function ReportOverview({ report }: ReportOverviewProps) {
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
-              data={chartData}
+              data={overview}
               margin={{
                 top: 5,
                 right: 30,
@@ -91,50 +98,4 @@ export default function ReportOverview({ report }: ReportOverviewProps) {
       </CardContent>
     </Card>
   );
-}
-
-function generateTimelineData(report: Report) {
-  // For demo purposes, we'll generate daily data leading up to the report date
-  const reportDate = new Date(report.date);
-  const data = [];
-
-  // Generate data for 14 days before the report date
-  for (let i = 13; i >= 0; i--) {
-    const date = new Date(reportDate);
-    date.setDate(date.getDate() - i);
-
-    // For a realistic pattern:
-    // - views gradually increase
-    // - signups follow with some delay
-    // - ensure final day matches the report's totals
-
-    const dayFactor = i === 0 ? 1 : (14 - i) / 14;
-    const randomFactor = 0.7 + Math.random() * 0.6;
-
-    let viewsForDay, signupsForDay;
-
-    if (i === 0) {
-      // Last day should match the report totals
-      const previousViews = data.reduce((sum, d) => sum + d.views, 0);
-      const previousSignups = data.reduce((sum, d) => sum + d.signups, 0);
-      viewsForDay = Math.max(1, report.views - previousViews);
-      signupsForDay = Math.max(0, report.signups - previousSignups);
-    } else {
-      viewsForDay = Math.round((report.views / 20) * dayFactor * randomFactor);
-      signupsForDay = Math.round(
-        (report.signups / 25) * dayFactor * randomFactor
-      );
-    }
-
-    data.push({
-      date: date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      views: viewsForDay,
-      signups: signupsForDay,
-    });
-  }
-
-  return data;
 }

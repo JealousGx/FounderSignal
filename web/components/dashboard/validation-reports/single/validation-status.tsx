@@ -1,3 +1,6 @@
+import { CheckIcon, XIcon } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -5,41 +8,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { CircularProgressIndicator } from "@/components/ui/circular-progress-indicator";
-import { CheckIcon, XIcon } from "lucide-react";
+
 import { Report } from "@/types/report";
 
 interface ValidationStatusProps {
   report: Report;
+  thresholds: {
+    signups: number;
+    conversionRate: number;
+  };
 }
 
-export default function ValidationStatus({ report }: ValidationStatusProps) {
-  // Define validation thresholds based on report type
-  const getValidationThresholds = () => {
-    switch (report.type) {
-      case "Milestone":
-        return { signups: 100, conversionRate: 30 };
-      case "Final":
-        return { signups: 250, conversionRate: 35 };
-      default:
-        return { signups: 50, conversionRate: 25 };
-    }
-  };
+export default function ValidationStatus({
+  report,
+  thresholds,
+}: ValidationStatusProps) {
+  const signupsPercentage = (report.signups / thresholds.signups) * 100;
+  const conversionPercentage =
+    (report.conversionRate / thresholds.conversionRate) * 100;
 
-  const thresholds = getValidationThresholds();
-
-  // Calculate validation percentages
-  const signupsPercentage = Math.min(
-    100,
-    Math.round((report.signups / thresholds.signups) * 100)
-  );
-  const conversionPercentage = Math.min(
-    100,
-    Math.round((report.conversionRate / thresholds.conversionRate) * 100)
-  );
-
-  // Overall validation status
   const isValidated = report.validated;
 
   return (
@@ -83,7 +71,8 @@ export default function ValidationStatus({ report }: ValidationStatusProps) {
               <p className="text-sm font-medium">Signups</p>
 
               <p className="text-xs text-muted-foreground">
-                {report.signups} / {thresholds.signups} target
+                {report.signups.toLocaleString()} /{" "}
+                {thresholds.signups.toLocaleString()} target
               </p>
             </div>
           </div>
@@ -100,7 +89,8 @@ export default function ValidationStatus({ report }: ValidationStatusProps) {
               <p className="text-sm font-medium">Conversion</p>
 
               <p className="text-xs text-muted-foreground">
-                {report.conversionRate}% / {thresholds.conversionRate}% target
+                {report.conversionRate.toFixed(2)}% /{" "}
+                {thresholds.conversionRate.toFixed(2)}% target
               </p>
             </div>
           </div>
@@ -117,7 +107,10 @@ export default function ValidationStatus({ report }: ValidationStatusProps) {
             isValidated={report.conversionRate >= thresholds.conversionRate}
           />
 
-          <ValidationItem text="Data collection complete" isValidated={true} />
+          <ValidationItem
+            text="Data collection complete for this report"
+            isValidated={report.signups >= thresholds.signups}
+          />
         </div>
       </CardContent>
     </Card>

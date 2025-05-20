@@ -40,40 +40,48 @@ export default async function ValidationReportsPage() {
         />
       </Suspense>
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="all">All Reports</TabsTrigger>
-          <TabsTrigger value="insights">Key Insights</TabsTrigger>
-          <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
-        </TabsList>
+      {data && data.reports?.length > 0 ? (
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="all">All Reports</TabsTrigger>
+            <TabsTrigger value="insights">Key Insights</TabsTrigger>
+            <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="all" className="space-y-4">
-          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-            <ReportsList
-              reports={data.reports}
-              itemsPerPage={REPORTS_PER_PAGE}
-              totalReports={data.total}
-            />
-          </Suspense>
-        </TabsContent>
+          <TabsContent value="all" className="space-y-4">
+            <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+              <ReportsList
+                reports={data.reports}
+                itemsPerPage={REPORTS_PER_PAGE}
+                totalReports={data.total}
+              />
+            </Suspense>
+          </TabsContent>
 
-        <TabsContent value="insights" className="space-y-6">
-          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-            <InsightsSection
-              recentInsights={data.recentInsights}
-              successData={data.successData}
-              conversionData={data.conversionData}
-              totalReports={data.total}
-            />
-          </Suspense>
-        </TabsContent>
+          <TabsContent value="insights" className="space-y-6">
+            <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+              <InsightsSection
+                recentInsights={data.recentInsights}
+                successData={data.successData}
+                conversionData={data.conversionData}
+                totalReports={data.total}
+              />
+            </Suspense>
+          </TabsContent>
 
-        <TabsContent value="recommendations" className="space-y-6">
-          <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-            <RecommendationsSection reports={data.reports} />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="recommendations" className="space-y-6">
+            <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+              <RecommendationsSection reports={data.reports} />
+            </Suspense>
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <div className="flex items-center justify-center h-96">
+          <p className="text-gray-500">
+            No reports available. Generate some insights to see reports here.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

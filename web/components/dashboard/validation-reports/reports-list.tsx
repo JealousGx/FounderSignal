@@ -4,6 +4,7 @@ import { ChevronDown, Download, ExternalLink, Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { getReports } from "@/app/dashboard/reports/get-reports";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Link as CustomLink } from "@/components/ui/link";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -31,8 +33,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { getReports } from "@/app/dashboard/reports/get-reports";
-import { Pagination } from "@/components/ui/pagination";
 import { cn, formatDate } from "@/lib/utils";
 import { Report, ReportType } from "@/types/report";
 

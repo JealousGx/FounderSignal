@@ -1,30 +1,27 @@
 import {
+  ArrowUpRight,
+  CheckSquare,
+  ChevronRight,
+  Lightbulb,
+} from "lucide-react";
+
+import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  ChevronRight,
-  Lightbulb,
-  ArrowUpRight,
-  CheckSquare,
-  PlusCircle,
-} from "lucide-react";
 import { Link } from "@/components/ui/link";
+
 import { Report } from "@/types/report";
 
 interface ActionItemsProps {
   report: Report;
+  insights: string[];
 }
 
-export default function ActionItems({ report }: ActionItemsProps) {
-  // Generate insights based on report data
-  const insights = generateInsights(report);
-
-  // Generate action items based on the report data
+export default function ActionItems({ report, insights }: ActionItemsProps) {
   const actionItems = generateActionItems(report);
 
   return (
@@ -77,7 +74,7 @@ export default function ActionItems({ report }: ActionItemsProps) {
                 </Link>
               </li>
             ))}
-            <li>
+            {/* <li>
               <Button
                 variant="ghost"
                 className="w-full justify-start text-left text-muted-foreground"
@@ -86,49 +83,12 @@ export default function ActionItems({ report }: ActionItemsProps) {
 
                 <span>Create custom action</span>
               </Button>
-            </li>
+            </li> */}
           </ul>
         </div>
       </CardContent>
     </Card>
   );
-}
-
-function generateInsights(report: Report) {
-  const insights = [];
-
-  // Conversion rate insights
-  if (report.conversionRate > 40) {
-    insights.push(
-      "Your conversion rate is exceptionally high compared to the industry average"
-    );
-  } else if (report.conversionRate < 20) {
-    insights.push(
-      "Your conversion rate is below average and might need improvement"
-    );
-  }
-
-  // Signup growth insights
-  if (report.signups > 200) {
-    insights.push(
-      "You've reached a significant number of signups, suggesting strong market interest"
-    );
-  } else if (report.signups < 50) {
-    insights.push("The current signup count is relatively low for this stage");
-  }
-
-  // Add insight about validation status
-  if (report.validated) {
-    insights.push(
-      "This idea has met all validation criteria and is ready to advance to the next stage"
-    );
-  } else {
-    insights.push(
-      "Additional validation is needed before moving to the next stage"
-    );
-  }
-
-  return insights;
 }
 
 function generateActionItems(report: Report) {
@@ -140,7 +100,6 @@ function generateActionItems(report: Report) {
     link: `/dashboard/ideas/${report.ideaId}/edit`,
   });
 
-  // Add conditional actions based on the report data
   if (report.conversionRate < 25) {
     items.push({
       text: "Improve your value proposition",

@@ -9,6 +9,7 @@ export interface Report {
   views: number;
   signups: number;
   conversionRate: number;
+  engagementRate: number;
   validated: boolean;
   sentiment: number;
   createdAt: string;

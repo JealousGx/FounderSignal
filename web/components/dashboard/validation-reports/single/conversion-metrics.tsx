@@ -1,6 +1,16 @@
 "use client";
 
 import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+import {
   Card,
   CardContent,
   CardDescription,
@@ -8,36 +18,28 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+
 import { Report } from "@/types/report";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 
 interface ConversionMetricsProps {
   report: Report;
 }
 
 export default function ConversionMetrics({ report }: ConversionMetricsProps) {
-  // Generate sample funnel data
   const funnelData = [
     { name: "Views", value: report.views },
-    { name: "Engaged", value: Math.round(report.views * 0.6) },
+    { name: "Engaged", value: report.engagementRate },
     { name: "Signups", value: report.signups },
   ];
 
-  // Calculate conversion rates
-  const viewToEngagedRate = Math.round(
-    (funnelData[1].value / funnelData[0].value) * 100
-  );
-  const engagedToSignupRate = Math.round(
-    (funnelData[2].value / funnelData[1].value) * 100
-  );
+  const viewToEngagedRate =
+    report.views > 0
+      ? Math.round((funnelData[1].value / funnelData[0].value) * 100)
+      : 0;
+  const engagedToSignupRate =
+    funnelData[1].value > 0
+      ? Math.round((funnelData[2].value / funnelData[1].value) * 100)
+      : 0;
   const overallConversionRate = report.conversionRate;
 
   return (

@@ -1,8 +1,10 @@
-import { Link } from "@/components/ui/link";
-import { CalendarIcon, FileDown, ExternalLink } from "lucide-react";
+import { CalendarIcon, ExternalLink, FileDown } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Link } from "@/components/ui/link";
+
 import { formatDate } from "@/lib/utils";
 import { Report } from "@/types/report";
 
@@ -11,16 +13,15 @@ interface ReportHeaderProps {
 }
 
 export default function ReportHeader({ report }: ReportHeaderProps) {
-  // Define badge colors based on report type
   const getBadgeColor = () => {
     switch (report.type) {
-      case "Weekly":
+      case "weekly":
         return "bg-blue-100 text-blue-800 border-blue-200";
-      case "Monthly":
+      case "monthly":
         return "bg-purple-100 text-purple-800 border-purple-200";
-      case "Milestone":
+      case "milestone":
         return "bg-green-100 text-green-800 border-green-200";
-      case "Final":
+      case "final":
         return "bg-amber-100 text-amber-800 border-amber-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -33,7 +34,10 @@ export default function ReportHeader({ report }: ReportHeaderProps) {
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className={getBadgeColor()}>
+              <Badge
+                variant="outline"
+                className={`${getBadgeColor()} capitalize`}
+              >
                 {report.type} Report
               </Badge>
 
@@ -49,7 +53,7 @@ export default function ReportHeader({ report }: ReportHeaderProps) {
 
           <div className="flex flex-wrap gap-2">
             <Link
-              href={`/dashboard/ideas/${report.ideaId}`}
+              href={`/dashboard/ideas/${report.idea?.id}`}
               variant="outline"
               size="sm"
             >

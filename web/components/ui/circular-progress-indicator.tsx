@@ -62,7 +62,7 @@ export function CircularProgressIndicator({
         fontWeight="bold"
         fill="#1e293b"
       >
-        {percentage}%
+        {percentage.toFixed(2)}%
       </text>
     </svg>
   );
