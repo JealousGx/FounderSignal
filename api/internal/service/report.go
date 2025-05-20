@@ -126,11 +126,29 @@ func (s *reportService) GenerateReport(ctx context.Context, userId string, idea 
 	var startDate time.Time
 	var endDate time.Time = date
 
+	var lastReport *domain.Report
+	var err error
+
+	if reportType == domain.ReportTypeWeekly || reportType == domain.ReportTypeMonthly {
+		lastReport, err = s.repo.GetLatest(ctx, idea.ID, &reportType)
+		if err != nil {
+			fmt.Println("Error fetching last report:", err)
+		}
+	}
+
 	switch reportType {
 	case domain.ReportTypeWeekly:
-		startDate = date.AddDate(0, 0, -7)
+		if lastReport != nil {
+			startDate = lastReport.Date // from the date of the last report
+		} else {
+			startDate = date.AddDate(0, 0, -7)
+		}
 	case domain.ReportTypeMonthly:
-		startDate = date.AddDate(0, -1, 0)
+		if lastReport != nil {
+			startDate = lastReport.Date // from the date of the last report
+		} else {
+			startDate = date.AddDate(0, -1, 0)
+		}
 	case domain.ReportTypeMilestone:
 		// For milestone reports, use the last 2 weeks
 		startDate = date.AddDate(0, 0, -14)
@@ -139,6 +157,10 @@ func (s *reportService) GenerateReport(ctx context.Context, userId string, idea 
 		startDate = idea.CreatedAt
 	default:
 		return nil, errors.New("invalid report type")
+	}
+
+	if startDate.After(endDate) {
+		return nil, errors.New("too soon to generate report for this idea")
 	}
 
 	// Check if a similar report was already generated recently
