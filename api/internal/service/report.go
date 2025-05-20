@@ -169,12 +169,11 @@ func (s *reportService) GenerateReport(ctx context.Context, userId string, idea 
 		conversionRate = (float64(analytics.Signups) / float64(analytics.Views)) * 100
 	}
 
-	isValidated := s.isReportValidated(report, conversionRate, idea.TargetSignups)
-	report.Validated = isValidated
-
+	report.Validated = s.isReportValidated(report, conversionRate, idea.TargetSignups)
 	report.Views = analytics.Views
 	report.Signups = analytics.Signups
 	report.Sentiment = analytics.Sentiment
+	report.EngagementRate = analytics.EngagementRate
 
 	if err := s.repo.Create(ctx, report); err != nil {
 		return nil, err

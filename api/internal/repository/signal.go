@@ -17,6 +17,7 @@ type SignalRepository interface {
 	GetByIdeaId(ctx context.Context, ideaId uuid.UUID, userId *string, eventType *domain.EventType) ([]*domain.Signal, error)
 	GetCountForIdeaOwner(ctx context.Context, ideaOwnerId string, specs SignalQuerySpecs) (int64, error)
 	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID, eventType *domain.EventType, start, end *time.Time, fields []string) (int64, error)
+	GetByIdeaWithTimeRange(ctx context.Context, ideaId uuid.UUID, startDate, endDate time.Time) ([]domain.Signal, error)
 }
 
 type signalRepository struct {
@@ -173,4 +174,19 @@ func (r *signalRepository) GetCountForIdeaOwner(ctx context.Context, ideaOwnerId
 	}
 
 	return count, nil
+}
+
+func (r *signalRepository) GetByIdeaWithTimeRange(ctx context.Context, ideaId uuid.UUID, startDate, endDate time.Time) ([]domain.Signal, error) {
+	var signals []domain.Signal
+
+	err := r.db.WithContext(ctx).
+		Where("idea_id = ? AND created_at BETWEEN ? AND ?", ideaId, startDate, endDate).
+		Order("signals.created_at ASC").
+		Find(&signals).Error
+	if err != nil {
+		fmt.Printf("Error fetching signals for idea %s: %v\n", ideaId, err)
+		return nil, err
+	}
+
+	return signals, nil
 }

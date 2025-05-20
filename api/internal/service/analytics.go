@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"foundersignal/internal/domain"
 	"foundersignal/internal/dto/response"
@@ -12,14 +13,15 @@ import (
 )
 
 type AnalyticsData struct {
-	Views     int64
-	Signups   int64
-	Sentiment float64
+	Views          int64
+	Signups        int64
+	Sentiment      float64
+	EngagementRate float64
 }
 
 type AnalyticsService interface {
 	GetIdeaReportAnalytics(ctx context.Context, ideaID uuid.UUID, startDate, endDate time.Time) (*AnalyticsData, error)
-	GetReportsOverview(ctx context.Context, userId string, reports []domain.Report) (*response.ReportsOverview, []response.ReportsSuccessData, error)
+	GetReportsOverview(ctx context.Context, userId string, reports []domain.Report) (*response.ReportsOverview, []response.NameValueData, error)
 }
 
 type analyticsService struct {
@@ -41,11 +43,85 @@ func NewAnalyticsService(ideaRepository repository.IdeaRepository, signalRepo re
 }
 
 func (s *analyticsService) GetIdeaReportAnalytics(ctx context.Context, ideaID uuid.UUID, startDate, endDate time.Time) (*AnalyticsData, error) {
-	// Fetch signal data for the time period
-	eventType := domain.EventTypePageView
-	views, err := s.signalRepo.GetCountByIdeaId(ctx, ideaID, &eventType, &startDate, &endDate, nil)
+	allSignals, err := s.signalRepo.GetByIdeaWithTimeRange(ctx, ideaID, startDate, endDate)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch signals: %w", err)
+		return nil, fmt.Errorf("failed to fetch signals for analytics: %w", err)
+	}
+
+	var pageViewsCount int64
+
+	type sessionActivity struct {
+		hasPageview    bool
+		hasInteraction bool
+	}
+	sessions := make(map[string]*sessionActivity)
+
+	for _, signal := range allSignals {
+		if signal.EventType == string(domain.EventTypePageView) {
+			pageViewsCount++
+		}
+
+		var sessionKey string
+		if signal.UserID != "" {
+			sessionKey = signal.UserID
+		} else {
+			sessionKey = "anon_" + signal.IPAddress + "_" + signal.UserAgent
+		}
+
+		if _, ok := sessions[sessionKey]; !ok {
+			sessions[sessionKey] = &sessionActivity{}
+		}
+		currentSessionActivity := sessions[sessionKey]
+
+		isInteractionEvent := false
+		switch signal.EventType {
+		case string(domain.EventTypePageView):
+			currentSessionActivity.hasPageview = true
+		case string(domain.EventTypeClick):
+			isInteractionEvent = true
+		case string(domain.EventTypeScroll):
+			var meta struct {
+				Percentage int `json:"percentage"`
+			}
+			if signal.Metadata != nil {
+				if err := json.Unmarshal(signal.Metadata, &meta); err == nil {
+					if meta.Percentage > 10 { // lets assume user-interaction if scrolled more than 10%
+						isInteractionEvent = true
+					}
+				}
+			}
+		case string(domain.EventTypeTimeOnPage):
+			var meta struct {
+				DurationSeconds int `json:"duration_seconds"`
+			}
+			if signal.Metadata != nil {
+				if err := json.Unmarshal(signal.Metadata, &meta); err == nil {
+					if meta.DurationSeconds > 5 { // lets assume user-interaction if time on page > 5 seconds
+						isInteractionEvent = true
+					}
+				}
+			}
+		}
+
+		if isInteractionEvent {
+			currentSessionActivity.hasInteraction = true
+		}
+	}
+
+	var totalSessionsWithPageview int
+	var engagedSessionsCount int
+	for _, activity := range sessions {
+		if activity.hasPageview {
+			totalSessionsWithPageview++
+			if activity.hasInteraction {
+				engagedSessionsCount++
+			}
+		}
+	}
+
+	var engagementRate float64
+	if totalSessionsWithPageview > 0 {
+		engagementRate = (float64(engagedSessionsCount) / float64(totalSessionsWithPageview)) * 100.0
 	}
 
 	// Fetch signup count for the time period
@@ -71,13 +147,14 @@ func (s *analyticsService) GetIdeaReportAnalytics(ctx context.Context, ideaID uu
 	}
 
 	return &AnalyticsData{
-		Views:     views,
-		Signups:   signups,
-		Sentiment: sentiment,
+		Views:          pageViewsCount,
+		Signups:        signups,
+		Sentiment:      sentiment,
+		EngagementRate: engagementRate,
 	}, nil
 }
 
-func (s *analyticsService) GetReportsOverview(ctx context.Context, userId string, reports []domain.Report) (*response.ReportsOverview, []response.ReportsSuccessData, error) {
+func (s *analyticsService) GetReportsOverview(ctx context.Context, userId string, reports []domain.Report) (*response.ReportsOverview, []response.NameValueData, error) {
 	total := int64(len(reports))
 
 	now := time.Now()
@@ -143,7 +220,7 @@ func (s *analyticsService) GetReportsOverview(ctx context.Context, userId string
 	avgSentimentChange := calculatePercentageChange(avgSentimentCurrentMonth, avgSentimentPreviousMonth)
 
 	totalNotValidated := total - totalValidatedAllTime
-	successData := []response.ReportsSuccessData{
+	successData := []response.NameValueData{
 		{
 			Name:  "Validated",
 			Total: totalValidatedAllTime,
