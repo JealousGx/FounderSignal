@@ -1,0 +1,176 @@
+name: Check Author Information
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-web-author:
+    name: Check Author in web/package.json
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Get author from PR branch package.json
+        id: pr_author
+        run: |
+          FILE_PATH="web/package.json"
+          OUTPUT_VAR_NAME="author_json_pr"
+          if [ ! -f "$FILE_PATH" ]; then
+            echo "$FILE_PATH not found in PR branch."
+            echo "$OUTPUT_VAR_NAME=__FILE_NOT_FOUND__" >> $GITHUB_OUTPUT
+          elif ! jq -e '.author' "$FILE_PATH" > /dev/null 2>&1; then
+            echo ".author field missing in $FILE_PATH in PR branch."
+            echo "$OUTPUT_VAR_NAME=__AUTHOR_FIELD_MISSING__" >> $GITHUB_OUTPUT
+          else
+            author_json=$(jq -c '.author' "$FILE_PATH")
+            echo "$OUTPUT_VAR_NAME=$author_json" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout base branch code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base_checkout
+
+      - name: Get author from base branch package.json
+        id: base_author
+        run: |
+          FILE_PATH="base_checkout/web/package.json"
+          OUTPUT_VAR_NAME="author_json_base"
+          if [ ! -f "$FILE_PATH" ]; then
+            echo "$FILE_PATH not found in base branch."
+            echo "$OUTPUT_VAR_NAME=__FILE_NOT_FOUND__" >> $GITHUB_OUTPUT
+          elif ! jq -e '.author' "$FILE_PATH" > /dev/null 2>&1; then
+            echo ".author field missing in $FILE_PATH in base branch."
+            echo "$OUTPUT_VAR_NAME=__AUTHOR_FIELD_MISSING__" >> $GITHUB_OUTPUT
+          else
+            author_json=$(jq -c '.author' "$FILE_PATH")
+            echo "$OUTPUT_VAR_NAME=$author_json" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Compare authors in web/package.json
+        run: |
+          PR_AUTHOR_VAL="${{ steps.pr_author.outputs.author_json_pr }}"
+          BASE_AUTHOR_VAL="${{ steps.base_author.outputs.author_json_base }}"
+
+          echo "PR Author JSON: $PR_AUTHOR_VAL"
+          echo "Base Author JSON: $BASE_AUTHOR_VAL"
+
+          # Determine if base author info is established (not missing and not 'null')
+          BASE_IS_ESTABLISHED=false
+          if [ "$BASE_AUTHOR_VAL" != "__FILE_NOT_FOUND__" ] && \
+             [ "$BASE_AUTHOR_VAL" != "__AUTHOR_FIELD_MISSING__" ] && \
+             [ "$BASE_AUTHOR_VAL" != "null" ]; then
+            BASE_IS_ESTABLISHED=true
+          fi
+
+          if [ "$BASE_IS_ESTABLISHED" = "true" ]; then
+            # Base author info exists and is valid, PR must match exactly
+            if [ "$PR_AUTHOR_VAL" != "$BASE_AUTHOR_VAL" ]; then
+              echo "Error: Author in web/package.json has been changed or removed."
+              echo "Original (Base): $BASE_AUTHOR_VAL"
+              echo "New (PR): $PR_AUTHOR_VAL"
+              echo "This change is not allowed."
+              exit 1
+            fi
+          else
+            # Base author info is not established (file missing, field missing, or .author is null).
+            # PR can establish it. If PR also doesn't establish it, that's fine too.
+            # No failure condition here, as we only restrict changes to *existing* established author info.
+            PR_IS_ESTABLISHED=false
+            if [ "$PR_AUTHOR_VAL" != "__FILE_NOT_FOUND__" ] && \
+               [ "$PR_AUTHOR_VAL" != "__AUTHOR_FIELD_MISSING__" ] && \
+               [ "$PR_AUTHOR_VAL" != "null" ]; then
+              PR_IS_ESTABLISHED=true
+            fi
+
+            if [ "$PR_IS_ESTABLISHED" = "true" ]; then
+                echo "Author info is being established in web/package.json. This is allowed."
+            else
+                echo "No established author info in base, and PR is not establishing it either. This is allowed."
+            fi
+          fi
+          echo "Author in web/package.json check passed."
+
+  check-api-author:
+    name: Check Author in api/AUTHOR.txt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Get author from PR branch api/AUTHOR.txt
+        id: pr_api_author_content
+        run: |
+          if [ -f api/AUTHOR.txt ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            # Read content, ensuring it's properly escaped for multiline
+            content=$(cat api/AUTHOR.txt)
+            delimiter=$(openssl rand -hex 8)
+            echo "content<<$delimiter" >> $GITHUB_OUTPUT
+            echo "$content" >> $GITHUB_OUTPUT
+            echo "$delimiter" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "content=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout base branch code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base_checkout
+
+      - name: Get author from base branch api/AUTHOR.txt
+        id: base_api_author_content
+        run: |
+          if [ -f base_checkout/api/AUTHOR.txt ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            content=$(cat base_checkout/api/AUTHOR.txt)
+            delimiter=$(openssl rand -hex 8)
+            echo "content<<$delimiter" >> $GITHUB_OUTPUT
+            echo "$content" >> $GITHUB_OUTPUT
+            echo "$delimiter" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "content=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Compare API authors
+        env:
+          PR_API_CONTENT: "${{ steps.pr_api_author_content.outputs.content }}"
+          BASE_API_CONTENT: "${{ steps.base_api_author_content.outputs.content }}"
+        run: |
+          PR_EXISTS=${{ steps.pr_api_author_content.outputs.exists }}
+          BASE_EXISTS=${{ steps.base_api_author_content.outputs.exists }}
+
+          echo "PR api/AUTHOR.txt exists: $PR_EXISTS"
+          echo "Base api/AUTHOR.txt exists: $BASE_EXISTS"
+          # To prevent issues with echo and special characters, compare directly
+          # echo "PR Content: $PR_API_CONTENT"
+          # echo "Base Content: $BASE_API_CONTENT"
+
+          if [ "$BASE_EXISTS" = "true" ]; then
+            # Base file exists. PR must also exist and match content.
+            if [ "$PR_EXISTS" = "false" ]; then
+              echo "Error: api/AUTHOR.txt was deleted. This is not allowed."
+              exit 1
+            # Using printf for safer comparison of potentially multi-line content
+            elif ! cmp -s <(printf "%s" "$PR_API_CONTENT") <(printf "%s" "$BASE_API_CONTENT"); then
+              echo "Error: Author in api/AUTHOR.txt has been changed. This is not allowed."
+              echo "Differences detected. Original (Base) vs New (PR):"
+              diff <(printf "%s" "$BASE_API_CONTENT") <(printf "%s" "$PR_API_CONTENT") || true # Show diff, ignore diff's exit code
+              exit 1
+            fi
+          elif [ "$PR_EXISTS" = "true" ]; then # And BASE_EXISTS is false
+            # Base file does not exist, but PR file does (initial creation)
+            echo "api/AUTHOR.txt is being created. This is allowed."
+          fi
+          echo "Author in api/AUTHOR.txt check passed."

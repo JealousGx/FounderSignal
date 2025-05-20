@@ -1,0 +1,3 @@
+Name: JealousGx
+Github URL: https://github.com/JealousGx
+URL: https://jealous.dev
