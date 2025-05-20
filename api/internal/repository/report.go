@@ -12,7 +12,7 @@ import (
 
 type ReportRepository interface {
 	Create(ctx context.Context, report *domain.Report) error
-	GetLatest(ctx context.Context, ideaID uuid.UUID, reportType *domain.ReportType) (*domain.Report, error)
+	GetLatest(ctx context.Context, ideaID uuid.UUID, reportType *domain.ReportType, exclude *uuid.UUID) (*domain.Report, error)
 	GetForUser(ctx context.Context, userID string, queryParams domain.QueryParams) ([]domain.Report, int64, error)
 	GetByID(ctx context.Context, reportID uuid.UUID) (*domain.Report, error)
 	GetForIdea(ctx context.Context, ideaID uuid.UUID) ([]domain.Report, error)
@@ -32,10 +32,10 @@ func (r *reportRepository) Create(ctx context.Context, report *domain.Report) er
 	return r.db.WithContext(ctx).Create(report).Error
 }
 
-func (r *reportRepository) GetLatest(ctx context.Context, ideaID uuid.UUID, reportType *domain.ReportType) (*domain.Report, error) {
+func (r *reportRepository) GetLatest(ctx context.Context, ideaID uuid.UUID, reportType *domain.ReportType, exclude *uuid.UUID) (*domain.Report, error) {
 	var report domain.Report
 	err := r.db.WithContext(ctx).
-		Where("idea_id = ? AND type = ?", ideaID, reportType).
+		Where("idea_id = ? AND type = ? AND id != ?", ideaID, reportType, exclude).
 		Order("date DESC").
 		First(&report).Error
 	if err != nil {

@@ -18,7 +18,7 @@ func CalculateConversionRate(views, signups int) float64 {
 		return 0
 	}
 
-	return math.Round((float64(signups)/float64(views))*100) / 100
+	return math.Round((float64(signups) / float64(views)) * 100)
 }
 
 func calculateIdeaStats(signals []domain.Signal, signups int) response.PublicIdeaStats {

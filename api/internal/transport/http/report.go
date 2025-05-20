@@ -14,7 +14,7 @@ import (
 type ReportHandler interface {
 	GenerateReport(c *gin.Context)
 	GetReportsList(c *gin.Context)
-	GetReportDetails(c *gin.Context)
+	GetByID(c *gin.Context)
 }
 
 type reportHandler struct {
@@ -110,24 +110,24 @@ func (h *reportHandler) GetReportsList(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *reportHandler) GetReportDetails(c *gin.Context) {
-	// reportId := c.Param("reportId")
-	// if reportId == "" {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Report ID is required"})
-	// 	return
-	// }
+func (h *reportHandler) GetByID(c *gin.Context) {
+	reportId := c.Param("reportId")
+	if reportId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Report ID is required"})
+		return
+	}
 
-	// parsedReportId, err := uuid.Parse(reportId)
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid report ID"})
-	// 	return
-	// }
+	parsedReportId, err := uuid.Parse(reportId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid report ID"})
+		return
+	}
 
-	// userId, exists := c.Get("userId")
-	// if !exists {
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
-	// 	return
-	// }
+	_, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
 
 	// userIdStr, ok := userId.(string)
 	// if !ok {
@@ -135,16 +135,16 @@ func (h *reportHandler) GetReportDetails(c *gin.Context) {
 	// 	return
 	// }
 
-	// report, err := h.service.GetReportDetails(c.Request.Context(), parsedReportId, userIdStr)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
+	res, err := h.service.GetByID(c.Request.Context(), parsedReportId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-	// if report == nil {
-	// 	c.JSON(http.StatusNotFound, gin.H{"error": "Report not found"})
-	// 	return
-	// }
+	if res == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Report not found"})
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{"report": "report details"}) // Placeholder for actual report details
+	c.JSON(http.StatusOK, res)
 }

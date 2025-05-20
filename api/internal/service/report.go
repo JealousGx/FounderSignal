@@ -17,8 +17,8 @@ import (
 type ReportService interface {
 	GenerateReports(ctx context.Context, userId string, req request.GenerateReportRequest) error
 	GetReportsList(ctx context.Context, userID string, queryParams domain.QueryParams, specs ReportSpecs) (*response.ReportListResponse, error)
-	// GetReportByID(ctx context.Context, reportID uuid.UUID) (*domain.Report, error)
-	// GetReportsForIdea(ctx context.Context, ideaID uuid.UUID) ([]domain.Report, error)
+	GetByID(ctx context.Context, reportId uuid.UUID) (*response.ReportPageResponse, error)
+	// GetReportsForIdea(ctx context.Context, ideaID uuid.UUID) ([]domain.Report, error) // to be implemented later
 }
 
 type ReportSpecs struct {
@@ -88,11 +88,13 @@ func (s *reportService) GetReportsList(ctx context.Context, userID string, query
 	if specs.WithStats {
 		reports, _, err := s.repo.GetAll(ctx, userID)
 		if err != nil {
+			fmt.Println("Error fetching all reports:", err)
 			return nil, fmt.Errorf("failed to fetch reports: %w", err)
 		}
 
 		overview, successData, err := s.analytics.GetReportsOverview(ctx, userID, reports)
 		if err != nil {
+			fmt.Println("Error calculating analytics for the reports:", err)
 			return nil, fmt.Errorf("failed to fetch reports overview: %w", err)
 		}
 
@@ -101,7 +103,7 @@ func (s *reportService) GetReportsList(ctx context.Context, userID string, query
 
 			conversionData = append(conversionData, response.ReportsConversionData{
 				Title:          report.Idea.Title,
-				ConversionRate: dto.CalculateConversionRate(int(report.Signups), int(report.Views)),
+				ConversionRate: dto.CalculateConversionRate(int(report.Views), int(report.Signups)),
 				ID:             report.ID,
 			})
 		}
@@ -121,8 +123,46 @@ func (s *reportService) GetReportsList(ctx context.Context, userID string, query
 	return &res, nil
 }
 
+func (s *reportService) GetByID(ctx context.Context, reportId uuid.UUID) (*response.ReportPageResponse, error) {
+	report, err := s.repo.GetByID(ctx, reportId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get report: %w", err)
+	}
+
+	thresholds := s.getValidationThresholds(report, report.Idea.TargetSignups)
+	res := dto.ToReportPageResponse(report, thresholds)
+
+	overview, timeline, err := s.analytics.GetReportOverview(ctx, report)
+	if err != nil {
+		return nil, fmt.Errorf("error calculating analytics for the report: %w", err)
+	}
+
+	res.PerformanceOverview = *overview
+	res.SignupsTimeline = *timeline
+
+	return &res, nil
+}
+
 func (s *reportService) GenerateReport(ctx context.Context, userId string, idea *domain.Idea, reportType domain.ReportType) (*uuid.UUID, error) {
-	date := time.Now()
+	now := time.Now()
+
+	year, month, day := now.Date()
+	todayStart := time.Date(year, month, day, 0, 0, 0, 0, now.Location())
+	todayEnd := time.Date(year, month, day, 23, 59, 59, int(time.Second-time.Nanosecond), now.Location())
+
+	// Check if a similar report was already generated recently
+	existingReport, existingReportErr := s.repo.GetReportByTypeAndTimeRange(ctx, idea.ID, reportType, todayStart, todayEnd)
+	if existingReportErr != nil {
+		return nil, errors.New("failed to check for existing report")
+	}
+
+	// If a similar report already exists, return an error
+	if existingReport != nil {
+		reportId := existingReport.ID
+		return &reportId, nil
+	}
+
+	date := now
 	var startDate time.Time
 	var endDate time.Time = date
 
@@ -130,7 +170,7 @@ func (s *reportService) GenerateReport(ctx context.Context, userId string, idea 
 	var err error
 
 	if reportType == domain.ReportTypeWeekly || reportType == domain.ReportTypeMonthly {
-		lastReport, err = s.repo.GetLatest(ctx, idea.ID, &reportType)
+		lastReport, err = s.repo.GetLatest(ctx, idea.ID, &reportType, nil)
 		if err != nil {
 			fmt.Println("Error fetching last report:", err)
 		}
@@ -141,17 +181,21 @@ func (s *reportService) GenerateReport(ctx context.Context, userId string, idea 
 		if lastReport != nil {
 			startDate = lastReport.Date // from the date of the last report
 		} else {
-			startDate = date.AddDate(0, 0, -7)
+			startDate = idea.CreatedAt
 		}
 	case domain.ReportTypeMonthly:
 		if lastReport != nil {
-			startDate = lastReport.Date // from the date of the last report
+			startDate = lastReport.Date
 		} else {
-			startDate = date.AddDate(0, -1, 0)
+			startDate = idea.CreatedAt
 		}
 	case domain.ReportTypeMilestone:
-		// For milestone reports, use the last 2 weeks
-		startDate = date.AddDate(0, 0, -14)
+		if lastReport != nil {
+			// For milestone reports, use the last 2 weeks
+			startDate = date.AddDate(0, 0, -14)
+		} else {
+			startDate = idea.CreatedAt
+		}
 	case domain.ReportTypeFinal:
 		// For final reports, use all available data
 		startDate = idea.CreatedAt
@@ -161,18 +205,6 @@ func (s *reportService) GenerateReport(ctx context.Context, userId string, idea 
 
 	if startDate.After(endDate) {
 		return nil, errors.New("too soon to generate report for this idea")
-	}
-
-	// Check if a similar report was already generated recently
-	existingReport, err := s.repo.GetReportByTypeAndTimeRange(ctx, idea.ID, reportType, startDate, endDate)
-	if err != nil {
-		return nil, errors.New("failed to check for existing report")
-	}
-
-	// If a similar report already exists, return an error
-	if existingReport != nil {
-		reportId := existingReport.ID
-		return &reportId, nil
 	}
 
 	report := &domain.Report{
@@ -186,10 +218,7 @@ func (s *reportService) GenerateReport(ctx context.Context, userId string, idea 
 		return nil, err
 	}
 
-	conversionRate := 0.0
-	if analytics.Views > 0 {
-		conversionRate = (float64(analytics.Signups) / float64(analytics.Views)) * 100
-	}
+	conversionRate := dto.CalculateConversionRate(int(analytics.Views), int(analytics.Signups))
 
 	report.Validated = s.isReportValidated(report, conversionRate, idea.TargetSignups)
 	report.Views = analytics.Views
@@ -207,6 +236,12 @@ func (s *reportService) GenerateReport(ctx context.Context, userId string, idea 
 }
 
 func (s *reportService) isReportValidated(report *domain.Report, conversionRate float64, targetSignups int) bool {
+	thresholds := s.getValidationThresholds(report, targetSignups)
+
+	return report.Signups >= thresholds.Signups && conversionRate >= thresholds.ConversionRate
+}
+
+func (s *reportService) getValidationThresholds(report *domain.Report, targetSignups int) response.ReportValidationThreshold {
 	var minSignups int64
 	var minConversionRate float64
 
@@ -225,5 +260,8 @@ func (s *reportService) isReportValidated(report *domain.Report, conversionRate 
 		minConversionRate = 200.0
 	}
 
-	return report.Signups >= minSignups && conversionRate >= minConversionRate
+	return response.ReportValidationThreshold{
+		Signups:        minSignups,
+		ConversionRate: minConversionRate,
+	}
 }

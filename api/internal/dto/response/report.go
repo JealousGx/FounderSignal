@@ -11,9 +11,17 @@ type ReportListResponse struct {
 	Reports        []ReportResponse        `json:"reports"`
 	Overview       ReportsOverview         `json:"overview"`
 	ConversionData []ReportsConversionData `json:"conversionData"`
-	SuccessData    []ReportsSuccessData    `json:"successData"`
+	SuccessData    []NameValueData         `json:"successData"`
 	RecentInsights []ReportResponse        `json:"recentInsights"`
 	Total          int64                   `json:"total"`
+}
+
+type ReportPageResponse struct {
+	Report              ReportResponse              `json:"report"`
+	PerformanceOverview []ReportPerformanceOverview `json:"overview"`
+	SignupsTimeline     ReportSignupsTimeline       `json:"signupsTimeline"`
+	ValidationThreshold ReportValidationThreshold   `json:"validationThreshold"`
+	Insights            []string                    `json:"insights"`
 }
 
 type ReportIdea struct {
@@ -29,12 +37,13 @@ type ReportResponse struct {
 	Views           int64             `json:"views"`
 	Signups         int64             `json:"signups"`
 	ConversionRate  float64           `json:"conversionRate"`
+	EngagementRate  float64           `json:"engagementRate"`
 	Validated       bool              `json:"validated"`
 	Sentiment       float64           `json:"sentiment"`
 	CreatedAt       string            `json:"createdAt"`
 	UpdatedAt       string            `json:"updatedAt"`
 	Idea            ReportIdea        `json:"idea"`
-	Recommendations []string          `json:"recommendations"`
+	Recommendations []string          `json:"recommendations,omitempty"`
 }
 
 type ReportsOverview struct {
@@ -53,7 +62,24 @@ type ReportsConversionData struct {
 	ID             uuid.UUID `json:"id"`
 }
 
-type ReportsSuccessData struct {
-	Name  string `json:"name"`  // validated and not validated
-	Total int64  `json:"value"` // total validated and not validated
+// single report response
+type ReportPerformanceOverview struct {
+	Views   int64  `json:"views"`
+	Signups int64  `json:"signups"`
+	Date    string `json:"date"`
+}
+
+type ReportSignupsTimeline struct {
+	DailySignups  []NameValueData `json:"dailySignups"`
+	WeeklySignups []NameValueData `json:"weeklySignups"`
+}
+
+type ReportValidationThreshold struct {
+	Signups        int64   `json:"signups"`
+	ConversionRate float64 `json:"conversionRate"`
+}
+
+type NameValueData struct {
+	Name  string `json:"name"`
+	Total int64  `json:"value"`
 }

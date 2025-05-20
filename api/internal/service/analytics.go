@@ -22,6 +22,7 @@ type AnalyticsData struct {
 type AnalyticsService interface {
 	GetIdeaReportAnalytics(ctx context.Context, ideaID uuid.UUID, startDate, endDate time.Time) (*AnalyticsData, error)
 	GetReportsOverview(ctx context.Context, userId string, reports []domain.Report) (*response.ReportsOverview, []response.NameValueData, error)
+	GetReportOverview(ctx context.Context, report *domain.Report) (*[]response.ReportPerformanceOverview, *response.ReportSignupsTimeline, error)
 }
 
 type analyticsService struct {
@@ -202,8 +203,15 @@ func (s *analyticsService) GetReportsOverview(ctx context.Context, userId string
 		}
 	}
 
-	avgSentimentAllTime := totalSentimentSumAllTime / float64(total)
-	successRateAllTime := float64(totalValidatedAllTime) / float64(total) * 100.0
+	avgSentimentAllTime := 0.0
+	if total > 0 {
+		avgSentimentAllTime = totalSentimentSumAllTime / float64(total)
+	}
+
+	successRateAllTime := 0.0
+	if total > 0 {
+		successRateAllTime = float64(totalValidatedAllTime) / float64(total) * 100.0
+	}
 
 	avgSentimentCurrentMonth := 0.0
 	if reportsCountCurrentMonth > 0 {
@@ -242,6 +250,129 @@ func (s *analyticsService) GetReportsOverview(ctx context.Context, userId string
 	}
 
 	return &overview, successData, nil
+}
+
+func (s *analyticsService) GetReportOverview(ctx context.Context, report *domain.Report) (*[]response.ReportPerformanceOverview, *response.ReportSignupsTimeline, error) {
+	overview := []response.ReportPerformanceOverview{}
+	timeline := response.ReportSignupsTimeline{
+		DailySignups:  []response.NameValueData{},
+		WeeklySignups: []response.NameValueData{},
+	}
+
+	ideaId := report.IdeaID
+
+	var startDate time.Time
+	reportType := report.Type
+	excludeReportID := report.ID
+	previousReport, err := s.reportRepo.GetLatest(ctx, report.IdeaID, &reportType, &excludeReportID)
+	if err != nil {
+		fmt.Printf("Error fetching previous report for GetReportOverview (IdeaID: %s, Type: %s, ReportID: %s): %v. Falling back to idea creation date.\n", report.IdeaID, report.Type, report.ID, err)
+
+		startDate = report.Idea.CreatedAt
+	} else if previousReport != nil {
+		startDate = previousReport.Date
+	} else {
+		startDate = report.Idea.CreatedAt
+	}
+
+	endDate := report.Date
+
+	if startDate.After(endDate) {
+		// This could happen if data is inconsistent or report dates are very close.
+		// Set startDate to endDate to avoid negative duration. Analytics calls should handle this.
+		startDate = endDate
+	}
+
+	dailyViews, err := s.signalRepo.GetDailyViewsByIdeaIDs(ctx, []uuid.UUID{ideaId}, startDate, endDate)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to fetch views for report overview: %w", err)
+	}
+
+	dailySignups, err := s.audienceRepo.GetSignupsByIdeaIds(ctx, []uuid.UUID{ideaId}, startDate, endDate)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to fetch signups for report overview: %w", err)
+	}
+
+	currentDay := startDate
+	for !currentDay.After(endDate) { // iterate from startDate to endDate
+		// Daily signups & views
+
+		year, month, day := currentDay.Date()
+		mapLookupKeyTime := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+		dayStr := mapLookupKeyTime.Format(time.RFC3339) // Standard date format for map keys
+		formattedDate := currentDay.Format("Jan 02")    // For display
+
+		var views int64
+		if ideaViewsMap, ok := dailyViews[ideaId]; ok {
+			if v, okDate := ideaViewsMap[dayStr]; okDate {
+				views = int64(v)
+			}
+		}
+
+		var signups int64
+		if ideaSignupsMap, ok := dailySignups[ideaId]; ok {
+			if s, okDate := ideaSignupsMap[dayStr]; okDate {
+				signups = int64(s)
+			}
+		}
+
+		overview = append(overview, response.ReportPerformanceOverview{
+			Date:    formattedDate,
+			Views:   views,
+			Signups: signups,
+		})
+
+		timeline.DailySignups = append(timeline.DailySignups, response.NameValueData{
+			Name:  formattedDate,
+			Total: signups,
+		})
+
+		currentDay = currentDay.AddDate(0, 0, 1)
+	}
+
+	currentWeek := startDate
+	for !currentWeek.After(endDate) {
+		// weekly signups
+
+		weekEndDate := currentWeek.AddDate(0, 0, 6) // End of a 7-day block
+		if weekEndDate.After(endDate) {
+			weekEndDate = endDate // Cap at the overall endDate
+		}
+
+		var totalWeeklySignups int64
+		dayInWeekIterator := currentWeek
+		// Iterate through the week to sum up signups
+		for !dayInWeekIterator.After(weekEndDate) {
+			year, month, day := dayInWeekIterator.Date()
+			mapLookupKeyTime := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+			dayStr := mapLookupKeyTime.Format(time.RFC3339)
+
+			if ideaSignupsMap, ok := dailySignups[ideaId]; ok {
+				if s, okDate := ideaSignupsMap[dayStr]; okDate {
+					totalWeeklySignups += int64(s)
+				}
+			}
+			dayInWeekIterator = dayInWeekIterator.AddDate(0, 0, 1)
+		}
+
+		// Format week name for display
+		var weekName string
+		if currentWeek.Format("Jan 02") == weekEndDate.Format("Jan 02") { // Single day week
+			weekName = currentWeek.Format("Jan 02, 2006")
+		} else {
+			weekName = fmt.Sprintf("%s - %s", currentWeek.Format("Jan 02"), weekEndDate.Format("Jan 02, 2006"))
+		}
+
+		timeline.WeeklySignups = append(timeline.WeeklySignups, response.NameValueData{
+			Name:  weekName,
+			Total: totalWeeklySignups,
+		})
+
+		currentWeek = currentWeek.AddDate(0, 0, 7)
+
+	}
+
+	return &overview, &timeline, nil
 }
 
 func calculatePercentageChange(current, previous float64) float64 {

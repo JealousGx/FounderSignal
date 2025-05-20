@@ -136,29 +136,44 @@ func ToReportListResponse(reports []domain.Report) response.ReportListResponse {
 	}
 }
 
+func ToReportPageResponse(report *domain.Report, thresholds response.ReportValidationThreshold) response.ReportPageResponse {
+	convertedReport := toReportResponse(*report)
+
+	return response.ReportPageResponse{
+		Report:              convertedReport,
+		ValidationThreshold: thresholds,
+		Insights:            getReportInsights(report, convertedReport.ConversionRate, thresholds),
+	}
+}
+
 func ToReportsResponse(reports []domain.Report) []response.ReportResponse {
 	var reportsResponse []response.ReportResponse
 	for _, report := range reports {
-		reportsResponse = append(reportsResponse, response.ReportResponse{
-			ID:              report.ID,
-			Date:            report.Date,
-			Type:            report.Type,
-			Views:           report.Views,
-			Signups:         report.Signups,
-			ConversionRate:  CalculateConversionRate(int(report.Views), int(report.Signups)),
-			Validated:       report.Validated,
-			Sentiment:       report.Sentiment,
-			CreatedAt:       report.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:       report.UpdatedAt.Format(time.RFC3339),
-			Recommendations: generateReportRecommendations(report),
-			Idea: response.ReportIdea{
-				ID:    report.Idea.ID,
-				Title: report.Idea.Title,
-			},
-		})
+		reportsResponse = append(reportsResponse, toReportResponse(report))
 	}
 
 	return reportsResponse
+}
+
+func toReportResponse(report domain.Report) response.ReportResponse {
+	return response.ReportResponse{
+		ID:              report.ID,
+		Date:            report.Date,
+		Type:            report.Type,
+		Views:           report.Views,
+		Signups:         report.Signups,
+		ConversionRate:  CalculateConversionRate(int(report.Views), int(report.Signups)),
+		EngagementRate:  report.EngagementRate,
+		Validated:       report.Validated,
+		Sentiment:       report.Sentiment,
+		CreatedAt:       report.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:       report.UpdatedAt.Format(time.RFC3339),
+		Recommendations: generateReportRecommendations(report),
+		Idea: response.ReportIdea{
+			ID:    report.Idea.ID,
+			Title: report.Idea.Title,
+		},
+	}
 }
 
 func mapFeedbackToIdeaComments(feedbacks []domain.Feedback, requestingUserID *string) []response.IdeaComment {
@@ -381,4 +396,72 @@ func generateReportRecommendations(report domain.Report) []string {
 	}
 
 	return recommendations
+}
+
+func getReportInsights(report *domain.Report, conversionRate float64, thresholds response.ReportValidationThreshold) []string {
+	minSignups := float64(thresholds.Signups)
+	minConversionRate := thresholds.ConversionRate
+
+	const HIGH_PERFORMANCE_FACTOR = 1.5 // 150% of min
+	const LOW_PERFORMANCE_FACTOR = 0.5  // 50% of min
+	const GOOD_PERFORMANCE_FACTOR = 1.0 // 100%
+
+	insights := []string{}
+
+	if minConversionRate > 0 {
+		if conversionRate >= minConversionRate*HIGH_PERFORMANCE_FACTOR {
+			insights = append(insights, fmt.Sprintf("Conversion rate (%.2f%%) is exceptionally high, exceeding %.2f%% of the target (%.2f%%).", conversionRate, HIGH_PERFORMANCE_FACTOR*100, minConversionRate))
+		} else if conversionRate >= minConversionRate*GOOD_PERFORMANCE_FACTOR {
+			insights = append(insights, fmt.Sprintf("Conversion rate (%.2f%%) has met or exceeded the target (%.2f%%).", conversionRate, minConversionRate))
+		} else if conversionRate < minConversionRate*LOW_PERFORMANCE_FACTOR {
+			insights = append(insights, fmt.Sprintf("Conversion rate (%.2f%%) is below %.2f%% of the target (%.2f%%) and may need improvement.", conversionRate, LOW_PERFORMANCE_FACTOR*100, minConversionRate))
+		} else {
+			insights = append(insights, fmt.Sprintf("Conversion rate (%.2f%%) is approaching the target of %.2f%%.", conversionRate, minConversionRate))
+		}
+	} else {
+		insights = append(insights, fmt.Sprintf("Current conversion rate is %.2f%%. No specific target was set for this report type.", conversionRate))
+	}
+
+	// Signup insights
+	if minSignups > 0 {
+		if float64(report.Signups) >= minSignups*HIGH_PERFORMANCE_FACTOR {
+			insights = append(insights, fmt.Sprintf("Signups (%d) are significantly high, exceeding %.2f%% of the target (%d). This suggests strong market interest.", report.Signups, HIGH_PERFORMANCE_FACTOR*100, int(minSignups)))
+		} else if float64(report.Signups) >= minSignups*GOOD_PERFORMANCE_FACTOR {
+			insights = append(insights, fmt.Sprintf("Signups (%d) have met or exceeded the target (%d).", report.Signups, int(minSignups)))
+		} else if float64(report.Signups) < minSignups*LOW_PERFORMANCE_FACTOR {
+			insights = append(insights, fmt.Sprintf("Signups (%d) are below %.2f%% of the target (%d) and are relatively low for this stage.", report.Signups, LOW_PERFORMANCE_FACTOR*100, int(minSignups)))
+		} else {
+			insights = append(insights, fmt.Sprintf("Signups (%d) are approaching the target of %d.", report.Signups, int(minSignups)))
+		}
+	} else {
+		insights = append(insights, fmt.Sprintf("Current signups: %d. No specific target was set for this report type.", report.Signups))
+	}
+
+	if report.Validated {
+		insights = append(insights, "This idea has met all validation criteria for this report and is on a good track.")
+	} else {
+		insights = append(insights, "Additional progress is needed to meet all validation criteria for this report.")
+	}
+
+	if report.EngagementRate > 0 {
+		if report.EngagementRate > 50 {
+			insights = append(insights, fmt.Sprintf("Engagement rate (%.2f%%) is strong, indicating good user interaction.", report.EngagementRate))
+		} else if report.EngagementRate > 20 {
+			insights = append(insights, fmt.Sprintf("Engagement rate (%.2f%%) is moderate. Consider strategies to boost user interaction.", report.EngagementRate))
+		} else {
+			insights = append(insights, fmt.Sprintf("Engagement rate (%.2f%%) is low. Focus on improving user experience and calls to action.", report.EngagementRate))
+		}
+	}
+
+	if report.Sentiment != 0 {
+		if report.Sentiment > 0.5 {
+			insights = append(insights, fmt.Sprintf("Overall sentiment (%.2f) is positive, suggesting users are responding well.", report.Sentiment))
+		} else if report.Sentiment < -0.2 {
+			insights = append(insights, fmt.Sprintf("Overall sentiment (%.2f) is leaning negative. It might be worth investigating feedback.", report.Sentiment))
+		} else {
+			insights = append(insights, fmt.Sprintf("Overall sentiment (%.2f) is neutral to slightly positive.", report.Sentiment))
+		}
+	}
+
+	return insights
 }
