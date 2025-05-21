@@ -11,7 +11,9 @@ import (
 
 type FeedbackHandler interface {
 	Create(c *gin.Context)
+	Update(c *gin.Context)
 	GetByIdea(c *gin.Context)
+	Delete(c *gin.Context)
 }
 
 type fbHandler struct {
@@ -81,6 +83,47 @@ func (h *fbHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"id": createdFBId})
 }
 
+func (h *fbHandler) Update(c *gin.Context) {
+	feedbackId := c.Param("feedbackId")
+	if feedbackId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Feedback ID is required"})
+		return
+	}
+
+	parsedFeedbackId, err := uuid.Parse(feedbackId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid feedback ID"})
+		return
+	}
+
+	var fb request.CreateFeedback
+	if err := c.ShouldBindJSON(&fb); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	err = h.service.Update(c.Request.Context(), userIdStr, parsedFeedbackId, fb.Comment)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
+}
+
 func (h *fbHandler) GetByIdea(c *gin.Context) {
 	ideaId := c.Param("ideaId")
 	if ideaId == "" {
@@ -112,4 +155,38 @@ func (h *fbHandler) GetByIdea(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, feedbacks)
+}
+
+func (h *fbHandler) Delete(c *gin.Context) {
+	feedbackId := c.Param("feedbackId")
+	if feedbackId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Feedback ID is required"})
+		return
+	}
+
+	parsedFeedbackId, err := uuid.Parse(feedbackId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid feedback ID"})
+		return
+	}
+
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	err = h.service.Delete(c.Request.Context(), parsedFeedbackId, userIdStr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
 }

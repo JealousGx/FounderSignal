@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"foundersignal/internal/domain"
 	"foundersignal/internal/dto"
 	"foundersignal/internal/dto/request"
@@ -18,7 +19,9 @@ import (
 
 type FeedbackService interface {
 	Add(ctx context.Context, parsedIdeaId uuid.UUID, parsedParentId *uuid.UUID, userId string, fb *request.CreateFeedback) (uuid.UUID, error)
+	Update(ctx context.Context, userId string, feedbackId uuid.UUID, comment string) error
 	GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string, queryParams domain.QueryParams) (*response.IdeaCommentResponse, error)
+	Delete(ctx context.Context, feedbackId uuid.UUID, userId string) error
 	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID) (int64, error)
 }
 
@@ -77,6 +80,28 @@ func (s *fbService) Add(ctx context.Context, ideaId uuid.UUID, parsedParentId *u
 	return feedback.ID, nil
 }
 
+func (s *fbService) Update(ctx context.Context, userId string, feedbackId uuid.UUID, comment string) error {
+	existingFeedback, err := s.repo.GetById(ctx, feedbackId)
+	if err != nil {
+		return fmt.Errorf("feedback not found: %w", err)
+	}
+
+	if existingFeedback.UserID != userId {
+		return fmt.Errorf("user %s is not the author of feedback %s", userId, feedbackId)
+	}
+
+	feedback := &domain.Feedback{
+		Comment: comment,
+	}
+
+	err = s.repo.Update(ctx, feedbackId, feedback)
+	if err != nil {
+		return fmt.Errorf("error updating feedback: %w", err)
+	}
+
+	return nil
+}
+
 func (s *fbService) GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string, queryParams domain.QueryParams) (*response.IdeaCommentResponse, error) {
 	feedbacks, total, err := s.repo.GetByIdea(ctx, ideaId, &queryParams)
 	if err != nil {
@@ -86,6 +111,24 @@ func (s *fbService) GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *str
 	comments := dto.FeedbackToIdeaComments(feedbacks, userId, total)
 
 	return comments, nil
+}
+
+func (s *fbService) Delete(ctx context.Context, feedbackId uuid.UUID, userId string) error {
+	feedback, err := s.repo.GetById(ctx, feedbackId)
+	if err != nil {
+		return err
+	}
+
+	if feedback.UserID != userId {
+		return fmt.Errorf("user %s is not the author of feedback %s", userId, feedbackId)
+	}
+
+	err = s.repo.Delete(ctx, feedbackId)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *fbService) GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID) (int64, error) {

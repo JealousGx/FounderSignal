@@ -1,14 +1,29 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  MoreVertical,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { ReactionButtons } from "@/components/reactions-btns";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { CommentExtended } from "@/types/comment";
+import { Textarea } from "../ui/textarea";
+import { deleteComment, updateComment } from "./actions";
 
 type ReplyFormType = React.ComponentType<{
   ideaId: string;
@@ -18,6 +33,12 @@ type ReplyFormType = React.ComponentType<{
   onReplyAdded: () => void;
   initialMention?: string;
 }>;
+
+type CommentActionsType = {
+  ideaId: string;
+  commentId: string;
+  onEditClick: () => void;
+};
 
 export const CommentItem = ({
   ideaId,
@@ -31,6 +52,8 @@ export const CommentItem = ({
   ReplyForm: ReplyFormType;
 }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [updatedContent, setUpdatedContent] = useState(comment.content);
 
   const handleReplyClick = () => {
     setShowReplyForm(true);
@@ -42,6 +65,27 @@ export const CommentItem = ({
 
   const handleReplyAdded = () => {
     setShowReplyForm(false);
+  };
+
+  const handleEditSubmit = async (content: string) => {
+    if (!content || content.trim() === "") {
+      toast.error("Comment content cannot be empty.");
+      return;
+    }
+
+    try {
+      const res = await updateComment(ideaId, comment.id, content);
+
+      if (res.error) {
+        toast.error(res.error);
+        return;
+      }
+
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Error updating comment:", err);
+      toast.error("Failed to update comment. Please try again.");
+    }
   };
 
   return (
@@ -69,40 +113,78 @@ export const CommentItem = ({
             </div>
           </div>
 
-          <p className="text-gray-700 mb-4">{comment.content}</p>
+          {!isEditing ? (
+            <>
+              <p className="text-gray-700 mb-4 whitespace-pre-line">
+                {comment.content}
+              </p>
 
-          {userId && (
-            <div className="w-full flex items-center gap-1 flex-col">
-              <div className="flex items-center gap-1 flex-start w-full">
-                <ReactionButtons
-                  ideaId={ideaId}
-                  commentId={comment.id}
-                  likedByUser={comment.likedByUser}
-                  dislikedByUser={comment.dislikedByUser}
-                  likes={comment.likes}
-                  dislikes={comment.dislikes}
-                />
+              {userId && (
+                <div className="w-full flex items-center gap-1 flex-col">
+                  <div className="flex items-center gap-1 flex-start w-full">
+                    <ReactionButtons
+                      ideaId={ideaId}
+                      commentId={comment.id}
+                      likedByUser={comment.likedByUser}
+                      dislikedByUser={comment.dislikedByUser}
+                      likes={comment.likes}
+                      dislikes={comment.dislikes}
+                    />
 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-500 hover:text-gray-700"
+                      onClick={handleReplyClick}
+                    >
+                      Reply
+                    </Button>
+
+                    {userId && comment.author.id === userId && (
+                      <CommentActions
+                        ideaId={ideaId}
+                        commentId={comment.id}
+                        onEditClick={() => setIsEditing(true)}
+                      />
+                    )}
+                  </div>
+
+                  {showReplyForm && userId && (
+                    <ReplyForm
+                      ideaId={ideaId}
+                      userId={userId}
+                      commentId={comment.id}
+                      onCancel={handleReplyCancel}
+                      onReplyAdded={handleReplyAdded}
+                      initialMention={`@${comment.author.name} `}
+                    />
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Textarea
+                defaultValue={updatedContent}
+                onChange={(e) => setUpdatedContent(e.target.value)}
+              />
+
+              <div className="flex gap-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  className="text-gray-500 hover:text-gray-700"
-                  onClick={handleReplyClick}
+                  onClick={() => setIsEditing(false)}
                 >
-                  Reply
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  type="submit"
+                  onClick={() => handleEditSubmit(updatedContent)}
+                >
+                  Save
                 </Button>
               </div>
-
-              {showReplyForm && userId && (
-                <ReplyForm
-                  ideaId={ideaId}
-                  userId={userId}
-                  commentId={comment.id}
-                  onCancel={handleReplyCancel}
-                  onReplyAdded={handleReplyAdded}
-                  initialMention={`@${comment.author.name} `}
-                />
-              )}
             </div>
           )}
 
@@ -168,5 +250,60 @@ const CollapsibleReplies = ({
         </Button>
       )}
     </div>
+  );
+};
+
+const CommentActions = ({
+  commentId,
+  ideaId,
+  onEditClick,
+}: CommentActionsType) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="icon" variant="ghost">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Button variant="ghost" size="sm" onClick={onEditClick}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
+          </Button>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <DeleteComment ideaId={ideaId} commentId={commentId} />
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const DeleteComment = ({
+  ideaId,
+  commentId,
+}: {
+  ideaId: string;
+  commentId: string;
+}) => {
+  const handleDelete = async () => {
+    const result = await deleteComment(ideaId, commentId);
+    if (result.error) {
+      console.error("Error deleting comment:", result.error);
+
+      toast.error("Failed to delete comment. Please try again.");
+    } else {
+      toast.success("Comment deleted successfully!");
+    }
+  };
+
+  return (
+    <Button variant="ghost" size="sm" onClick={handleDelete}>
+      <Trash2 className="mr-2 h-4 w-4" />
+      Delete
+    </Button>
   );
 };

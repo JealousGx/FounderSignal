@@ -13,6 +13,7 @@ export type Comment = {
 export type CommentExtended = Omit<Comment, "replies"> & {
   content: string;
   author: {
+    id: string;
     name: string;
     image: string;
   };

@@ -13,10 +13,13 @@ import (
 
 type FeedbackRepository interface {
 	Add(ctx context.Context, feedback *domain.Feedback) (*domain.Feedback, error)
+	Update(ctx context.Context, feedbackId uuid.UUID, feedback *domain.Feedback) error
+	GetById(ctx context.Context, feedbackId uuid.UUID) (*domain.Feedback, error)
 	GetByIdea(ctx context.Context, ideaId uuid.UUID, queryParams *domain.QueryParams) ([]domain.Feedback, int64, error)
 	GetForUser(ctx context.Context, userId string, limit int) ([]domain.Feedback, error)
 	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID) (int64, error)
 	GetByIdeaWithTimeRange(ctx context.Context, ideaId uuid.UUID, startDate, endDate time.Time) ([]domain.Feedback, error)
+	Delete(ctx context.Context, feedbackId uuid.UUID) error
 }
 
 type fbRepository struct {
@@ -50,6 +53,33 @@ func (r *fbRepository) Add(ctx context.Context, feedback *domain.Feedback) (*dom
 	}
 
 	return feedback, nil
+}
+
+func (r *fbRepository) Update(ctx context.Context, feedbackId uuid.UUID, feedback *domain.Feedback) error {
+	result := r.db.WithContext(ctx).Model(&domain.Feedback{}).
+		Where("id = ?", feedbackId).
+		Updates(feedback)
+
+	if result.Error != nil {
+		fmt.Printf("Error updating feedback %s: %v\n", feedbackId, result.Error)
+		return result.Error
+	}
+
+	return nil
+}
+
+func (r *fbRepository) GetById(ctx context.Context, feedbackId uuid.UUID) (*domain.Feedback, error) {
+	var feedback domain.Feedback
+
+	err := r.db.WithContext(ctx).
+		Where("id = ?", feedbackId).
+		First(&feedback).Error
+	if err != nil {
+		fmt.Printf("Error fetching feedback %s: %v\n", feedbackId, err)
+		return nil, err
+	}
+
+	return &feedback, nil
 }
 
 func (r *fbRepository) GetByIdea(ctx context.Context, ideaId uuid.UUID, queryParams *domain.QueryParams) ([]domain.Feedback, int64, error) {
@@ -152,4 +182,16 @@ func (r *fbRepository) GetByIdeaWithTimeRange(ctx context.Context, ideaId uuid.U
 	}
 
 	return feedbacks, nil
+}
+
+func (r *fbRepository) Delete(ctx context.Context, feedbackId uuid.UUID) error {
+	err := r.db.WithContext(ctx).
+		Where("id = ? OR parent_id = ?", feedbackId, feedbackId).
+		Delete(&domain.Feedback{}).Error
+	if err != nil {
+		fmt.Printf("Error deleting feedback %s: %v\n", feedbackId, err)
+		return err
+	}
+
+	return nil
 }

@@ -78,6 +78,7 @@ const mapComments = (
       ...c,
       content: c.comment,
       author: {
+        id: user?.id || c.userId,
         name: user ? getName(user) : "Unknown User",
         image:
           user?.imageUrl || "https://randomuser.me/api/portraits/men/76.jpg",
