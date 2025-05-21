@@ -3,6 +3,7 @@ package websocket
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"foundersignal/internal/dto/response"
 	"foundersignal/internal/pkg/auth"
@@ -15,7 +16,8 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
-		return origin == "http://localhost:3000"
+		return strings.Contains(origin, "foundersignal.com") ||
+			strings.Contains(origin, "localhost:3000")
 	},
 }
 
