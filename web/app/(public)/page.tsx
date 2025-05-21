@@ -1,6 +1,6 @@
 import React from "react";
-import Image from "next/image";
 
+import { OptimizedImage } from "@/components/ui/image";
 import { Link } from "@/components/ui/link";
 
 export default function Home() {
@@ -59,13 +59,14 @@ export default function Home() {
 
           <div className="lg:w-1/2 w-full">
             <div className="relative w-full aspect-square md:aspect-[4/3] rounded-xl bg-gray-100 overflow-hidden shadow-lg">
-              <Image
+              <OptimizedImage
                 src="/images/home_hero.webp"
                 alt="FounderSignal Steps"
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority
-                className="object-contain md:object-cover"
+                objectFit="contain"
+                className="md:object-cover"
               />
             </div>
           </div>
@@ -138,12 +139,11 @@ export default function Home() {
             <div className="bg-white h-full p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 bg-gray-100 rounded-full overflow-hidden">
-                  <Image
+                  <OptimizedImage
                     src="https://randomuser.me/api/portraits/women/33.jpg"
                     alt="Founder portrait"
                     width={64}
                     height={64}
-                    className="object-cover"
                   />
                 </div>
                 <div>
@@ -175,12 +175,11 @@ export default function Home() {
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full flex flex-col">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 bg-gray-100 rounded-full overflow-hidden">
-                  <Image
+                  <OptimizedImage
                     src="https://randomuser.me/api/portraits/men/42.jpg"
                     alt="Founder portrait"
                     width={64}
                     height={64}
-                    className="object-cover"
                   />
                 </div>
                 <div>

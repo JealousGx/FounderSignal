@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { OptimizedImage } from "@/components/ui/image";
 import {
   Table,
   TableBody,
@@ -7,8 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import { Idea } from "@/types/idea";
-import Image from "next/image";
 import { formatDate, getStageBadgeColor, getStatusBadgeColor } from "../utils";
 import { IdeaActions } from "./actions";
 import { EngagementIndicator } from "./engagement-indicator";
@@ -40,12 +41,12 @@ export default function IdeasTableView({ ideas }: IdeasTableViewProps) {
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 rounded overflow-hidden flex-shrink-0">
                     {idea.imageUrl && idea.imageUrl !== "" && (
-                      <Image
+                      <OptimizedImage
                         src={idea.imageUrl}
                         alt={idea.title}
                         width={48}
                         height={48}
-                        className="object-cover h-full w-full"
+                        // className="object-cover h-full w-full"
                       />
                     )}
                   </div>

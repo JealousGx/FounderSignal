@@ -1,5 +1,4 @@
 import { BarChart2 } from "lucide-react";
-import Image from "next/image";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,13 +9,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-import { formatDate, getStageBadgeColor, getStatusBadgeColor } from "../utils";
-import { IdeaCardActions } from "./actions";
+import { OptimizedImage } from "@/components/ui/image";
+import { Link } from "@/components/ui/link";
 import { EngagementIndicator } from "./engagement-indicator";
 
-import { Link } from "@/components/ui/link";
 import { Idea } from "@/types/idea";
+import { formatDate, getStageBadgeColor, getStatusBadgeColor } from "../utils";
+import { IdeaCardActions } from "./actions";
 
 interface IdeasGridViewProps {
   ideas: Idea[];
@@ -29,7 +28,7 @@ export default function IdeasGridView({ ideas }: IdeasGridViewProps) {
         <Card key={idea.id} className="overflow-hidden pt-0">
           <div className="h-[140px] w-full relative">
             {idea.imageUrl && idea.imageUrl !== "" && (
-              <Image
+              <OptimizedImage
                 src={idea.imageUrl}
                 alt={idea.title}
                 fill

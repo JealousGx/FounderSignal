@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Upload, X } from "lucide-react";
-import Image from "next/image";
 import {
   useActionState,
   useEffect,
@@ -30,6 +29,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { OptimizedImage } from "@/components/ui/image";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -318,11 +318,10 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
               <div className="space-y-4">
                 {previewImage ? (
                   <div className="relative w-full h-48 rounded-lg overflow-hidden">
-                    <Image
+                    <OptimizedImage
                       src={previewImage}
                       alt="Idea preview"
                       fill
-                      className="object-cover"
                     />
                     <Button
                       type="button"

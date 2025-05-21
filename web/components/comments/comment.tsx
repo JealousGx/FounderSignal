@@ -8,7 +8,6 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -20,9 +19,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { OptimizedImage } from "../ui/image";
+import { Textarea } from "../ui/textarea";
 
 import { CommentExtended } from "@/types/comment";
-import { Textarea } from "../ui/textarea";
 import { deleteComment, updateComment } from "./actions";
 
 type ReplyFormType = React.ComponentType<{
@@ -92,12 +92,12 @@ export const CommentItem = ({
     <div className="p-4 md:p-6">
       <div className="flex gap-4">
         <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-          <Image
+          <OptimizedImage
             src={comment.author.image}
             alt={comment.author.name}
             width={40}
             height={40}
-            className="object-cover"
+            quality={70}
           />
         </div>
 
