@@ -8,12 +8,12 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
 
 import { ReactionButtons } from "@/components/reactions-btns";
+import { OptimizedImage } from "@/components/ui/image";
 import { Link as CustomLink } from "@/components/ui/link";
 import { CommentsSection } from "./comments-section";
 
@@ -67,7 +67,11 @@ const getIdea = cache(async (id: string) => {
   }
 });
 
-export default async function IdeaPage({ params }: { params: { id: string } }) {
+export default async function IdeaPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id: ideaId } = await params;
   const res = await getIdea(ideaId);
 
@@ -173,12 +177,12 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
 
               <div className="flex items-center">
                 <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                  <Image
+                  <OptimizedImage
                     src={idea.founder.image}
                     alt={idea.founder.name}
                     width={40}
                     height={40}
-                    className="object-cover"
+                    quality={70}
                   />
                 </div>
 
@@ -307,12 +311,11 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
                     <div className="flex gap-3">
                       <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
                         {relatedIdea.imageUrl ? (
-                          <Image
+                          <OptimizedImage
                             src={relatedIdea.imageUrl}
                             alt={relatedIdea.title!}
                             width={48}
                             height={48}
-                            className="object-cover"
                           />
                         ) : (
                           <div className="w-full h-full bg-gray-200 animate-pulse"></div>

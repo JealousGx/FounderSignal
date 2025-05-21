@@ -20,6 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Report } from "@/types/report";
 import { getReports } from "./get-reports";
 
+export const dynamic = "force-dynamic";
+
 const REPORTS_PER_PAGE = 10;
 
 type ReportExtended = Report & {

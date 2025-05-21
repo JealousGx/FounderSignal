@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { getName } from "@/lib/utils";
 
-export const getDashboardData = cache(async () => {
+const getDashboardData = cache(async () => {
   try {
     const response = await api.get("/dashboard", {
       cache: "force-cache",

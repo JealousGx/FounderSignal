@@ -35,7 +35,7 @@ const getMVP = cache(async (ideaId: string) => {
 export default async function MVPPage({
   params,
 }: {
-  params: { ideaId: string };
+  params: Promise<{ ideaId: string }>;
 }) {
   const { ideaId } = await params;
   const mvp = await getMVP(ideaId);

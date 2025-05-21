@@ -77,11 +77,13 @@ export const submitReply = async (
         ? "Reply submitted successfully!"
         : "Comment submitted successfully!",
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Submission failed:", e);
 
     return {
-      error: e.message || "An unexpected error occurred during submission.",
+      error:
+        (e as Error).message ||
+        "An unexpected error occurred during submission.",
     };
   }
 };
@@ -128,11 +130,11 @@ export const submitReaction = async (
       dislikes: data.dislikes,
       userReaction: data.userReaction,
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Reaction submission failed:", e);
 
     return {
-      error: e.message || "An unexpected error occurred.",
+      error: (e as Error).message || "An unexpected error occurred.",
     };
   }
 };
@@ -171,11 +173,11 @@ export const updateComment = async (
     return {
       message: "Comment updated successfully!",
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Comment update failed:", e);
 
     return {
-      error: e.message || "An unexpected error occurred.",
+      error: (e as Error).message || "An unexpected error occurred.",
     };
   }
 };
@@ -209,11 +211,11 @@ export const deleteComment = async (
     return {
       message: "Comment deleted successfully!",
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Comment deletion failed:", e);
 
     return {
-      error: e.message || "An unexpected error occurred.",
+      error: (e as Error).message || "An unexpected error occurred.",
     };
   }
 };

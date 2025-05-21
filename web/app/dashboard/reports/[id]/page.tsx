@@ -42,9 +42,9 @@ const getReport = cache(async (id: string) => {
 });
 
 interface ReportPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function ReportPage({ params }: ReportPageProps) {

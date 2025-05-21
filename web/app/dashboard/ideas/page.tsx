@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { getUserIdeas } from "./get-ideas";
 
+export const dynamic = "force-dynamic";
+
 export default async function IdeasPage() {
   const data = await getUserIdeas(true, { limit: 10, offset: 0 });
 

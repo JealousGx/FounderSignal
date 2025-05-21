@@ -1,6 +1,8 @@
 import { getIdeas } from "./get-ideas";
 import Ideas from "./ideas";
 
+export const dynamic = "force-dynamic";
+
 const DEFAULT_PAGE_SIZE = 6;
 
 export default async function ExplorePage() {

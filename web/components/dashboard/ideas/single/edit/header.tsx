@@ -1,8 +1,8 @@
 import { ExternalLink } from "lucide-react";
-import Image from "next/image";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { OptimizedImage } from "@/components/ui/image";
 import { Link } from "@/components/ui/link";
 
 import { Idea } from "@/types/idea";
@@ -16,11 +16,10 @@ export default function EditHeader({ idea }: EditHeaderProps) {
   return (
     <Card className="border-none overflow-hidden shadow-sm">
       <div className="relative h-32 md:h-40 w-full flex items-end">
-        <Image
+        <OptimizedImage
           src={idea.imageUrl || "/placeholder-idea.jpg"}
           alt={idea.title}
           fill
-          className="object-cover"
         />
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>

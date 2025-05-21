@@ -11,7 +11,6 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { OptimizedImage } from "@/components/ui/image";
 import { Link as CustomLink } from "@/components/ui/link";
 
 import { Idea } from "@/types/idea";
@@ -35,14 +35,13 @@ export function IdeaOverview({ idea }: { idea: Idea }) {
   return (
     <Card className="border-none overflow-hidden shadow-sm">
       <div className="w-full h-48 sm:h-56 md:h-64 relative">
-        <Image
+        <OptimizedImage
           src={
             idea.imageUrl ||
             "https://images.unsplash.com/photo-1553877522-43269d4ea984?q=80&w=2000&auto=format&fit=crop"
           }
           alt={idea.title}
           fill
-          className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
 
