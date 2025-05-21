@@ -91,10 +91,6 @@ export const submitReaction = async (
   type: "like" | "dislike" | "remove",
   commentId?: string
 ) => {
-  // for comment / reply
-  // url structure: /ideas/:ideaId/feedback/:commentId/reaction
-  // const { ideaId, commentId } = params;
-
   if (ideaId === "") {
     return {
       error: "Idea ID required.",
@@ -134,6 +130,44 @@ export const submitReaction = async (
     };
   } catch (e: any) {
     console.error("Reaction submission failed:", e);
+
+    return {
+      error: e.message || "An unexpected error occurred.",
+    };
+  }
+};
+
+export const deleteComment = async (
+  ideaId: string,
+  commentId: string
+): Promise<{ error?: string; message?: string }> => {
+  if (commentId === "") {
+    return {
+      error: "Comment ID is required.",
+    };
+  }
+
+  const path = `/dashboard/feedback/${commentId}`;
+
+  try {
+    const response = await api.delete(path);
+
+    if (!response.ok || response.status !== 204) {
+      const data = await response.json();
+      console.error("API Error:", data.error || `Status: ${response.status}`);
+
+      return {
+        error: data.error || "Failed to delete comment",
+      };
+    }
+
+    revalidateTag(`comments-${ideaId}`);
+
+    return {
+      message: "Comment deleted successfully!",
+    };
+  } catch (e: any) {
+    console.error("Comment deletion failed:", e);
 
     return {
       error: e.message || "An unexpected error occurred.",

@@ -1,14 +1,28 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  MoreVertical,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { ReactionButtons } from "@/components/reactions-btns";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { CommentExtended } from "@/types/comment";
+import { deleteComment } from "./actions";
 
 type ReplyFormType = React.ComponentType<{
   ideaId: string;
@@ -18,6 +32,11 @@ type ReplyFormType = React.ComponentType<{
   onReplyAdded: () => void;
   initialMention?: string;
 }>;
+
+type CommentActionsType = {
+  ideaId: string;
+  commentId: string;
+};
 
 export const CommentItem = ({
   ideaId,
@@ -91,6 +110,10 @@ export const CommentItem = ({
                 >
                   Reply
                 </Button>
+
+                {userId && comment.author.id === userId && (
+                  <CommentActions ideaId={ideaId} commentId={comment.id} />
+                )}
               </div>
 
               {showReplyForm && userId && (
@@ -168,5 +191,56 @@ const CollapsibleReplies = ({
         </Button>
       )}
     </div>
+  );
+};
+
+const CommentActions = ({ commentId, ideaId }: CommentActionsType) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="icon" variant="ghost">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Button variant="ghost" size="sm">
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
+          </Button>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <DeleteComment ideaId={ideaId} commentId={commentId} />
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const DeleteComment = ({
+  ideaId,
+  commentId,
+}: {
+  ideaId: string;
+  commentId: string;
+}) => {
+  const handleDelete = async () => {
+    const result = await deleteComment(ideaId, commentId);
+    if (result.error) {
+      console.error("Error deleting comment:", result.error);
+
+      toast.error("Failed to delete comment. Please try again.");
+    } else {
+      toast.success("Comment deleted successfully!");
+    }
+  };
+
+  return (
+    <Button variant="ghost" size="sm" onClick={handleDelete}>
+      <Trash2 className="mr-2 h-4 w-4" />
+      Delete
+    </Button>
   );
 };
