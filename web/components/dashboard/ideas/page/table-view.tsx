@@ -46,7 +46,6 @@ export default function IdeasTableView({ ideas }: IdeasTableViewProps) {
                         alt={idea.title}
                         width={48}
                         height={48}
-                        // className="object-cover h-full w-full"
                       />
                     )}
                   </div>
