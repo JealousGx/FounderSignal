@@ -137,6 +137,49 @@ export const submitReaction = async (
   }
 };
 
+export const updateComment = async (
+  ideaId: string,
+  commentId: string,
+  content: string
+) => {
+  if (commentId === "") {
+    return {
+      error: "Comment ID is required.",
+    };
+  }
+
+  const payload = {
+    comment: content,
+  };
+
+  const path = `/dashboard/feedback/${commentId}`;
+
+  try {
+    const response = await api.put(path, JSON.stringify(payload));
+
+    if (!response.ok || response.status !== 204) {
+      const data = await response.json();
+      console.error("API Error:", data || `Status: ${response.status}`);
+
+      return {
+        error: "Failed to update comment",
+      };
+    }
+
+    revalidateTag(`comments-${ideaId}`);
+
+    return {
+      message: "Comment updated successfully!",
+    };
+  } catch (e: any) {
+    console.error("Comment update failed:", e);
+
+    return {
+      error: e.message || "An unexpected error occurred.",
+    };
+  }
+};
+
 export const deleteComment = async (
   ideaId: string,
   commentId: string

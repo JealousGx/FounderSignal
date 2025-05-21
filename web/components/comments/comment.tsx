@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { CommentExtended } from "@/types/comment";
-import { deleteComment } from "./actions";
+import { Textarea } from "../ui/textarea";
+import { deleteComment, updateComment } from "./actions";
 
 type ReplyFormType = React.ComponentType<{
   ideaId: string;
@@ -36,6 +37,7 @@ type ReplyFormType = React.ComponentType<{
 type CommentActionsType = {
   ideaId: string;
   commentId: string;
+  onEditClick: () => void;
 };
 
 export const CommentItem = ({
@@ -50,6 +52,8 @@ export const CommentItem = ({
   ReplyForm: ReplyFormType;
 }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [updatedContent, setUpdatedContent] = useState(comment.content);
 
   const handleReplyClick = () => {
     setShowReplyForm(true);
@@ -61,6 +65,27 @@ export const CommentItem = ({
 
   const handleReplyAdded = () => {
     setShowReplyForm(false);
+  };
+
+  const handleEditSubmit = async (content: string) => {
+    if (!content || content.trim() === "") {
+      toast.error("Comment content cannot be empty.");
+      return;
+    }
+
+    try {
+      const res = await updateComment(ideaId, comment.id, content);
+
+      if (res.error) {
+        toast.error(res.error);
+        return;
+      }
+
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Error updating comment:", err);
+      toast.error("Failed to update comment. Please try again.");
+    }
   };
 
   return (
@@ -88,44 +113,78 @@ export const CommentItem = ({
             </div>
           </div>
 
-          <p className="text-gray-700 mb-4">{comment.content}</p>
+          {!isEditing ? (
+            <>
+              <p className="text-gray-700 mb-4 whitespace-pre-line">
+                {comment.content}
+              </p>
 
-          {userId && (
-            <div className="w-full flex items-center gap-1 flex-col">
-              <div className="flex items-center gap-1 flex-start w-full">
-                <ReactionButtons
-                  ideaId={ideaId}
-                  commentId={comment.id}
-                  likedByUser={comment.likedByUser}
-                  dislikedByUser={comment.dislikedByUser}
-                  likes={comment.likes}
-                  dislikes={comment.dislikes}
-                />
+              {userId && (
+                <div className="w-full flex items-center gap-1 flex-col">
+                  <div className="flex items-center gap-1 flex-start w-full">
+                    <ReactionButtons
+                      ideaId={ideaId}
+                      commentId={comment.id}
+                      likedByUser={comment.likedByUser}
+                      dislikedByUser={comment.dislikedByUser}
+                      likes={comment.likes}
+                      dislikes={comment.dislikes}
+                    />
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-500 hover:text-gray-700"
-                  onClick={handleReplyClick}
-                >
-                  Reply
-                </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-500 hover:text-gray-700"
+                      onClick={handleReplyClick}
+                    >
+                      Reply
+                    </Button>
 
-                {userId && comment.author.id === userId && (
-                  <CommentActions ideaId={ideaId} commentId={comment.id} />
-                )}
-              </div>
+                    {userId && comment.author.id === userId && (
+                      <CommentActions
+                        ideaId={ideaId}
+                        commentId={comment.id}
+                        onEditClick={() => setIsEditing(true)}
+                      />
+                    )}
+                  </div>
 
-              {showReplyForm && userId && (
-                <ReplyForm
-                  ideaId={ideaId}
-                  userId={userId}
-                  commentId={comment.id}
-                  onCancel={handleReplyCancel}
-                  onReplyAdded={handleReplyAdded}
-                  initialMention={`@${comment.author.name} `}
-                />
+                  {showReplyForm && userId && (
+                    <ReplyForm
+                      ideaId={ideaId}
+                      userId={userId}
+                      commentId={comment.id}
+                      onCancel={handleReplyCancel}
+                      onReplyAdded={handleReplyAdded}
+                      initialMention={`@${comment.author.name} `}
+                    />
+                  )}
+                </div>
               )}
+            </>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Textarea
+                defaultValue={updatedContent}
+                onChange={(e) => setUpdatedContent(e.target.value)}
+              />
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  type="submit"
+                  onClick={() => handleEditSubmit(updatedContent)}
+                >
+                  Save
+                </Button>
+              </div>
             </div>
           )}
 
@@ -194,7 +253,11 @@ const CollapsibleReplies = ({
   );
 };
 
-const CommentActions = ({ commentId, ideaId }: CommentActionsType) => {
+const CommentActions = ({
+  commentId,
+  ideaId,
+  onEditClick,
+}: CommentActionsType) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -205,7 +268,7 @@ const CommentActions = ({ commentId, ideaId }: CommentActionsType) => {
 
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={onEditClick}>
             <Pencil className="mr-2 h-4 w-4" />
             Edit
           </Button>
