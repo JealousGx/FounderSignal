@@ -67,7 +67,11 @@ const getIdea = cache(async (id: string) => {
   }
 });
 
-export default async function IdeaPage({ params }: { params: { id: string } }) {
+export default async function IdeaPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id: ideaId } = await params;
   const res = await getIdea(ideaId);
 

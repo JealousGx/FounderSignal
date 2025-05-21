@@ -64,11 +64,13 @@ export const submitIdea = async (
       message: `Idea "${idea.title}" submitted successfully!`,
       ideaId: responseData.id,
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Submission failed:", e);
 
     return {
-      error: e.message || "An unexpected error occurred during submission.",
+      error:
+        (e as Error).message ||
+        "An unexpected error occurred during submission.",
     };
   }
 };

@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 export async function sendSignal(
   ideaId: string,
   eventType: string,
-  metadata?: any
+  metadata?: { [key: string]: unknown }
 ): Promise<void> {
   try {
     await api.post(

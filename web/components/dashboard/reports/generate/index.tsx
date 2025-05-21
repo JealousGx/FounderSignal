@@ -55,7 +55,7 @@ export default function GenerateReports({
     setIsLoading(true);
 
     try {
-      const report = await generateReport(reportType, ideaId, ideaStatus);
+      await generateReport(reportType, ideaId, ideaStatus);
 
       toast.success(
         `${
@@ -66,8 +66,8 @@ export default function GenerateReports({
       setOpen(false);
 
       router.push(`/dashboard/reports`);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to generate report");
+    } catch (e: unknown) {
+      toast.error((e as Error).message || "Failed to generate report");
     } finally {
       setIsLoading(false);
     }

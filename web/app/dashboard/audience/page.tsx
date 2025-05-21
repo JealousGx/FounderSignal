@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { getAudience } from "./get-audience";
 
+export const dynamic = "force-dynamic";
+
 const USERS_PER_PAGE = 10;
 
 export default async function AudiencePage() {

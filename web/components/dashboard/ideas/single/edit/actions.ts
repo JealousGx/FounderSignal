@@ -79,11 +79,13 @@ export const updateIdea = async (
     return {
       message: `Idea updated successfully!`,
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Submission failed:", e);
 
     return {
-      error: e.message || "An unexpected error occurred during submission.",
+      error:
+        (e as Error).message ||
+        "An unexpected error occurred during submission.",
     };
   }
 };
@@ -142,11 +144,13 @@ export const updateMVP = async (
     return {
       message: `Landing page updated successfully!`,
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Submission failed:", e);
 
     return {
-      error: e.message || "An unexpected error occurred during submission.",
+      error:
+        (e as Error).message ||
+        "An unexpected error occurred during submission.",
     };
   }
 };
@@ -176,11 +180,12 @@ export const deleteIdea = async (id: string) => {
     return {
       message: `Idea deleted successfully!`,
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Deletion failed:", e);
 
     return {
-      error: e.message || "An unexpected error occurred during deletion.",
+      error:
+        (e as Error).message || "An unexpected error occurred during deletion.",
     };
   }
 };
