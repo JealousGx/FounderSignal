@@ -8,7 +8,69 @@ A real-time micro-validation platform for startup founders to test startup ideas
 
 ```
 /foundersignal
-update when done.
+├── api/
+│   ├── .air.toml
+│   ├── .env
+│   ├── .env.example
+│   ├── AUTHOR.txt
+│   ├── Dockerfile
+│   ├── go.mod
+│   ├── go.sum
+│   ├── Makefile
+│   ├── cmd/
+│   │   ├── config/
+│   │   └── server/
+│   ├── internal/
+│   │   ├── domain/
+│   │   ├── dto/
+│   │   ├── pkg/
+│   │   ├── repository/
+│   │   ├── service/
+│   │   ├── transport/
+│   │   └── websocket/
+│   ├── pkg/
+│   │   ├── database/
+│   │   └── validator/
+│   ├── scripts/
+│   └── tmp/
+│       └── main
+├── web/
+│   ├── .dockerignore
+│   ├── .env.example
+│   ├── .env.local
+│   ├── Dockerfile
+│   ├── README.md
+│   ├── components.json
+│   ├── eslint.config.mjs
+│   ├── middleware.ts
+│   ├── next-env.d.ts
+│   ├── next.config.ts
+│   ├── package.json
+│   ├── postcss.config.mjs
+│   ├── tsconfig.json
+│   ├── app/
+│   │   ├── (public)/
+│   │   │   ├── explore/
+│   │   │   └── submit/
+│   │   ├── dashboard/
+│   │   │   ├── audience/
+│   │   │   ├── ideas/
+│   │   │   └── reports/
+│   ├── components/
+│   │   ├── comments/
+│   │   ├── dashboard/ # dashboard related components
+│   │   ├── navbar/
+│   │   ├── reactions-btns/
+│   │   └── ui/ # shadcn ui components
+│   ├── contexts/
+│   ├── lib/
+│   ├── public/
+│   └── types/
+├── .dockerignore
+├── .gitignore
+├── docker-compose.yml
+├── LICENSE
+├── README.md
 ```
 
 ## 🚀 Features
