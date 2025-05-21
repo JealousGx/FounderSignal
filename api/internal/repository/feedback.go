@@ -13,6 +13,7 @@ import (
 
 type FeedbackRepository interface {
 	Add(ctx context.Context, feedback *domain.Feedback) (*domain.Feedback, error)
+	Update(ctx context.Context, feedbackId uuid.UUID, feedback *domain.Feedback) error
 	GetById(ctx context.Context, feedbackId uuid.UUID) (*domain.Feedback, error)
 	GetByIdea(ctx context.Context, ideaId uuid.UUID, queryParams *domain.QueryParams) ([]domain.Feedback, int64, error)
 	GetForUser(ctx context.Context, userId string, limit int) ([]domain.Feedback, error)
@@ -52,6 +53,19 @@ func (r *fbRepository) Add(ctx context.Context, feedback *domain.Feedback) (*dom
 	}
 
 	return feedback, nil
+}
+
+func (r *fbRepository) Update(ctx context.Context, feedbackId uuid.UUID, feedback *domain.Feedback) error {
+	result := r.db.WithContext(ctx).Model(&domain.Feedback{}).
+		Where("id = ?", feedbackId).
+		Updates(feedback)
+
+	if result.Error != nil {
+		fmt.Printf("Error updating feedback %s: %v\n", feedbackId, result.Error)
+		return result.Error
+	}
+
+	return nil
 }
 
 func (r *fbRepository) GetById(ctx context.Context, feedbackId uuid.UUID) (*domain.Feedback, error) {
