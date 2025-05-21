@@ -42,6 +42,8 @@ func registerProtectedRoutes(router *gin.RouterGroup, h *Handlers) {
 	router.GET("/reports", h.Report.GetReportsList)
 	router.GET("/reports/:reportId", h.Report.GetByID)
 	router.POST("/reports/generate", h.Report.GenerateReport)
+
+	router.DELETE("/feedback/:feedbackId", h.Feedback.Delete)
 }
 
 func registerPublicRoutes(router *gin.RouterGroup, h *Handlers) {

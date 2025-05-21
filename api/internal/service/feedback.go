@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"foundersignal/internal/domain"
 	"foundersignal/internal/dto"
 	"foundersignal/internal/dto/request"
@@ -19,6 +20,7 @@ import (
 type FeedbackService interface {
 	Add(ctx context.Context, parsedIdeaId uuid.UUID, parsedParentId *uuid.UUID, userId string, fb *request.CreateFeedback) (uuid.UUID, error)
 	GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string, queryParams domain.QueryParams) (*response.IdeaCommentResponse, error)
+	Delete(ctx context.Context, feedbackId uuid.UUID, userId string) error
 	GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID) (int64, error)
 }
 
@@ -86,6 +88,24 @@ func (s *fbService) GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *str
 	comments := dto.FeedbackToIdeaComments(feedbacks, userId, total)
 
 	return comments, nil
+}
+
+func (s *fbService) Delete(ctx context.Context, feedbackId uuid.UUID, userId string) error {
+	feedback, err := s.repo.GetById(ctx, feedbackId)
+	if err != nil {
+		return err
+	}
+
+	if feedback.UserID != userId {
+		return fmt.Errorf("user %s is not the author of feedback %s", userId, feedbackId)
+	}
+
+	err = s.repo.Delete(ctx, feedbackId)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *fbService) GetCountByIdeaId(ctx context.Context, ideaId uuid.UUID) (int64, error) {

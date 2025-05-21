@@ -12,6 +12,7 @@ import (
 type FeedbackHandler interface {
 	Create(c *gin.Context)
 	GetByIdea(c *gin.Context)
+	Delete(c *gin.Context)
 }
 
 type fbHandler struct {
@@ -112,4 +113,38 @@ func (h *fbHandler) GetByIdea(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, feedbacks)
+}
+
+func (h *fbHandler) Delete(c *gin.Context) {
+	feedbackId := c.Param("feedbackId")
+	if feedbackId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Feedback ID is required"})
+		return
+	}
+
+	parsedFeedbackId, err := uuid.Parse(feedbackId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid feedback ID"})
+		return
+	}
+
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	userIdStr, ok := userId.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	err = h.service.Delete(c.Request.Context(), parsedFeedbackId, userIdStr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
 }
