@@ -12,7 +12,7 @@
     "prettier:fix": "prettier --write \"**/*.{js,jsx,ts,tsx}\"",
     "analyze": "cross-env ANALYZE=true pnpm run build",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "prepare": "husky"
+    "prepare": "husky install"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.18.5",
