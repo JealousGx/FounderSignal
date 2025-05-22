@@ -14,13 +14,6 @@ pnpm-debug.log
 **/out/
 **/.output/
 
-# Environment and config
-**/.env*
-**/.env.local
-**/.env.development.local
-**/.env.test.local
-**/.env.production.local
-
 # Cache and temp files
 **/.cache/
 **/.temp/
