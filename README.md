@@ -85,25 +85,42 @@ A real-time micro-validation platform for startup founders to test startup ideas
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 15, TailwindCSS, Clerk.dev
-- **Backend**: Golang (Gin/Fiber), PostgreSQL (NeonDB), Redis
-- **Infra**: AWS Lambda, CloudFront, S3
-- **Realtime**: WebSockets + Supabase Realtime
-- **AI**: OpenAI API (for summarizing feedback)
+- **Backend**: Golang (Gin), PostgreSQL (NeonDB), (To be implemented later)
+- **Realtime**: WebSockets
+- **AI**: OpenAI API (for summarizing feedback) (To be implemented later)
 
 ## 🧪 Getting Started
 
 1. Clone the repo
 2. Setup `.env` files for both apps
-3. Install dependencies:
 
+- For the web app, navigate to the `web` directory:
+  ```bash
+  cd web
+  cp .env.example .env.local
+  ```
+  Then, fill in the necessary environment variables in `.env.local`.
+  - For the API, navigate to the `api` directory:
+    ```bash
+    cd api
+    cp .env.example .env
+    ```
+    Then, fill in the necessary environment variables in `.env`.
+
+3. Install dependencies:
+   - For the web app (from the `web` directory):
    ```bash
-   pnpm install # for monorepo
-   cd apps/web && pnpm dev
-   cd apps/api && go run main.go
+   pnpm install
+   pnpm dev
    ```
 
-4. Set up PostgreSQL and Redis locally or use hosted services
-5. Deploy via Vercel (web) and Railway/Fly.io (api)
+- For the API (from the `api` directory):
+  ```bash
+  # Ensure you have Go installed
+  go run cmd/server/main.go
+  # Or, if you prefer using Air for live reloading (ensure Air is installed):
+  # air
+  ```
 
 ---
 
