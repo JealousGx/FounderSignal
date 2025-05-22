@@ -9,7 +9,6 @@ COPY . .
 
 ENV CGO_ENABLED=0 GOOS=linux
 RUN go build -o api ./cmd/server
-RUN ls -l /app/api
 
 FROM alpine:latest
 
