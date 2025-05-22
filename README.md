@@ -85,7 +85,7 @@ A real-time micro-validation platform for startup founders to test startup ideas
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 15, TailwindCSS, Clerk.dev
-- **Backend**: Golang (Gin), PostgreSQL (NeonDB), (To be implemented later)
+- **Backend**: Golang (Gin), PostgreSQL, (To be implemented later)
 - **Realtime**: WebSockets
 - **AI**: OpenAI API (for summarizing feedback) (To be implemented later)
 
