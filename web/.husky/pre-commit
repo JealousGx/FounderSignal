@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Running pre-commit hooks..."
+
+# Run linting
+echo "Running linter..."
+npm run lint || {
+  echo "Linting failed! Fix the issues before committing."
+  exit 1
+}
+
+# Run prettier check
+echo "Running prettier check..."
+npm run prettier || {
+  echo "Prettier check failed! Fix the formatting issues before committing."
+  exit 1
+}
+
+echo "All pre-commit checks passed!"
