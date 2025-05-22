@@ -9,6 +9,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - ./api/.env # change this to your .env file
     environment:
       DATABASE_URL: postgres://admin:admin@postgres:5432/postgres?sslmode=disable
 
@@ -18,8 +20,6 @@ services:
       DBName: postgres
       DBHost: postgres
       DBPort: 5432
-    volumes:
-      - ./api:/app
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -37,11 +37,9 @@ services:
       - "3000:3000"
     environment:
       NEXT_TELEMETRY_DISABLED: 1
-      NODE_ENV: development
-    volumes:
-      - ./web:/app
-      - /app/node_modules
-      - /app/.next
+      NODE_ENV: development # change this to production if needed. i wanted to test it in development mode and avoid publishing clerk project.
+    env_file:
+      - ./web/.env.local # change this to your .env.local file
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]

@@ -66,7 +66,7 @@ export default function Home() {
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority
                 objectFit="contain"
-                className="md:object-cover"
+                className="w-full h-full"
               />
             </div>
           </div>
