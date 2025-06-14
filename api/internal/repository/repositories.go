@@ -5,6 +5,7 @@ import (
 )
 
 type Repositories struct {
+	User     UserRepository
 	Idea     IdeaRepository
 	Audience AudienceRepository
 	Signal   SignalRepository
@@ -16,6 +17,7 @@ type Repositories struct {
 
 func NewRepositories(db *gorm.DB) *Repositories {
 	return &Repositories{
+		User:     NewUserRepository(db),
 		Idea:     NewIdeasRepo(db),
 		Audience: NewAudienceRepo(db),
 		Signal:   NewSignalRepo(db),

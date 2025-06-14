@@ -6,6 +6,7 @@ import (
 )
 
 type Services struct {
+	User      UserService
 	Idea      IdeaService
 	Feedback  FeedbackService
 	Reaction  ReactionService
@@ -21,6 +22,7 @@ func NewServices(repos *repository.Repositories, broadcaster websocket.ActivityB
 	analyticsService := NewAnalyticsService(repos.Idea, repos.Signal, repos.Audience, repos.Feedback, repos.Report)
 
 	return &Services{
+		User:        NewUserService(repos.User),
 		Idea:        NewIdeasService(repos.Idea, repos.Signal, repos.Audience),
 		Feedback:    NewFeedbackService(repos.Feedback, repos.Idea, broadcaster),
 		Reaction:    NewReactionService(repos.Reaction),

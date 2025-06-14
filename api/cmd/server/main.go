@@ -6,6 +6,7 @@ import (
 	"foundersignal/internal/repository"
 	"foundersignal/internal/service"
 	"foundersignal/internal/transport/http"
+	wh "foundersignal/internal/transport/webhooks"
 	ws "foundersignal/internal/websocket"
 	"foundersignal/pkg/database"
 	"log"
@@ -51,8 +52,12 @@ func main() {
 	repos := repository.NewRepositories(db)
 	services := service.NewServices(repos, activityBroadcaster)
 	handlers := http.NewHandlers(services)
+	webhooks := wh.NewWebhooks(services, wh.Secrets{
+		ClerkWebhookSecret: cfg.Envs.CLERK_WEBHOOK_SECRET,
+	})
 
 	http.RegisterRoutes(router, handlers, cfg.Envs)
+	wh.RegisterRoutes(router, webhooks)
 
 	router.Run(":" + cfg.Envs.Server.Port)
 }
