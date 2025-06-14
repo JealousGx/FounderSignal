@@ -68,7 +68,7 @@ export default async function Dashboard() {
           <Suspense
             fallback={<Skeleton className="h-[400px] w-full rounded-xl" />}
           >
-            <IdeaAnalytics analytics={data.analyticsData} />
+            <IdeaAnalytics analytics={data.analyticsData || []} />
           </Suspense>
         </div>
 
