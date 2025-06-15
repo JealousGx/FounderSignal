@@ -10,9 +10,12 @@ import (
 
 type UserRepository interface {
 	Create(ctx context.Context, user *domain.User) error
-	Update(ctx context.Context, id string, user *domain.User) error
-	FindByID(ctx context.Context, id string) (*domain.User, error)
-	Delete(ctx context.Context, id string) error
+	Update(ctx context.Context, userID string, user *domain.User) error
+	FindByID(ctx context.Context, userID string) (*domain.User, error)
+	FindByEmail(ctx context.Context, email string) (*domain.User, error)
+	Delete(ctx context.Context, userID string) error
+	FindByPaddleSubscriptionID(ctx context.Context, paddleSubscriptionID string) (*domain.User, error)
+	FindByPaddleCustomerID(ctx context.Context, paddleCustomerID string) (*domain.User, error)
 }
 
 type userRepository struct {
@@ -54,4 +57,34 @@ func (r *userRepository) Delete(ctx context.Context, id string) error {
 	}
 
 	return nil
+}
+
+func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+	var user domain.User
+	err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+
+	return &user, err
+}
+
+func (r *userRepository) FindByPaddleSubscriptionID(ctx context.Context, paddleSubscriptionID string) (*domain.User, error) {
+	var user domain.User
+	err := r.db.WithContext(ctx).Where("paddle_subscription_id = ?", paddleSubscriptionID).First(&user).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+
+	return &user, err
+}
+
+func (r *userRepository) FindByPaddleCustomerID(ctx context.Context, paddleCustomerID string) (*domain.User, error) {
+	var user domain.User
+	err := r.db.WithContext(ctx).Where("paddle_customer_id = ?", paddleCustomerID).First(&user).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+
+	return &user, err
 }

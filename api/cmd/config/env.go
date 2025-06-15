@@ -15,6 +15,8 @@ type Config struct {
 	CLERK_JWKS_URL       string
 	CLERK_WEBHOOK_SECRET string
 
+	PADDLE_WEBHOOK_SECRET string
+
 	APP_ENV string
 }
 
@@ -39,6 +41,8 @@ func initConfig() Config {
 
 		CLERK_JWKS_URL:       getEnv("CLERK_JWKS_URL", "https://clerk.YOUR_INSTANCE.clerk.accounts.dev/.well-known/jwks.json"),
 		CLERK_WEBHOOK_SECRET: getEnv("CLERK_WEBHOOK_SECRET", "whsec_abcdefghijklmnopqrstuvwxyz"),
+
+		PADDLE_WEBHOOK_SECRET: getEnv("PADDLE_WEBHOOK_SECRET", "abcd_abcd_abcd"),
 
 		APP_ENV: getEnv("APP_ENV", "development"),
 	}

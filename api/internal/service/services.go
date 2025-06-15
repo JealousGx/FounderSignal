@@ -13,6 +13,7 @@ type Services struct {
 	MVP       MVPService
 	Dashboard DashboardService
 	Report    ReportService
+	Paddle    PaddleService
 
 	// Broadcaster for WebSocket events
 	Broadcaster websocket.ActivityBroadcaster
@@ -23,6 +24,7 @@ func NewServices(repos *repository.Repositories, broadcaster websocket.ActivityB
 
 	return &Services{
 		User:        NewUserService(repos.User),
+		Paddle:      NewPaddleService(repos.User, repos.Paddle),
 		Idea:        NewIdeasService(repos.Idea, repos.User, repos.Signal, repos.Audience),
 		Feedback:    NewFeedbackService(repos.Feedback, repos.Idea, broadcaster),
 		Reaction:    NewReactionService(repos.Reaction),

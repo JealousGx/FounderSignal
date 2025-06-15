@@ -5,15 +5,18 @@ import (
 )
 
 type Webhooks struct {
-	Clerk ClerkHandler
+	Clerk  ClerkHandler
+	Paddle PaddleHandler
 }
 
 type Secrets struct {
-	ClerkWebhookSecret string
+	ClerkWebhookSecret  string
+	PaddleWebhookSecret string
 }
 
 func NewWebhooks(services *service.Services, secrets Secrets) *Webhooks {
 	return &Webhooks{
-		Clerk: NewClerkHandler(services.User, secrets.ClerkWebhookSecret),
+		Clerk:  NewClerkHandler(services.User, secrets.ClerkWebhookSecret),
+		Paddle: NewPaddleHandler(services.Paddle, secrets.PaddleWebhookSecret),
 	}
 }

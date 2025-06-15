@@ -13,6 +13,7 @@ type Repositories struct {
 	Reaction ReactionRepository
 	MVP      MVPRepository
 	Report   ReportRepository
+	Paddle   PaddleRepository
 }
 
 func NewRepositories(db *gorm.DB) *Repositories {
@@ -25,6 +26,7 @@ func NewRepositories(db *gorm.DB) *Repositories {
 		Reaction: NewReactionRepo(db),
 		MVP:      NewMVPRepo(db),
 		Report:   NewReportRepository(db),
+		Paddle:   NewPaddleRepository(db),
 	}
 }
 

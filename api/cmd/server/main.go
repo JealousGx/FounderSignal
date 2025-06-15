@@ -53,7 +53,8 @@ func main() {
 	services := service.NewServices(repos, activityBroadcaster)
 	handlers := http.NewHandlers(services)
 	webhooks := wh.NewWebhooks(services, wh.Secrets{
-		ClerkWebhookSecret: cfg.Envs.CLERK_WEBHOOK_SECRET,
+		ClerkWebhookSecret:  cfg.Envs.CLERK_WEBHOOK_SECRET,
+		PaddleWebhookSecret: cfg.Envs.PADDLE_WEBHOOK_SECRET,
 	})
 
 	http.RegisterRoutes(router, handlers, cfg.Envs)
