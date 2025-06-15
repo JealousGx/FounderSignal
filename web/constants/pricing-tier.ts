@@ -12,7 +12,7 @@ export const PricingTier: Tier[] = [
   {
     name: "Starter",
     id: "starter",
-    icon: "/icons/price-tiers/free-icon.svg",
+    icon: "/assets/icons/price-tiers/free-icon.svg",
     description: "Test your first idea with an auto-MVP & basic feedback.",
     features: [
       "Validate your first idea",
@@ -30,7 +30,7 @@ export const PricingTier: Tier[] = [
   {
     name: "Pro",
     id: "pro",
-    icon: "/icons/price-tiers/basic-icon.svg",
+    icon: "/assets/icons/price-tiers/basic-icon.svg",
     description: "Deeper insights with custom MVPs & broader audience access.",
     features: [
       "Validate up to 10 ideas simultaneously",
@@ -49,7 +49,7 @@ export const PricingTier: Tier[] = [
   {
     name: "Business",
     id: "business",
-    icon: "/icons/price-tiers/pro-icon.svg",
+    icon: "/assets/icons/price-tiers/pro-icon.svg",
     description:
       "Extensive validation for teams with AI insights & full analytics.",
     features: [

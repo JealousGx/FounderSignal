@@ -45,6 +45,12 @@ export function Toggle({ setFrequency, frequency }: Props) {
               className="relative z-10 px-6 py-2.5 text-base font-medium leading-5 text-gray-700 rounded-md data-[state=active]:text-gray-900 focus:outline-none transition-colors duration-300 ease-in-out"
             >
               {billingFrequency.label}
+
+              {billingFrequency.value === "year" && (
+                <span className="ml-1 text-xs text-primary font-semibold">
+                  20% off
+                </span>
+              )}
             </TabsTrigger>
           ))}
         </TabsList>

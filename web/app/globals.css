@@ -302,3 +302,44 @@
   background: #296cd8;
   filter: blur(32px);
 }
+
+/* checkout success */
+.checkout-background-base {
+  width: 100%;
+  position: absolute;
+  z-index: -1;
+}
+
+.checkout-success-background {
+  position: absolute;
+  left: 50%;
+  margin-left: -410px;
+  top: -338.001px;
+  width: 820px;
+  height: 938px;
+  border-radius: 820px;
+  transform: rotate(180deg);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 251, 229, 0) 0%,
+    rgba(21, 227, 227, 0.06) 35.5%,
+    rgba(255, 248, 0, 0.18) 80.5%
+  );
+  filter: blur(100px);
+}
+
+.checkout-success-background::before {
+  content: "";
+  position: absolute;
+  width: 394px;
+  top: 350px;
+  height: 559px;
+  left: 50%;
+  margin-left: -197px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(168, 240, 248, 0.6) 100%
+  );
+  filter: blur(100px);
+}

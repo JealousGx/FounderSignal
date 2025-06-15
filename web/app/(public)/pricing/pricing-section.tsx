@@ -1,9 +1,10 @@
 "use client";
 
-import { Environments, initializePaddle, Paddle } from "@paddle/paddle-js";
+import { Paddle } from "@paddle/paddle-js";
 import { useEffect, useState } from "react";
 
 import { PriceCards } from "./cards";
+import { CountryDropdown } from "./country-dropdown";
 import { Toggle } from "./toggle";
 
 import {
@@ -11,29 +12,25 @@ import {
   IBillingFrequency,
 } from "@/constants/billing-frequency";
 import { usePaddlePrices } from "@/hooks/usePaddlePrices";
-import { CountryDropdown } from "./country-dropdown";
+import { paddle } from "@/lib/paddle";
 
 export const PricingSection = () => {
   const [frequency, setFrequency] = useState<IBillingFrequency>(
     BillingFrequency[0]
   );
-  const [paddle, setPaddle] = useState<Paddle | undefined>(undefined);
+  const [p, setPaddle] = useState<Paddle | undefined>(undefined);
   const [country, setCountry] = useState<string>("US");
 
-  const { prices, loading } = usePaddlePrices(paddle, country);
+  const { prices, loading } = usePaddlePrices(p, country);
 
   useEffect(() => {
     if (
       process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN &&
       process.env.NEXT_PUBLIC_PADDLE_ENV
     ) {
-      initializePaddle({
-        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
-        environment: process.env.NEXT_PUBLIC_PADDLE_ENV as Environments,
-        eventCallback: console.log,
-      }).then((paddle) => {
-        if (paddle) {
-          setPaddle(paddle);
+      paddle.then((_p) => {
+        if (_p) {
+          setPaddle(_p);
         }
       });
     }
@@ -46,6 +43,7 @@ export const PricingSection = () => {
 
         <CountryDropdown country={country} onCountryChange={setCountry} />
       </div>
+
       <PriceCards frequency={frequency} loading={loading} priceMap={prices} />
     </section>
   );

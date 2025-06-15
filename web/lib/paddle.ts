@@ -1,3 +1,4 @@
+import { Environments, initializePaddle } from "@paddle/paddle-js";
 import {
   Environment,
   LogLevel,
@@ -19,3 +20,10 @@ export function getPaddleInstance() {
 
   return new Paddle(process.env.PADDLE_API_KEY!, paddleOptions);
 }
+
+// this paddle works only in client files.
+export const paddle = initializePaddle({
+  token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
+  environment: process.env.NEXT_PUBLIC_PADDLE_ENV as Environments,
+  eventCallback: console.log,
+});
