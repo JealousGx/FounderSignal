@@ -1,8 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -10,6 +7,9 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function DesktopNav() {
   const pathname = usePathname();
@@ -31,6 +31,7 @@ export function DesktopNav() {
             </Link>
           </NavigationMenuLink>
         </NavigationMenuItem>
+
         <NavigationMenuItem>
           <NavigationMenuLink
             className={cn(
@@ -42,6 +43,21 @@ export function DesktopNav() {
           >
             <Link href="/submit" passHref>
               Submit Idea
+            </Link>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <NavigationMenuLink
+            className={cn(
+              navigationMenuTriggerStyle(),
+              "bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:hover:bg-transparent data-[state=open]:focus:bg-transparent data-[state=open]:bg-transparent",
+              pathname === "/pricing" ? "text-primary" : ""
+            )}
+            asChild
+          >
+            <Link href="/pricing" passHref>
+              Pricing
             </Link>
           </NavigationMenuLink>
         </NavigationMenuItem>

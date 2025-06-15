@@ -1,10 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -12,8 +8,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { NavbarLogo } from "./navbar-logo";
+import { cn } from "@/lib/utils";
+import { Menu } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AuthButtons } from "../auth-buttons";
+import { NavbarLogo } from "./navbar-logo";
 
 interface MobileNavProps {
   isSignedIn?: boolean;
@@ -48,6 +48,7 @@ export function MobileNav({ isSignedIn }: MobileNavProps) {
           >
             Explore Ideas
           </Link>
+
           <Link
             href="/submit"
             className={cn(
@@ -58,6 +59,18 @@ export function MobileNav({ isSignedIn }: MobileNavProps) {
             )}
           >
             Submit Idea
+          </Link>
+
+          <Link
+            href="/pricing"
+            className={cn(
+              "py-2 text-lg font-medium transition-colors",
+              pathname === "/pricing"
+                ? "text-primary"
+                : "text-muted-foreground hover:text-primary"
+            )}
+          >
+            Pricing
           </Link>
           <div className="h-[1px] bg-border mb-6" />
           <AuthButtons isSignedIn={isSignedIn} variant="vertical" />
