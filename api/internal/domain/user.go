@@ -17,8 +17,9 @@ const (
 // User represents an application user, linked to a Clerk user.
 // It stores application-specific data like subscription plan and limits.
 type User struct {
-	ID    string `gorm:"type:varchar(255);not null;uniqueIndex:idx_user_clerk_id;primaryKey" json:"id"`
-	Email string `gorm:"type:varchar(255);not null" json:"email"`
+	ID            string `gorm:"type:varchar(255);not null;uniqueIndex:idx_user_clerk_id;primaryKey" json:"id"`
+	Email         string `gorm:"type:varchar(255);not null" json:"email"`
+	UsedFreeTrial bool   `gorm:"default:false" json:"usedFreeTrial"` // Indicates if the user has used the free plan. Allow only one idea creation on free plan. can be exploited by deleting and creating another idea.
 
 	LastLoginAt *time.Time `gorm:"index" json:"lastLoginAt,omitempty"`
 

@@ -23,7 +23,7 @@ func NewServices(repos *repository.Repositories, broadcaster websocket.ActivityB
 
 	return &Services{
 		User:        NewUserService(repos.User),
-		Idea:        NewIdeasService(repos.Idea, repos.Signal, repos.Audience),
+		Idea:        NewIdeasService(repos.Idea, repos.User, repos.Signal, repos.Audience),
 		Feedback:    NewFeedbackService(repos.Feedback, repos.Idea, broadcaster),
 		Reaction:    NewReactionService(repos.Reaction),
 		MVP:         NewMVPService(repos.MVP, repos.Idea),
