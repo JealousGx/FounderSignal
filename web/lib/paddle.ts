@@ -24,6 +24,7 @@ export function getPaddleInstance() {
 // this paddle works only in client files.
 export const paddle = initializePaddle({
   token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
-  environment: process.env.NEXT_PUBLIC_PADDLE_ENV as Environments,
+  environment:
+    (process.env.NEXT_PUBLIC_PADDLE_ENV as Environments) ?? Environment.sandbox,
   eventCallback: console.log,
 });
