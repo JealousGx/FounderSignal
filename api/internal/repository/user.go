@@ -28,6 +28,7 @@ func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
 }
 
 func (r *userRepository) Update(ctx context.Context, id string, user *domain.User) error {
+	user.ID = id
 	if err := r.db.WithContext(ctx).Model(user).Updates(user).Error; err != nil {
 		fmt.Println("Error updating user:", err)
 
