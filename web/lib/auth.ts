@@ -14,7 +14,7 @@ export const clerk = async () => await clerkClient();
  * @returns {Promise<User>} The current user object.
  */
 export const getUser = cache(async () => {
-  return api.get("/dashboard/user");
+  return api.get("/dashboard/user").then((res) => res.json());
 });
 
 export const getClerkUser = cache(async (userId: string) => {
