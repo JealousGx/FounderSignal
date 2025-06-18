@@ -20,6 +20,7 @@ import { IdeaVisibility } from "./idea-visibility";
 
 import { Idea } from "@/types/idea";
 import { getStatusBadgeColor } from "../utils";
+import { ShareIdeaUrl } from "./share";
 
 export function IdeaSettings({ idea }: { idea: Idea }) {
   return (
@@ -61,10 +62,14 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
                 Preview Landing Page
               </Link>
 
-              <Button variant="outline" className="w-full gap-2">
+              <ShareIdeaUrl
+                ideaId={idea.id}
+                variant="outline"
+                className="w-full gap-2"
+              >
                 <Share2 className="w-4 h-4" />
                 Share Idea
-              </Button>
+              </ShareIdeaUrl>
             </div>
           </div>
         </CardContent>

@@ -5,6 +5,7 @@ import {
   Check,
   Eye,
   Settings,
+  Share2,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import { OptimizedImage } from "@/components/ui/image";
 import { Link as CustomLink } from "@/components/ui/link";
 import { CommentsSection } from "./comments-section";
 
+import { ShareIdeaUrl } from "@/components/dashboard/ideas/single/share";
 import { api } from "@/lib/api";
 import { getClerkUser } from "@/lib/auth";
 import { formatDate, getName } from "@/lib/utils";
@@ -261,6 +263,10 @@ export default async function IdeaPage({
                       likes={idea.likes}
                       dislikes={idea.dislikes}
                     />
+
+                    <ShareIdeaUrl ideaId={ideaId} variant="ghost" size="icon">
+                      <Share2 className="h-4 w-4 mr-2" />
+                    </ShareIdeaUrl>
                   </div>
                 </div>
               </div>

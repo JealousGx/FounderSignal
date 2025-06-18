@@ -28,6 +28,7 @@ import { Link as CustomLink } from "@/components/ui/link";
 
 import { Idea } from "@/types/idea";
 import { formatDate, getStageBadgeColor, getStatusBadgeColor } from "../utils";
+import { ShareIdeaUrl } from "./share";
 
 export function IdeaOverview({ idea }: { idea: Idea }) {
   const isActive = idea.status === "active";
@@ -98,8 +99,14 @@ export function IdeaOverview({ idea }: { idea: Idea }) {
               </DropdownMenuItem>
 
               <DropdownMenuItem>
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
+                <ShareIdeaUrl
+                  ideaId={idea.id}
+                  variant="ghost"
+                  className="justify-start !p-0"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </ShareIdeaUrl>
               </DropdownMenuItem>
 
               {isActive ? (
