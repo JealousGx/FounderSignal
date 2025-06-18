@@ -6,7 +6,6 @@ import {
   Settings,
   Share2,
   ThumbsUp,
-  Trash2,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -18,7 +17,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { OptimizedImage } from "@/components/ui/image";
@@ -95,30 +93,24 @@ export function IdeaOverview({ idea }: { idea: Idea }) {
                 </Link>
               </DropdownMenuItem>
 
-              <DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <ShareIdeaUrl
                   ideaId={idea.id}
                   variant="ghost"
-                  className="justify-start !p-0 h-auto"
+                  className="cursor-pointer justify-start w-full !px-2 py-1.5"
                 >
                   <Share2 className="h-4 w-4 mr-2" />
                   Share
                 </ShareIdeaUrl>
               </DropdownMenuItem>
 
-              <DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <UpdateCampaign
                   ideaId={idea.id}
                   status={idea.status}
                   variant="ghost"
-                  className="!p-0 h-auto"
+                  className="cursor-pointer justify-start w-full !px-2 py-1.5"
                 />
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem className="text-red-600">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

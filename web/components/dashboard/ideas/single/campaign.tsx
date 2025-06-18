@@ -56,7 +56,7 @@ export const UpdateCampaign = ({
         className="w-full gap-2"
         {...rest}
       >
-        <PauseCircle className="w-4 h-4" />
+        <PauseCircle className="w-4 h-4 mr-2" />
         Pause Campaign
       </Button>
     );
@@ -71,7 +71,7 @@ export const UpdateCampaign = ({
         className="w-full gap-2"
         {...rest}
       >
-        <PlayCircle className="w-4 h-4" />
+        <PlayCircle className="w-4 h-4 mr-2" />
         Resume Campaign
       </Button>
     );
