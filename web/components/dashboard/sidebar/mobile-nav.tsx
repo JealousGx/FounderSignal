@@ -95,10 +95,10 @@ export default function MobileDashboardNav() {
 
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-2 text-gray-700"
+                  className="w-full justify-start gap-0 text-gray-700"
                   onClick={() => setOpen(false)}
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className="w-5 h-5 mr-3 text-gray-500" />
                   Close menu
                 </Button>
               </div>

@@ -31,9 +31,9 @@ export const ManageSubscriptions = () => {
       variant="ghost"
       target="_blank"
       rel="noopener noreferrer"
-      className="w-full justify-start gap-2 text-gray-700"
+      className="w-full justify-start gap-0 text-gray-700"
     >
-      <CreditCard className="w-5 h-5 text-gray-500" />
+      <CreditCard className="w-5 h-5 mr-3 text-gray-500" />
       Manage Subscriptions
     </Link>
   );
