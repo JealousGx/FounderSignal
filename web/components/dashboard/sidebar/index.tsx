@@ -1,12 +1,15 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { SignOutButton } from "@clerk/nextjs";
 import { LogOut, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
+import { ManageSubscriptions } from "./manage-subscriptions";
 import { NavItems } from "./navi-items";
+
+import { cn } from "@/lib/utils";
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
@@ -62,10 +65,15 @@ export default function DashboardSidebar() {
         </nav>
       </div>
 
-      <div className="px-3 mt-auto pt-4 border-t border-gray-200">
+      <div className="flex flex-col gap-2 px-3 mt-auto pt-4 border-t border-gray-200">
+        <ManageSubscriptions />
+
         <SignOutButton>
-          <Button variant="ghost" className="w-full justify-start gap-2">
-            <LogOut className="w-5 h-5 mr-3 text-gray-500" />
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 text-gray-700"
+          >
+            <LogOut className="w-5 h-5 text-gray-500" />
             Sign out
           </Button>
         </SignOutButton>
