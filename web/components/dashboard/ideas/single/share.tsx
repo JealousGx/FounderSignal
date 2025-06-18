@@ -1,17 +1,14 @@
 "use client";
 
-import { type VariantProps } from "class-variance-authority";
-import React, { ReactNode } from "react";
-
-import { Button, buttonVariants } from "@/components/ui/button";
+import { ReactNode } from "react";
 import { toast } from "sonner";
 
-type ShareIdeaUrlProps = React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-    ideaId: string;
-    children?: ReactNode;
-  };
+import { Button, ButtonProps } from "@/components/ui/button";
+
+type ShareIdeaUrlProps = ButtonProps & {
+  ideaId: string;
+  children?: ReactNode;
+};
 
 export const ShareIdeaUrl = ({
   ideaId,

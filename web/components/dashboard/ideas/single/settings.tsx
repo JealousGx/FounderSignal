@@ -1,13 +1,6 @@
-import {
-  Edit,
-  ExternalLink,
-  PauseCircle,
-  PlayCircle,
-  Share2,
-} from "lucide-react";
+import { Edit, ExternalLink, Share2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -16,11 +9,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Link } from "@/components/ui/link";
+import { UpdateCampaign } from "./campaign";
 import { IdeaVisibility } from "./idea-visibility";
+import { ShareIdeaUrl } from "./share";
 
 import { Idea } from "@/types/idea";
 import { getStatusBadgeColor } from "../utils";
-import { ShareIdeaUrl } from "./share";
 
 export function IdeaSettings({ idea }: { idea: Idea }) {
   return (
@@ -100,19 +94,7 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
               </div>
             </div>
 
-            <div>
-              {idea.status === "active" ? (
-                <Button variant="outline" className="w-full gap-2">
-                  <PauseCircle className="w-4 h-4" />
-                  Pause Campaign
-                </Button>
-              ) : idea.status === "paused" ? (
-                <Button variant="outline" className="w-full gap-2">
-                  <PlayCircle className="w-4 h-4" />
-                  Resume Campaign
-                </Button>
-              ) : null}
-            </div>
+            <UpdateCampaign ideaId={idea.id} status={idea.status} />
           </div>
         </CardContent>
       </Card>
