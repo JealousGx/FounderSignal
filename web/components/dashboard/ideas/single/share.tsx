@@ -26,7 +26,7 @@ export const ShareIdeaUrl = ({
   };
 
   return (
-    <Button onClick={onClick} {...props}>
+    <Button onClick={onClick} {...props} aria-label="Share Idea URL">
       {children}
     </Button>
   );

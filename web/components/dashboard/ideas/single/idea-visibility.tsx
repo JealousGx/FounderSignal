@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 
-import { updateIdeaVisibility } from "./edit/actions";
+import { updateIdeaAttributes } from "./edit/actions";
 
 export const IdeaVisibility = ({
   ideaId,
@@ -27,9 +27,11 @@ export const IdeaVisibility = ({
   const handlePrivacyChange = async (checked: boolean) => {
     setIsSaving(true);
     try {
-      const response = await updateIdeaVisibility(ideaId, checked);
+      const response = await updateIdeaAttributes(ideaId, {
+        isPrivate: checked,
+      });
       if (response.error) {
-        return toast.error("Error updating visibility: ");
+        return toast.error("Error updating visibility");
       }
       setIsPrivate(checked);
 

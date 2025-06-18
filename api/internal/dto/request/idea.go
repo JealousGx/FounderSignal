@@ -8,14 +8,14 @@ type CreateIdea struct {
 }
 
 type UpdateIdea struct {
-	Title          string `json:"title"`
-	Description    string `json:"description"`
-	IsPrivate      *bool  `json:"isPrivate"`
-	Status         string `json:"status"`
-	Stage          string `json:"stage"`
-	TargetAudience string `json:"targetAudience"`
-	TargetSignups  int    `json:"targetSignups"`
-	ImageURL       string `json:"imageUrl"`
+	Title          *string `json:"title" binding:"omitempty,min=6"`
+	Description    *string `json:"description" binding:"omitempty,min=30"`
+	IsPrivate      *bool   `json:"isPrivate"`
+	Status         *string `json:"status" binding:"omitempty,oneof=draft active paused completed archived"`
+	Stage          *string `json:"stage" binding:"omitempty,oneof=validation mvp ideation"`
+	TargetAudience *string `json:"targetAudience" binding:"omitempty,min=8"`
+	TargetSignups  *int    `json:"targetSignups" binding:"omitempty,min=1"`
+	ImageURL       *string `json:"imageUrl"`
 }
 
 type UpdateMVP struct {

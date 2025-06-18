@@ -192,13 +192,13 @@ export const deleteIdea = async (id: string) => {
   }
 };
 
-export const updateIdeaVisibility = async (
+export const updateIdeaAttributes = async (
   ideaId: string,
-  isPrivate: boolean
+  attributes: Record<string, unknown>
 ) => {
-  return updateIdeaRequest(ideaId, { isPrivate }).then((res) => {
+  return updateIdeaRequest(ideaId, attributes).then((res) => {
     if (!res.ok) {
-      throw new Error("Failed to update idea visibility");
+      throw new Error("Failed to update idea attributes");
     }
 
     return res.json();
