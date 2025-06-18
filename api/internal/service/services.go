@@ -6,12 +6,14 @@ import (
 )
 
 type Services struct {
+	User      UserService
 	Idea      IdeaService
 	Feedback  FeedbackService
 	Reaction  ReactionService
 	MVP       MVPService
 	Dashboard DashboardService
 	Report    ReportService
+	Paddle    PaddleService
 
 	// Broadcaster for WebSocket events
 	Broadcaster websocket.ActivityBroadcaster
@@ -21,7 +23,9 @@ func NewServices(repos *repository.Repositories, broadcaster websocket.ActivityB
 	analyticsService := NewAnalyticsService(repos.Idea, repos.Signal, repos.Audience, repos.Feedback, repos.Report)
 
 	return &Services{
-		Idea:        NewIdeasService(repos.Idea, repos.Signal, repos.Audience),
+		User:        NewUserService(repos.User),
+		Paddle:      NewPaddleService(repos.User, repos.Paddle),
+		Idea:        NewIdeasService(repos.Idea, repos.User, repos.Signal, repos.Audience),
 		Feedback:    NewFeedbackService(repos.Feedback, repos.Idea, broadcaster),
 		Reaction:    NewReactionService(repos.Reaction),
 		MVP:         NewMVPService(repos.MVP, repos.Idea),

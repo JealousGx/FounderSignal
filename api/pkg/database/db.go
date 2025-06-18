@@ -26,6 +26,8 @@ func Connect(dbConfig domain.DBConfig) error {
 
 	// Auto-migrate models / domains
 	err = DB.AutoMigrate(
+		&domain.User{},
+		&domain.PaddleProcessedEvent{},
 		&domain.Idea{},
 		&domain.MVPSimulator{},
 		&domain.Signal{},

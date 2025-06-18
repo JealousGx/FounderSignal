@@ -32,14 +32,16 @@ type IdeaService interface {
 }
 
 type ideaService struct {
+	u            repository.UserRepository
 	repo         repository.IdeaRepository
 	signalRepo   repository.SignalRepository
 	audienceRepo repository.AudienceRepository
 }
 
-func NewIdeasService(repo repository.IdeaRepository, signalRepo repository.SignalRepository,
+func NewIdeasService(repo repository.IdeaRepository, u repository.UserRepository, signalRepo repository.SignalRepository,
 	audienceRepo repository.AudienceRepository) *ideaService {
 	return &ideaService{
+		u:            u,
 		repo:         repo,
 		signalRepo:   signalRepo,
 		audienceRepo: audienceRepo,
@@ -47,6 +49,17 @@ func NewIdeasService(repo repository.IdeaRepository, signalRepo repository.Signa
 }
 
 func (s *ideaService) Create(ctx context.Context, userId string, req *request.CreateIdea) (uuid.UUID, error) {
+	user, err := s.u.FindByID(ctx, userId)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to find user: %w", err)
+	}
+	if user == nil {
+		return uuid.Nil, fmt.Errorf("user not found")
+	}
+	if user.UsedFreeTrial && user.Plan == domain.FreePlan {
+		return uuid.Nil, fmt.Errorf("you have already used your free trial. Upgrade to Pro or Business plan to create more ideas")
+	}
+
 	if err := validator.Validate(req); err != nil {
 		return uuid.Nil, err
 	}
@@ -82,7 +95,24 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		CTAButton:   req.CTAButton,
 	}
 
-	return s.repo.CreateWithMVP(ctx, idea, mvp)
+	ideaId, err := s.repo.CreateWithMVP(ctx, idea, mvp)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to create idea: %w", err)
+	}
+
+	// If the user is on the free plan, set the UsedFreeTrial flag to true
+	if user.Plan == domain.FreePlan && !user.UsedFreeTrial {
+		_user := &domain.User{
+			UsedFreeTrial: true,
+		}
+
+		if err := s.u.Update(ctx, userId, _user); err != nil {
+			log.Printf("WARNING: Failed to update user after creating idea: %v", err)
+
+		}
+	}
+
+	return ideaId, nil
 }
 
 func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUID, req request.UpdateIdea) error {

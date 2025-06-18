@@ -25,11 +25,11 @@ export const metadata: Metadata = {
     "A real-time micro-validation platform for startup founders to test startup ideas within 72 hours — powered by dynamic MVPs, user feedback, and AI summaries.",
   robots: { index: true, follow: true },
   icons: {
-    icon: "/favicon/favicon.ico",
-    shortcut: "/favicon/favicon-16x16.png",
-    apple: "/favicon/apple-touch-icon.png",
+    icon: "/assets/favicon/favicon.ico",
+    shortcut: "/assets/favicon/favicon-16x16.png",
+    apple: "/assets/favicon/apple-touch-icon.png",
   },
-  manifest: `/favicon/site.webmanifest`,
+  manifest: `/assets/favicon/site.webmanifest`,
   authors: [
     {
       name: "JealousGx",

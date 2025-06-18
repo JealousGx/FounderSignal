@@ -60,7 +60,7 @@ export default function Home() {
           <div className="lg:w-1/2 w-full">
             <div className="relative w-full aspect-square md:aspect-[4/3] rounded-xl bg-gray-100 overflow-hidden shadow-lg">
               <OptimizedImage
-                src="/images/home_hero.webp"
+                src="/assets/images/home_hero.webp"
                 alt="FounderSignal Steps"
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"

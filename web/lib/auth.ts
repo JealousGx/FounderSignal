@@ -11,6 +11,7 @@ export const getUser = cache(async (userId: string) => {
 
   return user;
 });
+
 export const getUsers = cache(async (userIds: string[]) => {
   const clerk = await clerkClient();
   const allUsers: User[] = [];

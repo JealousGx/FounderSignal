@@ -9,6 +9,15 @@ export default async function RecentIdeas({
 }: {
   recentIdeas: Idea[];
 }) {
+  if (!recentIdeas || recentIdeas.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-lg font-bold">Recent Ideas</h2>
+        <p className="text-sm text-gray-600">No recent ideas found.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="flex items-center justify-between px-4 md:px-6 pt-4 md:pt-6 pb-4">
