@@ -24,9 +24,10 @@ type IdeaRepository interface {
 }
 
 type IdeaQuerySpec struct {
-	Status     domain.IdeaStatus
-	WithCounts bool
-	ByUserId   string
+	IncludePrivate *bool
+	Status         domain.IdeaStatus
+	WithCounts     bool
+	ByUserId       string
 }
 
 type ideaRepository struct {
@@ -92,6 +93,10 @@ func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryP
 
 	if spec.ByUserId != "" {
 		query = query.Where("user_id = ?", spec.ByUserId)
+	}
+
+	if spec.IncludePrivate != nil {
+		query = query.Where("is_private = ?", *spec.IncludePrivate)
 	}
 
 	var totalCount int64

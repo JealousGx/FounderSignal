@@ -143,6 +143,10 @@ func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUI
 		TargetSignups:  req.TargetSignups,
 	}
 
+	if req.IsPrivate != nil {
+		idea.IsPrivate = req.IsPrivate
+	}
+
 	// Update the idea
 	if err := s.repo.Update(ctx, idea); err != nil {
 		return err
@@ -199,9 +203,11 @@ func (s *ideaService) GetByID(ctx context.Context, id uuid.UUID, userId string) 
 }
 
 func (s *ideaService) GetIdeas(ctx context.Context, queryParams domain.QueryParams) (*response.IdeaListResponse, error) {
+	includePrivateIdeas := false
 	ideasRaw, totalCount, err := s.repo.GetIdeas(ctx, queryParams, repository.IdeaQuerySpec{
-		Status:     domain.IdeaStatusActive,
-		WithCounts: true,
+		IncludePrivate: &includePrivateIdeas,
+		Status:         domain.IdeaStatusActive,
+		WithCounts:     true,
 	})
 	if err != nil {
 		return nil, err

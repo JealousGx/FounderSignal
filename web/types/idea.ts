@@ -9,6 +9,7 @@ export interface Idea {
   stage: "validation" | "mvp" | "ideation";
   signups: number;
   targetSignups: number;
+  isPrivate: boolean;
   views: number;
   likes: number;
   dislikes: number;

@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Link } from "@/components/ui/link";
+import { IdeaVisibility } from "./idea-visibility";
 
 import { Idea } from "@/types/idea";
 import { getStatusBadgeColor } from "../utils";
@@ -68,6 +69,8 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
           </div>
         </CardContent>
       </Card>
+
+      <IdeaVisibility ideaId={idea.id} isPrivate={idea.isPrivate} />
 
       <Card>
         <CardHeader>

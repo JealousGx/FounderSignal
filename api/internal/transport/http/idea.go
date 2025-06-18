@@ -197,36 +197,3 @@ func (h *ideaHandler) GetByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, idea)
 }
-
-// func (h *IdeaHandler) GetTopIdeas(c *gin.Context) {
-// 	userId, exists := c.Get("userId")
-// 	if !exists {
-// 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
-// 		return
-// 	}
-
-// 	limit := 7
-// 	if l := c.Query("limit"); l != "" {
-// 		if n, err := strconv.Atoi(l); err == nil && n > 0 {
-// 			limit = n
-// 		}
-// 	}
-
-// 	offset := 0
-// 	if l := c.Query("offset"); l != "" {
-// 		if n, err := strconv.Atoi(l); err == nil && n > 0 {
-// 			offset = n
-// 		}
-// 	}
-
-// 	ideas, err := h.service.GetTopIdeas(c.Request.Context(), userId.(string), domain.QueryParams{
-// 		Limit:  limit,
-// 		Offset: offset,
-// 	})
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, ideas)
-// }
