@@ -20,6 +20,7 @@ type IdeaList struct {
 	Title          string    `json:"title"`
 	Description    string    `json:"description"`
 	TargetAudience string    `json:"targetAudience"`
+	IsPrivate      bool      `json:"isPrivate"`
 	CreatedAt      string    `json:"createdAt"`
 	UpdatedAt      string    `json:"updatedAt"`
 	Views          int       `json:"views"`

@@ -13,6 +13,7 @@ type Idea struct {
 	Slug           string `gorm:"not null;uniqueIndex;index" json:"slug"`
 	Description    string `gorm:"type:text;not null" json:"description"`
 	TargetAudience string `gorm:"not null" json:"targetAudience"`
+	IsPrivate      *bool  `gorm:"default:false" json:"isPrivate"`
 	Status         string `gorm:"not null;default:'active';index" json:"status"` // status defined in ./types.go file
 	Stage          string `gorm:"not null;default:'ideation';index" json:"stage"`
 	TargetSignups  int    `gorm:"default:100" json:"targetSignups"`

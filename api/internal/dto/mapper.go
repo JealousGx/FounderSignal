@@ -27,11 +27,19 @@ func ToIdeasListResponse(ideas []*domain.Idea, count int64, stats *response.User
 	}
 
 	for _, idea := range ideas {
+		var isPrivate bool
+		if idea.IsPrivate != nil {
+			isPrivate = *idea.IsPrivate
+		} else {
+			isPrivate = false
+		}
+
 		res.Ideas = append(res.Ideas, response.IdeaList{
 			ID:             idea.ID,
 			Title:          idea.Title,
 			Description:    idea.Description,
 			TargetAudience: idea.TargetAudience,
+			IsPrivate:      isPrivate,
 			Status:         idea.Status,
 			Stage:          idea.Stage,
 			TargetSignups:  idea.TargetSignups,

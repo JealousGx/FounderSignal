@@ -2,13 +2,10 @@ import {
   Calendar,
   ExternalLink,
   Eye,
-  PauseCircle,
   Pencil,
-  PlayCircle,
   Settings,
   Share2,
   ThumbsUp,
-  Trash2,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -20,18 +17,17 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { OptimizedImage } from "@/components/ui/image";
 import { Link as CustomLink } from "@/components/ui/link";
+import { UpdateCampaign } from "./campaign";
+import { ShareIdeaUrl } from "./share";
 
 import { Idea } from "@/types/idea";
 import { formatDate, getStageBadgeColor, getStatusBadgeColor } from "../utils";
 
 export function IdeaOverview({ idea }: { idea: Idea }) {
-  const isActive = idea.status === "active";
-
   return (
     <Card className="border-none overflow-hidden shadow-sm">
       <div className="w-full h-48 sm:h-56 md:h-64 relative">
@@ -97,27 +93,24 @@ export function IdeaOverview({ idea }: { idea: Idea }) {
                 </Link>
               </DropdownMenuItem>
 
-              <DropdownMenuItem>
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
+              <DropdownMenuItem asChild>
+                <ShareIdeaUrl
+                  ideaId={idea.id}
+                  variant="ghost"
+                  className="cursor-pointer justify-start w-full !px-2 py-1.5"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </ShareIdeaUrl>
               </DropdownMenuItem>
 
-              {isActive ? (
-                <DropdownMenuItem>
-                  <PauseCircle className="h-4 w-4 mr-2" />
-                  Pause Campaign
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem>
-                  <PlayCircle className="h-4 w-4 mr-2" />
-                  Resume Campaign
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem className="text-red-600">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+              <DropdownMenuItem asChild>
+                <UpdateCampaign
+                  ideaId={idea.id}
+                  status={idea.status}
+                  variant="ghost"
+                  className="cursor-pointer justify-start w-full !px-2 py-1.5"
+                />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

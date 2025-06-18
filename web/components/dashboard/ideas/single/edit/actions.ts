@@ -26,6 +26,11 @@ export type UpdateMVPState = {
   fieldErrors?: MVPFieldError;
 };
 
+export const updateIdeaRequest = async (
+  ideaId: string,
+  attributes: Record<string, unknown>
+) => api.put(`/dashboard/ideas/${ideaId}`, JSON.stringify(attributes));
+
 export const updateIdea = async (
   prevState: UpdateIdeaState | null,
   formData: FormData
@@ -58,10 +63,7 @@ export const updateIdea = async (
   updatedIdea.imageUrl = ""; // remove this line when image upload is implemented
 
   try {
-    const response = await api.put(
-      `/dashboard/ideas/${ideaId}`,
-      JSON.stringify(updatedIdea)
-    );
+    const response = await updateIdeaRequest(ideaId, updatedIdea);
     const responseData = await response.json();
 
     if (!response.ok || responseData.error) {
@@ -188,4 +190,17 @@ export const deleteIdea = async (id: string) => {
         (e as Error).message || "An unexpected error occurred during deletion.",
     };
   }
+};
+
+export const updateIdeaAttributes = async (
+  ideaId: string,
+  attributes: Record<string, unknown>
+) => {
+  return updateIdeaRequest(ideaId, attributes).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to update idea attributes");
+    }
+
+    return res.json();
+  });
 };

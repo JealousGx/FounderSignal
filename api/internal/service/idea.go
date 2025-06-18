@@ -134,13 +134,30 @@ func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUI
 		Base: domain.Base{
 			ID: ideaId,
 		},
-		Title:          req.Title,
-		Description:    req.Description,
-		Status:         req.Status,
-		Stage:          req.Stage,
-		ImageURL:       req.ImageURL,
-		TargetAudience: req.TargetAudience,
-		TargetSignups:  req.TargetSignups,
+	}
+	if req.Title != nil {
+		idea.Title = *req.Title
+	}
+	if req.Description != nil {
+		idea.Description = *req.Description
+	}
+	if req.Status != nil {
+		idea.Status = *req.Status
+	}
+	if req.Stage != nil {
+		idea.Stage = *req.Stage
+	}
+	if req.ImageURL != nil {
+		idea.ImageURL = *req.ImageURL
+	}
+	if req.TargetAudience != nil {
+		idea.TargetAudience = *req.TargetAudience
+	}
+	if req.TargetSignups != nil {
+		idea.TargetSignups = *req.TargetSignups
+	}
+	if req.IsPrivate != nil {
+		idea.IsPrivate = req.IsPrivate
 	}
 
 	// Update the idea
@@ -199,9 +216,11 @@ func (s *ideaService) GetByID(ctx context.Context, id uuid.UUID, userId string) 
 }
 
 func (s *ideaService) GetIdeas(ctx context.Context, queryParams domain.QueryParams) (*response.IdeaListResponse, error) {
+	includePrivateIdeas := false
 	ideasRaw, totalCount, err := s.repo.GetIdeas(ctx, queryParams, repository.IdeaQuerySpec{
-		Status:     domain.IdeaStatusActive,
-		WithCounts: true,
+		IncludePrivate: &includePrivateIdeas,
+		Status:         domain.IdeaStatusActive,
+		WithCounts:     true,
 	})
 	if err != nil {
 		return nil, err
