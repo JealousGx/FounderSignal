@@ -21,7 +21,7 @@ export const ManageSubscriptions = () => {
       });
   }, []);
 
-  if (!paddleCustomerPortalUrl || paddleCustomerPortalUrl === "") {
+  if (!paddleCustomerPortalUrl) {
     return null;
   }
 

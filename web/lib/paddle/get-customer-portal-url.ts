@@ -13,5 +13,5 @@ export const getCustomerPortalUrl = cache(async () => {
     []
   );
 
-  return portalSession.urls.general.overview;
+  return portalSession?.urls?.general?.overview ?? null;
 });
