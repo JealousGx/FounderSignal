@@ -20,6 +20,8 @@ func RegisterRoutes(router *gin.Engine, h *Handlers, envs config.Config) {
 
 func registerProtectedRoutes(router *gin.RouterGroup, h *Handlers) {
 	// ideas routes
+	router.GET("/user", h.User.GetById)
+
 	ideasRouter := router.Group("/ideas")
 	ideasRouter.POST("/", h.Idea.Create)
 	ideasRouter.PUT("/:ideaId", h.Idea.Update)

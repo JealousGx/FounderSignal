@@ -18,7 +18,7 @@ import { Link as CustomLink } from "@/components/ui/link";
 import { CommentsSection } from "./comments-section";
 
 import { api } from "@/lib/api";
-import { getUser } from "@/lib/auth";
+import { getClerkUser } from "@/lib/auth";
 import { formatDate, getName } from "@/lib/utils";
 import { Idea } from "@/types/idea";
 
@@ -83,7 +83,7 @@ export default async function IdeaPage({
   const relatedIdeas = res.relatedIdeas;
 
   const currUser = await auth();
-  const founder = await getUser(idea.userId);
+  const founder = await getClerkUser(idea.userId);
 
   idea.founder = {
     name: getName(founder),

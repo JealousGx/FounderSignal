@@ -1,5 +1,10 @@
 "use client";
 
+import { Menu, Plus, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -7,12 +12,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
-import { Menu, Plus, X } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { ManageSubscriptions } from "./manage-subscriptions";
 import { NavItems } from "./navi-items";
+
+import { cn } from "@/lib/utils";
 
 export default function MobileDashboardNav() {
   const [open, setOpen] = useState(false);
@@ -87,13 +90,15 @@ export default function MobileDashboardNav() {
                 })}
               </nav>
 
-              <div className="px-2 py-4 mt-auto border-t border-gray-200">
+              <div className="flex flex-col gap-2 px-2 py-4 mt-auto border-t border-gray-200">
+                <ManageSubscriptions />
+
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-2 text-gray-700"
+                  className="w-full justify-start gap-0 text-gray-700"
                   onClick={() => setOpen(false)}
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className="w-5 h-5 mr-3 text-gray-500" />
                   Close menu
                 </Button>
               </div>
