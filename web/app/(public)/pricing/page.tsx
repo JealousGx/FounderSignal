@@ -1,3 +1,4 @@
+import { FAQs } from "./faqs";
 import { PricingSection } from "./pricing-section";
 
 export default async function Pricing() {
@@ -16,6 +17,7 @@ export default async function Pricing() {
       </section>
 
       <PricingSection />
+      <FAQs />
     </main>
   );
 }
