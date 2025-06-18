@@ -12,6 +12,7 @@ import (
 )
 
 type Handlers struct {
+	User      UserHandler
 	Idea      IdeaHandler
 	Feedback  FeedbackHandler
 	Reaction  ReactionHandler
@@ -23,6 +24,7 @@ type Handlers struct {
 
 func NewHandlers(services *service.Services) *Handlers {
 	return &Handlers{
+		User:      NewUserHandler(services.User),
 		Idea:      NewIdeaHandler(services.Idea),
 		Feedback:  NewFeedbackHandler(services.Feedback),
 		Reaction:  NewReactionHandler(services.Reaction),

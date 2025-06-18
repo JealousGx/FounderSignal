@@ -2,10 +2,22 @@ import "server-only";
 
 import { clerkClient, User } from "@clerk/nextjs/server";
 import { cache } from "react";
+import { api } from "./api";
 
 export const clerk = async () => await clerkClient();
 
-export const getUser = cache(async (userId: string) => {
+/**
+ * Fetches the current authenticated user from the API.
+ *
+ * This function is cached to avoid unnecessary API calls.
+ *
+ * @returns {Promise<User>} The current user object.
+ */
+export const getUser = cache(async () => {
+  return api.get("/dashboard/user");
+});
+
+export const getClerkUser = cache(async (userId: string) => {
   const clerkClient = await clerk();
   const user = await clerkClient.users.getUser(userId);
 

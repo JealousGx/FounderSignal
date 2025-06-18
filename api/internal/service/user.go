@@ -15,6 +15,7 @@ import (
 type UserService interface {
 	ClerkUser(ctx context.Context, eventType string, clerkUser request.ClerkUserCreateRequest) error
 	Update(ctx context.Context, user *domain.User) error
+	FindById(ctx context.Context, userID string) (*domain.User, error)
 }
 
 type userService struct {
@@ -23,6 +24,21 @@ type userService struct {
 
 func NewUserService(userRepo repository.UserRepository) *userService {
 	return &userService{userRepo: userRepo}
+}
+
+func (s *userService) FindById(ctx context.Context, userId string) (*domain.User, error) {
+	user, err := s.userRepo.FindByID(ctx, userId)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			log.Printf("User with ID %s not found in DB.", userId)
+			return nil, fmt.Errorf("user with ID %s not found", userId)
+		}
+
+		log.Printf("Error finding user %s in DB: %v", userId, err)
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (s *userService) ClerkUser(ctx context.Context, eventType string, clerkUser request.ClerkUserCreateRequest) error {
