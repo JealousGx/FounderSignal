@@ -1,9 +1,8 @@
 "use client";
 
-import { ChevronDown, Mail, Search, Tag } from "lucide-react";
-import { useState } from "react";
+import { Mail, Search, Tag } from "lucide-react";
+import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,14 +11,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Pagination } from "@/components/ui/pagination";
+import { PaginationWithPageSize } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -37,26 +39,42 @@ import Link from "next/link";
 interface AudienceListProps {
   members: AudienceMember[];
   total: number;
-  itemsPerPage?: number;
 }
+
+const sortOptions = [
+  {
+    label: "Newest First",
+    value: "newest",
+  },
+  {
+    label: "Oldest First",
+    value: "oldest",
+  },
+];
 
 export default function AudienceList({
   members: initialMembers,
   total,
-  itemsPerPage = 10,
 }: AudienceListProps) {
   const [members, setMembers] = useState(initialMembers);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(total);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedSort, setSelectedSort] = useState("newest");
 
-  const filteredMembers = members.filter(
-    (member) =>
-      member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (member.idea?.title &&
-        member.idea?.title.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
   const totalPages = Math.ceil(totalMembers / itemsPerPage);
 
@@ -64,16 +82,14 @@ export default function AudienceList({
     page,
     pageSize,
     sortBy,
-    filterBy,
+    search,
   }: {
     page: number;
     pageSize: number;
     sortBy?: string;
-    filterBy?: string;
+    search?: string;
   }) => {
     if (isLoading) return;
-
-    // filterBy = filterBy === filters[0].value ? undefined : filterBy; // no need to pass filter if "All Ideas" is selected)
 
     setIsLoading(true);
     try {
@@ -82,10 +98,10 @@ export default function AudienceList({
         limit: pageSize,
         offset,
         sortBy,
-        filterBy,
+        search,
       });
 
-      if (!result) {
+      if (!result || !Array.isArray(result.audiences)) {
         setMembers([]);
         setTotalMembers(0);
       }
@@ -110,13 +126,50 @@ export default function AudienceList({
     }
   };
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = async (page: number) => {
     setCurrentPage(page);
-    fetchAudience({
+    await fetchAudience({
       page,
       pageSize: itemsPerPage,
+      sortBy: selectedSort,
+      search: debouncedSearchQuery,
     });
   };
+
+  const handlePageSizeChange = async (value: string) => {
+    const newPageSize = parseInt(value, 10);
+
+    setItemsPerPage(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+    await fetchAudience({
+      page: 1,
+      pageSize: newPageSize,
+      sortBy: selectedSort,
+      search: debouncedSearchQuery,
+    });
+  };
+
+  const handleSortChange = async (value: string) => {
+    setSelectedSort(value);
+    setCurrentPage(1); // Reset to first page when sort changes
+    await fetchAudience({
+      page: 1,
+      pageSize: itemsPerPage,
+      sortBy: value,
+      search: debouncedSearchQuery,
+    });
+  };
+
+  useEffect(() => {
+    setMembers(initialMembers);
+    setTotalMembers(total);
+  }, [initialMembers, total]);
+
+  useEffect(() => {
+    // Fetch audience whenever the debounced search query changes
+    handlePageChange(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery]);
 
   return (
     <Card>
@@ -128,34 +181,38 @@ export default function AudienceList({
               People who signed up for your ideas
             </CardDescription>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2">
+
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+
               <Input
                 type="search"
-                placeholder="Search by email..."
-                className="pl-8 w-full md:w-[240px]"
+                placeholder="Search audience by idea title"
+                className="pl-8 w-full sm:w-[200px] md:w-[250px]"
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <ChevronDown className="h-4 w-4 mr-2" />
-                  Filter by idea
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>All ideas</DropdownMenuItem>
-                <DropdownMenuItem>EcoTrack</DropdownMenuItem>
-                <DropdownMenuItem>RemoteTeamOS</DropdownMenuItem>
-                <DropdownMenuItem>SkillSwap</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+            <Select
+              defaultValue={selectedSort}
+              onValueChange={handleSortChange}
+            >
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent align="end" className="w-[200px]">
+                <SelectGroup>
+                  <SelectLabel>Sort By</SelectLabel>
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </CardHeader>
@@ -180,7 +237,7 @@ export default function AudienceList({
                     Loading subscribers...
                   </TableCell>
                 </TableRow>
-              ) : filteredMembers.length === 0 ? (
+              ) : members.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={5}
@@ -192,7 +249,7 @@ export default function AudienceList({
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMembers.map((member) => (
+                members.map((member) => (
                   <TableRow key={member.userId + member.ideaId}>
                     <TableCell className="font-medium">
                       <div className="flex items-center">
@@ -236,10 +293,13 @@ export default function AudienceList({
       </CardContent>
 
       <CardFooter>
-        <Pagination
+        <PaginationWithPageSize
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={handlePageChange}
+          itemsPerPage={itemsPerPage}
+          handlePageChange={handlePageChange}
+          handlePageSizeChange={handlePageSizeChange}
+          pageSizeOptions={[5, 10, 20, 50]}
         />
       </CardFooter>
     </Card>

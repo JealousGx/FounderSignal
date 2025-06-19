@@ -231,7 +231,7 @@ export default function ReportsList({
   }, [initialReports, _totalReports]);
 
   useEffect(() => {
-    // Fetch ideas whenever the debounced search query changes
+    // Fetch reports whenever the debounced search query changes
     handlePageChange(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchQuery]);
