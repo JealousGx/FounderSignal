@@ -9,6 +9,7 @@ import (
 // AudienceMember represents a subscriber who has signed up for an idea
 type AudienceMember struct {
 	UserID     string     `gorm:"not null;uniqueIndex:idx_audience_idea_user" json:"userId"`
+	UserEmail  string     `gorm:"type:varchar(255);uniqueIndex:idx_audience_idea_user" json:"userEmail"`
 	SignupTime time.Time  `gorm:"not null;default:now()" json:"signupTime"`
 	IdeaID     uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_audience_idea_user" json:"ideaId"`
 	Engaged    bool       `gorm:"default:false" json:"engaged"`

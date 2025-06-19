@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"foundersignal/internal/domain"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,7 +13,7 @@ import (
 
 type AudienceRepository interface {
 	GetForFounder(ctx context.Context, founderId string, queryParams domain.QueryParams) ([]*domain.AudienceMember, int64, error)
-	Upsert(ctx context.Context, ideaID uuid.UUID, userID string) (*domain.AudienceMember, error)
+	Upsert(ctx context.Context, ideaID uuid.UUID, userID string, userEmail string) (*domain.AudienceMember, error)
 	GetByIdeaId(ctx context.Context, ideaId uuid.UUID) ([]*domain.AudienceMember, error)
 	GetSignupsByIdeaIds(ctx context.Context, ideaIds []uuid.UUID, from, to time.Time) (map[uuid.UUID]map[string]int, error)
 	GetRecentByUserIdeas(ctx context.Context, userID string, limit int) ([]domain.AudienceMember, error)
@@ -34,17 +35,30 @@ func (r *audienceRepository) GetForFounder(ctx context.Context, founderId string
 	query := r.db.WithContext(ctx).
 		Model(&domain.AudienceMember{}).
 		Joins("JOIN ideas ON ideas.id = audience_members.idea_id").
-		Where("ideas.user_id = ?", founderId).
-		Preload("Idea")
+		Where("ideas.user_id = ?", founderId)
 
-	if queryParams.FilterBy != "" {
-		query = query.Where("audience_members.idea_id = ?", queryParams.FilterBy)
+	var tsQueryString string
+	if queryParams.Search != "" {
+		searchWords := strings.Fields(queryParams.Search)
+		if len(searchWords) > 0 {
+			searchWords[len(searchWords)-1] += ":*"
+			tsQueryString = strings.Join(searchWords, " & ")
+
+			query = query.Where(
+				"(ideas.search_vector @@ to_tsquery('english', ?) OR to_tsvector('english', audience_members.user_email) @@ to_tsquery('english', ?))",
+				tsQueryString, tsQueryString,
+			)
+		}
 	}
 
 	var count int64
 	err := query.Count(&count).Error
 	if err != nil {
 		return nil, 0, err
+	}
+
+	if count == 0 {
+		return []*domain.AudienceMember{}, 0, nil
 	}
 
 	orderClause := "audience_members.signup_time DESC"
@@ -59,7 +73,12 @@ func (r *audienceRepository) GetForFounder(ctx context.Context, founderId string
 
 	query = paginateAndOrder(query, queryParams.Limit, queryParams.Offset, orderClause)
 
-	err = query.Find(&audienceMembers).Error
+	if queryParams.Search != "" {
+		rankExpression := "ts_rank(ideas.search_vector, to_tsquery('english', ?)) + ts_rank(to_tsvector('english', audience_members.user_email), to_tsquery('english', ?))"
+		query = query.Order(gorm.Expr(rankExpression+" DESC", tsQueryString, tsQueryString))
+	}
+
+	err = query.Preload("Idea").Find(&audienceMembers).Error
 	if err != nil {
 		return nil, 0, err
 	}
@@ -67,10 +86,11 @@ func (r *audienceRepository) GetForFounder(ctx context.Context, founderId string
 	return audienceMembers, count, nil
 }
 
-func (r *audienceRepository) Upsert(ctx context.Context, ideaID uuid.UUID, userID string) (*domain.AudienceMember, error) {
+func (r *audienceRepository) Upsert(ctx context.Context, ideaID uuid.UUID, userID string, userEmail string) (*domain.AudienceMember, error) {
 	member := domain.AudienceMember{
-		IdeaID: ideaID,
-		UserID: userID,
+		IdeaID:    ideaID,
+		UserID:    userID,
+		UserEmail: userEmail,
 	}
 
 	now := time.Now()
@@ -85,6 +105,7 @@ func (r *audienceRepository) Upsert(ctx context.Context, ideaID uuid.UUID, userI
 	}).FirstOrCreate(&member, domain.AudienceMember{
 		IdeaID:     ideaID,
 		UserID:     userID,
+		UserEmail:  userEmail,
 		SignupTime: time.Now(),
 		LastActive: &now,
 		Visits:     1,
