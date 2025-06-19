@@ -1,11 +1,9 @@
 package http
 
 import (
-	"foundersignal/internal/domain"
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/service"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -108,25 +106,8 @@ func (h *ideaHandler) Delete(c *gin.Context) {
 }
 
 func (h *ideaHandler) GetIdeas(c *gin.Context) {
-	limit := 6
-	if l := c.Query("limit"); l != "" {
-		if n, err := strconv.Atoi(l); err == nil && n > 0 {
-			limit = n
-		}
-	}
 
-	offset := 0
-	if l := c.Query("offset"); l != "" {
-		if n, err := strconv.Atoi(l); err == nil && n > 0 {
-			offset = n
-		}
-	}
-
-	ideas, err := h.service.GetIdeas(c.Request.Context(), domain.QueryParams{
-		Limit:  limit,
-		Offset: offset,
-		SortBy: c.Query("sortBy"),
-	})
+	ideas, err := h.service.GetIdeas(c.Request.Context(), getProcessedQueryParams(c))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -142,33 +123,12 @@ func (h *ideaHandler) GetUserIdeas(c *gin.Context) {
 		return
 	}
 
-	limit := 10
-	if l := c.Query("limit"); l != "" {
-		if n, err := strconv.Atoi(l); err == nil && n > 0 {
-			limit = n
-		}
-	}
-
-	offset := 0
-	if l := c.Query("offset"); l != "" {
-		if n, err := strconv.Atoi(l); err == nil && n > 0 {
-			offset = n
-		}
-	}
-
 	getStats := c.Query("getStats")
 	if getStats == "" {
 		getStats = "false"
 	}
-	sortBy := c.Query("sortBy")
-	filterBy := c.Query("filterBy")
 
-	ideas, err := h.service.GetUserIdeas(c.Request.Context(), userId.(string), getStats == "true", domain.QueryParams{
-		Limit:    limit,
-		Offset:   offset,
-		FilterBy: filterBy,
-		SortBy:   sortBy,
-	})
+	ideas, err := h.service.GetUserIdeas(c.Request.Context(), userId.(string), getStats == "true", getProcessedQueryParams(c))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

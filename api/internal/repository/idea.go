@@ -49,6 +49,10 @@ func (r *ideaRepository) CreateWithMVP(ctx context.Context, idea *domain.Idea, m
 		}
 
 		ideaID = idea.ID
+		searchableText := fmt.Sprintf("%s %s %s", idea.Title, idea.Description, idea.TargetAudience)
+		if err := tx.Model(idea).UpdateColumn("search_vector", gorm.Expr("to_tsvector('english', ?)", searchableText)).Error; err != nil {
+			return err
+		}
 
 		mvp.IdeaID = ideaID
 		if err := tx.Create(mvp).Error; err != nil {
@@ -66,10 +70,18 @@ func (r *ideaRepository) CreateWithMVP(ctx context.Context, idea *domain.Idea, m
 }
 
 func (r *ideaRepository) Update(ctx context.Context, idea *domain.Idea) error {
+
 	if err := r.db.WithContext(ctx).Model(idea).Updates(idea).Error; err != nil {
 		fmt.Println("Error updating idea:", err)
 
 		return err
+	}
+
+	if idea.Title != "" || idea.Description != "" || idea.TargetAudience != "" {
+		searchableText := fmt.Sprintf("%s %s %s", idea.Title, idea.Description, idea.TargetAudience)
+		if err := r.db.WithContext(ctx).Model(idea).UpdateColumn("search_vector", gorm.Expr("to_tsvector('english', ?)", searchableText)).Error; err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -97,6 +109,16 @@ func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryP
 
 	if spec.IncludePrivate != nil {
 		query = query.Where("is_private = ?", *spec.IncludePrivate)
+	}
+
+	var tsQueryString string
+	if queryParams.Search != "" {
+		searchWords := strings.Fields(queryParams.Search)
+		if len(searchWords) > 0 {
+			searchWords[len(searchWords)-1] += ":*"
+			tsQueryString = strings.Join(searchWords, " & ")
+			query = query.Where("search_vector @@ to_tsquery('english', ?)", tsQueryString)
+		}
 	}
 
 	var totalCount int64
@@ -128,6 +150,11 @@ func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryP
 	}
 
 	query = paginateAndOrder(query, queryParams.Limit, queryParams.Offset, orderClause)
+
+	if queryParams.Search != "" {
+		query = query.Order(gorm.Expr("ts_rank(search_vector, to_tsquery('english', ?)) DESC", tsQueryString))
+
+	}
 
 	var ideas []*domain.Idea
 	if err := query.Find(&ideas).Error; err != nil {
