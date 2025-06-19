@@ -16,7 +16,7 @@ type ClerkEvent struct {
 type EmailAddress struct {
 	EmailAddress string            `json:"email_address"`
 	ID           string            `json:"id"`
-	LinkedTo     []string          `json:"linked_to"`
+	LinkedTo     []any             `json:"linked_to"`
 	Object       string            `json:"object"`
 	Verification ClerkVerification `json:"verification"`
 }
