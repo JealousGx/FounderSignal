@@ -289,51 +289,25 @@ func (r *ideaRepository) getRelatedIdeas(ctx context.Context, idea domain.Idea) 
 
 	baseQuery = r.withCounts(baseQuery)
 
-	tokens := simpleTokenizer(idea.TargetAudience)
+	tokens := simpleTokenizer(idea.Title + " " + idea.TargetAudience)
 
-	if len(tokens) > 0 {
-		var scoreClauses []string
-		var whereClauses []string
-		var queryArgs []interface{}
+	if len(tokens) == 0 {
+		return nil
+	}
 
-		for _, token := range tokens {
-			likePattern := "%" + token + "%"
-			scoreClauses = append(scoreClauses, "(CASE WHEN LOWER(target_audience) LIKE ? THEN 1 ELSE 0 END)")
-			whereClauses = append(whereClauses, "LOWER(target_audience) LIKE ?")
-			queryArgs = append(queryArgs, likePattern)
-		}
+	tsQueryString := strings.Join(tokens, " | ")
 
-		for _, token := range tokens {
-			likePattern := "%" + token + "%"
-			queryArgs = append(queryArgs, likePattern)
-		}
+	selectWithRelevance := fmt.Sprintf("%s, ts_rank(search_vector, to_tsquery('english', ?)) as relevance", r.withCountsSelectClause())
 
-		matchScoreSQL := strings.Join(scoreClauses, " + ")
-		whereSQL := strings.Join(whereClauses, " OR ")
+	relatedIdeasQuery := baseQuery.
+		Select(selectWithRelevance, tsQueryString).
+		Where("ideas.id != ? AND ideas.status = ? AND search_vector @@ to_tsquery('english', ?)", idea.ID, domain.IdeaStatusActive, tsQueryString).
+		Order("relevance DESC, signups DESC").
+		Limit(3)
 
-		currentSelect := "ideas.*, COALESCE(v.view_count, 0) as views, COALESCE(s.signup_count, 0) as signups"
-		finalSelect := fmt.Sprintf("%s, (%s) as match_score", currentSelect, matchScoreSQL)
-
-		relatedIdeasQuery := baseQuery.
-			Select(finalSelect, queryArgs[:len(tokens)]...).
-			Where("ideas.id != ? AND ideas.status = ?", idea.ID, domain.IdeaStatusActive).
-			Where(whereSQL, queryArgs[len(tokens):]...).
-			Order("match_score DESC, COALESCE(s.signup_count, 0) DESC")
-
-		if err := relatedIdeasQuery.Find(&relatedIdeas).Error; err != nil {
-			fmt.Println("Error finding related ideas with tokenization:", err)
-			relatedIdeas = nil
-		}
-	} else {
-		fallbackQuery := baseQuery.
-			Where("id != ? AND status = ?", idea.ID, domain.IdeaStatusActive).
-			Where("target_audience LIKE ?", "%"+idea.TargetAudience+"%").
-			Order("views DESC")
-
-		if err := fallbackQuery.Find(&relatedIdeas).Error; err != nil {
-			fmt.Println("Error finding related ideas (fallback):", err)
-			relatedIdeas = nil
-		}
+	if err := relatedIdeasQuery.Find(&relatedIdeas).Error; err != nil {
+		fmt.Println("Error finding related ideas using FTS:", err)
+		return nil
 	}
 
 	return relatedIdeas
@@ -349,6 +323,15 @@ func (r *ideaRepository) withCounts(query *gorm.DB) *gorm.DB {
 		Select("idea_id, COUNT(DISTINCT user_id) as signup_count").
 		Group("idea_id")
 
+	fullSelectClause := r.withCountsSelectClause()
+
+	return query.
+		Select(fullSelectClause).
+		Joins("LEFT JOIN (?) as v ON ideas.id = v.idea_id", views).
+		Joins("LEFT JOIN (?) as s ON ideas.id = s.idea_id", signups)
+}
+
+func (r *ideaRepository) withCountsSelectClause() string {
 	selectIdeaFields := []string{
 		"ideas.id", "ideas.created_at", "ideas.updated_at", "ideas.deleted_at",
 		"ideas.user_id",
@@ -368,12 +351,7 @@ func (r *ideaRepository) withCounts(query *gorm.DB) *gorm.DB {
 	fullSelectParts = append(fullSelectParts, "COALESCE(v.view_count, 0) as views")
 	fullSelectParts = append(fullSelectParts, "COALESCE(s.signup_count, 0) as signups")
 
-	fullSelectClause := strings.Join(fullSelectParts, ", ")
-
-	return query.
-		Select(fullSelectClause).
-		Joins("LEFT JOIN (?) as v ON ideas.id = v.idea_id", views).
-		Joins("LEFT JOIN (?) as s ON ideas.id = s.idea_id", signups)
+	return strings.Join(fullSelectParts, ", ")
 }
 
 func simpleTokenizer(text string) []string {
