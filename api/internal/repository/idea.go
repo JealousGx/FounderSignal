@@ -153,7 +153,6 @@ func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryP
 
 	if queryParams.Search != "" {
 		query = query.Order(gorm.Expr("ts_rank(search_vector, to_tsquery('english', ?)) DESC", tsQueryString))
-
 	}
 
 	var ideas []*domain.Idea

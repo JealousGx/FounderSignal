@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"foundersignal/internal/domain"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -49,17 +50,29 @@ func (r *reportRepository) GetForUser(ctx context.Context, userID string, queryP
 	query := r.db.WithContext(ctx).
 		Model(&domain.Report{}).
 		Joins("JOIN ideas ON ideas.id = reports.idea_id").
-		Where("ideas.user_id = ?", userID).
-		Preload("Idea").
-		Order("reports.date DESC")
+		Where("ideas.user_id = ?", userID)
 
 	if queryParams.FilterBy != "" {
-		query = query.Where("reports.type = ?", queryParams.FilterBy)
+		query = query.Where("reports.type = ?", domain.ReportType(queryParams.FilterBy))
+	}
+
+	var tsQueryString string
+	if queryParams.Search != "" {
+		searchWords := strings.Fields(queryParams.Search)
+		if len(searchWords) > 0 {
+			searchWords[len(searchWords)-1] += ":*"
+			tsQueryString = strings.Join(searchWords, " & ")
+			query = query.Where("ideas.search_vector @@ to_tsquery('english', ?)", tsQueryString)
+		}
 	}
 
 	var totalCount int64
 	if err := query.Count(&totalCount).Error; err != nil {
 		return nil, 0, err
+	}
+
+	if totalCount == 0 {
+		return []domain.Report{}, 0, nil
 	}
 
 	orderClause := "reports.date DESC"
@@ -70,12 +83,12 @@ func (r *reportRepository) GetForUser(ctx context.Context, userID string, queryP
 		orderClause = "reports.date ASC"
 	case "views":
 		orderClause = "reports.views DESC"
-	case "signups":
+	case "conversionRate":
 		orderClause = "reports.signups DESC"
 	case "sentiment":
 		orderClause = "reports.sentiment DESC"
-	case "conversionRate":
-		orderClause = "reports.conversion_rate DESC"
+	case "nameAsc":
+		orderClause = "ideas.title ASC"
 	case "validated":
 		orderClause = "reports.validated DESC"
 	default:
@@ -84,7 +97,11 @@ func (r *reportRepository) GetForUser(ctx context.Context, userID string, queryP
 
 	query = paginateAndOrder(query, queryParams.Limit, queryParams.Offset, orderClause)
 
-	err := query.Find(&reports).Error
+	if queryParams.Search != "" {
+		query = query.Order(gorm.Expr("ts_rank(ideas.search_vector, to_tsquery('english', ?)) DESC", tsQueryString))
+	}
+
+	err := query.Preload("Idea").Find(&reports).Error
 	if err != nil {
 		return nil, 0, errors.New("failed to fetch reports")
 	}
