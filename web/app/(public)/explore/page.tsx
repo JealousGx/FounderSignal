@@ -8,21 +8,6 @@ const DEFAULT_PAGE_SIZE = 6;
 export default async function ExplorePage() {
   const initialData = await getIdeas({ limit: DEFAULT_PAGE_SIZE, offset: 0 });
 
-  if (!initialData || initialData.totalCount === 0) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-12 md:px-6">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-          No Ideas Found
-        </h1>
-
-        <p className="text-xl text-gray-600 max-w-3xl mt-4">
-          There are no startup ideas available at the moment. Please check back
-          later.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-7xl mx-auto px-4 py-12 md:px-6">
       <div className="mb-12">
@@ -47,8 +32,8 @@ export default async function ExplorePage() {
       </div>
 
       <Ideas
-        initialIdeas={initialData.ideas || []}
-        initialTotalCount={initialData.totalCount || 0}
+        initialIdeas={initialData?.ideas || []}
+        initialTotalCount={initialData?.totalCount || 0}
         defaultItemsPerPage={DEFAULT_PAGE_SIZE}
       />
     </div>

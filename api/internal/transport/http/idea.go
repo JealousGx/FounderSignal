@@ -125,6 +125,7 @@ func (h *ideaHandler) GetIdeas(c *gin.Context) {
 	ideas, err := h.service.GetIdeas(c.Request.Context(), domain.QueryParams{
 		Limit:  limit,
 		Offset: offset,
+		SortBy: c.Query("sortBy"),
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

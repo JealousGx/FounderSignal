@@ -234,33 +234,6 @@ export default function IdeasDataView({
                 </SelectGroup>
               </SelectContent>
             </Select>
-
-            {/* <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Filters" />
-              </SelectTrigger>
-              <SelectContent align="end" className="w-[200px]">
-                <SelectGroup>
-                  <SelectLabel>Filter by Status</SelectLabel>
-                  {filters.map((filter) => (
-                    <SelectItem key={filter.value} value={filter.value}>
-                      {filter.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-
-                <SelectSeparator />
-
-                <SelectGroup>
-                  <SelectLabel>Sort By</SelectLabel>
-                  {sortOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select> */}
           </div>
         </div>
       </CardHeader>
