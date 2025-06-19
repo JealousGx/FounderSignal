@@ -1,5 +1,5 @@
 import { UserButton } from "@clerk/nextjs";
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,9 +24,9 @@ export default function DashboardHeader() {
       </div> */}
 
       <div className="flex items-center gap-2 w-full justify-end">
-        <Button variant="ghost" size="icon" className="text-gray-700">
+        {/* <Button variant="ghost" size="icon" className="text-gray-700">
           <Bell className="h-5 w-5" />
-        </Button>
+        </Button> */}
 
         <UserButton fallback={<Skeleton className="h-7 w-7 rounded-full" />} />
       </div>
