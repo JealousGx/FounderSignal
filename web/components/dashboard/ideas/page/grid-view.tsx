@@ -106,7 +106,7 @@ export default function IdeasGridView({ ideas }: IdeasGridViewProps) {
           </Card>
         ))
       ) : (
-        <div className="col-span-4 flex flex-col items-center justify-center h-full">
+        <div className="col-span-full flex flex-col items-center justify-center h-full">
           <h2 className="text-lg font-semibold text-gray-700">
             No ideas found.
           </h2>
