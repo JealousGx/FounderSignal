@@ -1,21 +1,21 @@
 "use server";
 
-import { api, QueryParams } from "@/lib/api";
-import { Idea } from "@/types/idea";
 import { cache } from "react";
+
+import { api, QueryParams } from "@/lib/api";
+import { constructNewPath } from "@/lib/utils";
+import { Idea } from "@/types/idea";
 
 export const getIdeas = cache(async (qs: QueryParams) => {
   try {
-    const response = await api.get(
-      `/ideas?limit=${qs.limit}&offset=${qs.offset}`,
-      {
-        cache: "force-cache",
-        next: {
-          revalidate: 3600,
-          tags: [`ideas`],
-        },
-      }
-    );
+    const url = constructNewPath("/ideas", qs);
+    const response = await api.get(url, {
+      cache: "force-cache",
+      next: {
+        revalidate: 3600,
+        tags: [`ideas`],
+      },
+    });
 
     if (!response.ok) {
       console.error(

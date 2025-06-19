@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Download, ExternalLink, Search } from "lucide-react";
+import { Download, ExternalLink, Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -15,15 +15,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Link as CustomLink } from "@/components/ui/link";
-import { Pagination } from "@/components/ui/pagination";
+import { PaginationWithPageSize } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -39,19 +42,86 @@ import { Report, ReportType } from "@/types/report";
 interface ReportsListProps {
   reports: Report[];
   totalReports: number;
-  itemsPerPage: number;
 }
+
+const filters = [
+  {
+    label: "All Reports",
+    value: "all",
+  },
+  {
+    label: "Weekly",
+    value: "weekly",
+  },
+  {
+    label: "Monthly",
+    value: "monthly",
+  },
+  {
+    label: "Milestone",
+    value: "milestone",
+  },
+  {
+    label: "Final",
+    value: "final",
+  },
+];
+
+const sortOptions = [
+  {
+    label: "Newest First",
+    value: "newest",
+  },
+  {
+    label: "Oldest First",
+    value: "oldest",
+  },
+  {
+    label: "Highest Conversion Rate",
+    value: "conversionRate",
+  },
+  {
+    label: "Lowest Conversion Rate",
+    value: "views",
+  },
+  {
+    label: "Highest Sentiment",
+    value: "sentiment",
+  },
+  {
+    label: "Validated",
+    value: "validated",
+  },
+  {
+    label: "Name (A-Z)",
+    value: "nameAsc",
+  },
+];
 
 export default function ReportsList({
   reports: initialReports,
   totalReports: _totalReports,
-  itemsPerPage,
 }: ReportsListProps) {
   const [reports, setReports] = useState(initialReports);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalReports, setTotalReports] = useState(_totalReports);
+
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedFilter, setSelectedFilter] = useState("all");
+  const [selectedSort, setSelectedSort] = useState("newest");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
   const totalPages = Math.ceil(totalReports / itemsPerPage);
 
@@ -60,13 +130,17 @@ export default function ReportsList({
     pageSize,
     sortBy,
     filterBy,
+    search,
   }: {
     page: number;
     pageSize: number;
     sortBy?: string;
     filterBy?: string;
+    search?: string;
   }) => {
     if (isLoading) return;
+
+    filterBy = filterBy === filters[0].value ? undefined : filterBy; // no need to pass filter if "All Reports" is selected)
 
     setIsLoading(true);
     try {
@@ -76,9 +150,10 @@ export default function ReportsList({
         offset,
         sortBy,
         filterBy,
+        search,
       });
 
-      if (!result) {
+      if (!result || !Array.isArray(result.reports)) {
         setReports([]);
         setTotalReports(0);
       }
@@ -102,24 +177,64 @@ export default function ReportsList({
     }
   };
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = async (page: number) => {
     setCurrentPage(page);
-    fetchReports({
+    await fetchReports({
       page,
       pageSize: itemsPerPage,
+      filterBy: selectedFilter,
+      sortBy: selectedSort,
+      search: debouncedSearchQuery,
     });
   };
 
-  const filteredReports = reports.filter(
-    (report) =>
-      report.idea?.title!.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.type.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handlePageSizeChange = async (value: string) => {
+    const newPageSize = parseInt(value, 10);
+
+    setItemsPerPage(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+    await fetchReports({
+      page: 1,
+      pageSize: newPageSize,
+      filterBy: selectedFilter,
+      sortBy: selectedSort,
+      search: debouncedSearchQuery,
+    });
+  };
+
+  const handleFilterChange = async (value: string) => {
+    setSelectedFilter(value);
+    setCurrentPage(1); // Reset to first page when filter changes
+    await fetchReports({
+      page: 1,
+      pageSize: itemsPerPage,
+      filterBy: value,
+      sortBy: selectedSort,
+      search: debouncedSearchQuery,
+    });
+  };
+  const handleSortChange = async (value: string) => {
+    setSelectedSort(value);
+    setCurrentPage(1); // Reset to first page when sort changes
+    await fetchReports({
+      page: 1,
+      pageSize: itemsPerPage,
+      filterBy: selectedFilter,
+      sortBy: value,
+      search: debouncedSearchQuery,
+    });
+  };
 
   useEffect(() => {
     setReports(initialReports);
     setTotalReports(_totalReports);
   }, [initialReports, _totalReports]);
+
+  useEffect(() => {
+    // Fetch reports whenever the debounced search query changes
+    handlePageChange(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery]);
 
   return (
     <Card>
@@ -133,36 +248,56 @@ export default function ReportsList({
             </CardDescription>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
 
               <Input
                 type="search"
-                placeholder="Search reports..."
-                className="pl-8 w-full md:w-[240px]"
+                placeholder="Search reports by idea title"
+                className="pl-8 w-full sm:w-[200px] md:w-[250px]"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <ChevronDown className="h-4 w-4 mr-2" />
-                  Sort by
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Newest first</DropdownMenuItem>
+            <Select
+              defaultValue={selectedFilter}
+              onValueChange={handleFilterChange}
+            >
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Filters" />
+              </SelectTrigger>
+              <SelectContent align="end" className="w-[200px]">
+                <SelectGroup>
+                  <SelectLabel>Filter by Type</SelectLabel>
+                  {filters.map((filter) => (
+                    <SelectItem key={filter.value} value={filter.value}>
+                      {filter.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
 
-                <DropdownMenuItem>Oldest first</DropdownMenuItem>
-
-                <DropdownMenuItem>Highest conversion</DropdownMenuItem>
-
-                <DropdownMenuItem>Name (A-Z)</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Select
+              defaultValue={selectedSort}
+              onValueChange={handleSortChange}
+            >
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent align="end" className="w-[200px]">
+                <SelectGroup>
+                  <SelectLabel>Sort By</SelectLabel>
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </CardHeader>
@@ -196,7 +331,7 @@ export default function ReportsList({
                     Loading reports...
                   </TableCell>
                 </TableRow>
-              ) : filteredReports.length === 0 ? (
+              ) : reports.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={6}
@@ -208,7 +343,7 @@ export default function ReportsList({
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredReports.map((report) => (
+                reports.map((report) => (
                   <TableRow key={report.id}>
                     <TableCell className="font-medium">
                       <Link
@@ -259,10 +394,13 @@ export default function ReportsList({
       </CardContent>
 
       <CardFooter>
-        <Pagination
+        <PaginationWithPageSize
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={handlePageChange}
+          itemsPerPage={itemsPerPage}
+          handlePageChange={handlePageChange}
+          handlePageSizeChange={handlePageSizeChange}
+          pageSizeOptions={[5, 10, 20, 50]}
         />
       </CardFooter>
     </Card>

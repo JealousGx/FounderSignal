@@ -35,64 +35,75 @@ export default function IdeasTableView({ ideas }: IdeasTableViewProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {ideas.map((idea) => (
-            <TableRow key={idea.id}>
-              <TableCell className="font-medium">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded overflow-hidden flex-shrink-0">
-                    {idea.imageUrl && idea.imageUrl !== "" && (
-                      <OptimizedImage
-                        src={idea.imageUrl}
-                        alt={idea.title}
-                        width={48}
-                        height={48}
-                      />
-                    )}
+          {ideas.length > 0 ? (
+            ideas.map((idea) => (
+              <TableRow key={idea.id}>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded overflow-hidden flex-shrink-0">
+                      {idea.imageUrl && idea.imageUrl !== "" && (
+                        <OptimizedImage
+                          src={idea.imageUrl}
+                          alt={idea.title}
+                          width={48}
+                          height={48}
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">{idea.title}</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[220px]">
+                        {idea.description}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">{idea.title}</p>
-                    <p className="text-xs text-muted-foreground truncate max-w-[220px]">
-                      {idea.description}
-                    </p>
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className={`${getStatusBadgeColor(idea.status)} capitalize`}
+                  >
+                    {idea.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className={`${getStageBadgeColor(idea.stage)} capitalize`}
+                  >
+                    {idea.stage}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  {idea.signups.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right">
+                  {idea.views.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    {idea.engagementRate.toFixed(2)}%
+                    <EngagementIndicator rate={idea.engagementRate} />
                   </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant="outline"
-                  className={`${getStatusBadgeColor(idea.status)} capitalize`}
-                >
-                  {idea.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant="outline"
-                  className={`${getStageBadgeColor(idea.stage)} capitalize`}
-                >
-                  {idea.stage}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                {idea.signups.toLocaleString()}
-              </TableCell>
-              <TableCell className="text-right">
-                {idea.views.toLocaleString()}
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                  {idea.engagementRate.toFixed(2)}%
-                  <EngagementIndicator rate={idea.engagementRate} />
-                </div>
-              </TableCell>
-              <TableCell className="text-right text-muted-foreground text-sm">
-                {formatDate(idea.updatedAt)}
-              </TableCell>
-              <TableCell>
-                <IdeaActions idea={idea} />
+                </TableCell>
+                <TableCell className="text-right text-muted-foreground text-sm">
+                  {formatDate(idea.updatedAt)}
+                </TableCell>
+                <TableCell>
+                  <IdeaActions idea={idea} />
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={8}
+                className="text-center text-muted-foreground"
+              >
+                No ideas found.
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
     </div>

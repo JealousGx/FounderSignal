@@ -1,7 +1,7 @@
 "use client";
 
 import { Grid, Search, Table } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Card,
@@ -92,6 +92,19 @@ export default function IdeasDataView({
   const [selectedFilter, setSelectedFilter] = useState(filters[0].value);
   const [selectedSort, setSelectedSort] = useState(sortOptions[0].value);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
+
   const totalPages = Math.ceil(totalIdeas / itemsPerPage);
 
   const fetchIdeas = async ({
@@ -99,11 +112,13 @@ export default function IdeasDataView({
     pageSize,
     sortBy,
     filterBy,
+    search,
   }: {
     page: number;
     pageSize: number;
     sortBy?: string;
     filterBy?: string;
+    search?: string;
   }) => {
     if (isLoading) return;
 
@@ -117,6 +132,7 @@ export default function IdeasDataView({
         offset,
         sortBy,
         filterBy,
+        search,
       });
 
       if (!result) {
@@ -137,49 +153,59 @@ export default function IdeasDataView({
     }
   };
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = async (page: number) => {
     setCurrentPage(page);
-    fetchIdeas({
+    await fetchIdeas({
       page,
       pageSize: itemsPerPage,
       filterBy: selectedFilter,
       sortBy: selectedSort,
+      search: debouncedSearchQuery,
     });
   };
 
-  const handlePageSizeChange = (value: string) => {
+  const handlePageSizeChange = async (value: string) => {
     const newPageSize = parseInt(value, 10);
 
     setItemsPerPage(newPageSize);
     setCurrentPage(1); // Reset to first page when changing page size
-    fetchIdeas({
+    await fetchIdeas({
       page: 1,
       pageSize: newPageSize,
       filterBy: selectedFilter,
       sortBy: selectedSort,
+      search: debouncedSearchQuery,
     });
   };
 
-  const handleFilterChange = (value: string) => {
+  const handleFilterChange = async (value: string) => {
     setSelectedFilter(value);
     setCurrentPage(1); // Reset to first page when filter changes
-    fetchIdeas({
+    await fetchIdeas({
       page: 1,
       pageSize: itemsPerPage,
       filterBy: value,
       sortBy: selectedSort,
+      search: debouncedSearchQuery,
     });
   };
-  const handleSortChange = (value: string) => {
+  const handleSortChange = async (value: string) => {
     setSelectedSort(value);
     setCurrentPage(1); // Reset to first page when sort changes
-    fetchIdeas({
+    await fetchIdeas({
       page: 1,
       pageSize: itemsPerPage,
       filterBy: selectedFilter,
       sortBy: value,
+      search: debouncedSearchQuery,
     });
   };
+
+  useEffect(() => {
+    // Fetch ideas whenever the debounced search query changes
+    handlePageChange(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery]);
 
   return (
     <Card className="bg-white">
@@ -198,8 +224,10 @@ export default function IdeasDataView({
 
               <Input
                 type="search"
-                placeholder="Search ideas..."
+                placeholder="Search for ideas by keyword, industry, or problem..."
                 className="pl-8 w-full sm:w-[200px] md:w-[250px]"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
@@ -234,33 +262,6 @@ export default function IdeasDataView({
                 </SelectGroup>
               </SelectContent>
             </Select>
-
-            {/* <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Filters" />
-              </SelectTrigger>
-              <SelectContent align="end" className="w-[200px]">
-                <SelectGroup>
-                  <SelectLabel>Filter by Status</SelectLabel>
-                  {filters.map((filter) => (
-                    <SelectItem key={filter.value} value={filter.value}>
-                      {filter.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-
-                <SelectSeparator />
-
-                <SelectGroup>
-                  <SelectLabel>Sort By</SelectLabel>
-                  {sortOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select> */}
           </div>
         </div>
       </CardHeader>

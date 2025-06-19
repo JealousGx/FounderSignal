@@ -51,9 +51,10 @@ func getProcessedQueryParams(c *gin.Context) domain.QueryParams {
 		offset = 0
 	}
 
-	order := c.Query("order")
-	sortBy := c.Query("sortBy")
-	filterBy := c.Query("filterBy")
+	order := c.DefaultQuery("order", "")
+	sortBy := c.DefaultQuery("sortBy", "")
+	filterBy := c.DefaultQuery("filterBy", "")
+	search := c.DefaultQuery("search", "")
 
 	lastCreatedAt, err := time.Parse(time.RFC3339Nano, c.Query("lastCreatedAt"))
 	if err != nil {
@@ -75,6 +76,7 @@ func getProcessedQueryParams(c *gin.Context) domain.QueryParams {
 		Order:         order,
 		SortBy:        sortBy,
 		FilterBy:      filterBy,
+		Search:        search,
 		LastCreatedAt: lastCreatedAt,
 		LastId:        parsedLastId,
 	}

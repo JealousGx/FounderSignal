@@ -26,6 +26,7 @@ type QueryParams struct {
 	Order    string
 	SortBy   string
 	FilterBy string
+	Search   string
 
 	LastCreatedAt time.Time
 	LastId        uuid.UUID

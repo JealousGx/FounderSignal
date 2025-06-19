@@ -21,6 +21,9 @@ type Idea struct {
 	Likes          int    `gorm:"default:0" json:"likes"`
 	Dislikes       int    `gorm:"default:0" json:"dislikes"`
 
+	// Search-specific fields for better performance
+	SearchVector string `gorm:"type:tsvector;index:idx_search_vector,type:gin" json:"-"`
+
 	Signups        int     `json:"signups"`
 	Views          int     `json:"views"`
 	EngagementRate float64 `json:"engagementRate"`

@@ -279,7 +279,19 @@ func (s *ideaService) RecordSignal(ctx context.Context, ideaID uuid.UUID, userID
 
 	// If the event is a CTA click and we have a UserID, create/update AudienceMember
 	if eventType == "cta_click" && userID != "" {
-		_, err := s.audienceRepo.Upsert(ctx, ideaID, userID)
+		var userEmail string
+		user, err := s.u.FindByID(ctx, userID)
+		if err != nil {
+			fmt.Printf("Failed to find user by ID: %v\n", err)
+			return fmt.Errorf("failed to find user: %w", err)
+		}
+
+		if user == nil {
+			return fmt.Errorf("user not found: %w", err)
+		}
+		userEmail = user.Email
+
+		_, err = s.audienceRepo.Upsert(ctx, ideaID, userID, userEmail)
 		if err != nil {
 			// Log this error but don't necessarily fail the whole signal recording
 			log.Printf("WARN: Failed to upsert audience member for idea %s, user %s after CTA click: %v", ideaID, userID, err)

@@ -10,10 +10,8 @@ import { getAudience } from "./get-audience";
 
 export const dynamic = "force-dynamic";
 
-const USERS_PER_PAGE = 10;
-
 export default async function AudiencePage() {
-  const data = await getAudience(true, { limit: USERS_PER_PAGE });
+  const data = await getAudience(true, { limit: 10 });
 
   if (!data) {
     return (
@@ -40,7 +38,6 @@ export default async function AudiencePage() {
             <AudienceList
               members={data.audiences}
               total={data.stats.totalSubscribers}
-              itemsPerPage={USERS_PER_PAGE}
             />
           </Suspense>
         </div>
