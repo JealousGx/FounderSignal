@@ -2,7 +2,7 @@
 
 import { ArrowRight, Clock, Search, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { PaginationWithPageSize } from "@/components/ui/pagination";
 import { getIdeas } from "./get-ideas";
@@ -76,43 +76,40 @@ export default function Ideas({
     setTotalPages(Math.ceil(totalItems / itemsPerPage));
   }, [totalItems, itemsPerPage]);
 
-  const fetchIdeas = useCallback(
-    async (
-      page: number,
-      pageSize: number,
-      sortBy?: string,
-      searchQuery?: string
-    ) => {
-      if (isLoading) return;
+  const fetchIdeas = async (
+    page: number,
+    pageSize: number,
+    sortBy?: string,
+    searchQuery?: string
+  ) => {
+    if (isLoading) return;
 
-      setIsLoading(true);
-      try {
-        const offset = (page - 1) * pageSize;
-        const result = await getIdeas({
-          limit: pageSize,
-          offset,
-          sortBy,
-          search: searchQuery,
-        });
+    setIsLoading(true);
+    try {
+      const offset = (page - 1) * pageSize;
+      const result = await getIdeas({
+        limit: pageSize,
+        offset,
+        sortBy,
+        search: searchQuery,
+      });
 
-        if (result && "ideas" in result && Array.isArray(result.ideas)) {
-          setIdeas(result.ideas);
-          if ("totalCount" in result) {
-            setTotalItems(result.totalCount);
-          }
-        } else {
-          console.warn("Unexpected result format:", result);
-          setIdeas([]);
-          setTotalItems(0);
+      if (result && "ideas" in result && Array.isArray(result.ideas)) {
+        setIdeas(result.ideas);
+        if ("totalCount" in result) {
+          setTotalItems(result.totalCount);
         }
-      } catch (error) {
-        console.error("Error fetching ideas:", error);
-      } finally {
-        setIsLoading(false);
+      } else {
+        console.warn("Unexpected result format:", result);
+        setIdeas([]);
+        setTotalItems(0);
       }
-    },
-    [isLoading]
-  );
+    } catch (error) {
+      console.error("Error fetching ideas:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handlePageChange = async (page: number) => {
     setCurrentPage(page);
