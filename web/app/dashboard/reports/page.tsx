@@ -22,14 +22,12 @@ import { getReports } from "./get-reports";
 
 export const dynamic = "force-dynamic";
 
-const REPORTS_PER_PAGE = 10;
-
 type ReportExtended = Report & {
   recommendations: string[];
 };
 
 export default async function ValidationReportsPage() {
-  const data = await getReports(true, { limit: REPORTS_PER_PAGE });
+  const data = await getReports(true, { limit: 10 });
 
   return (
     <div className="space-y-6">
@@ -52,11 +50,7 @@ export default async function ValidationReportsPage() {
 
           <TabsContent value="all" className="space-y-4">
             <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-              <ReportsList
-                reports={data.reports}
-                itemsPerPage={REPORTS_PER_PAGE}
-                totalReports={data.total}
-              />
+              <ReportsList reports={data.reports} totalReports={data.total} />
             </Suspense>
           </TabsContent>
 
