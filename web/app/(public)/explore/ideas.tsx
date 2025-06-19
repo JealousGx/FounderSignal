@@ -2,7 +2,7 @@
 
 import { ArrowRight, Clock, Search, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { PaginationWithPageSize } from "@/components/ui/pagination";
 import { getIdeas } from "./get-ideas";
@@ -59,62 +59,89 @@ export default function Ideas({
   );
 
   const [selectedSort, setSelectedSort] = useState(sortOptions[0].value);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
   useEffect(() => {
     setTotalPages(Math.ceil(totalItems / itemsPerPage));
   }, [totalItems, itemsPerPage]);
 
-  const fetchIdeas = async (
-    page: number,
-    pageSize: number,
-    sortBy?: string
-  ) => {
-    if (isLoading) return;
+  const fetchIdeas = useCallback(
+    async (
+      page: number,
+      pageSize: number,
+      sortBy?: string,
+      searchQuery?: string
+    ) => {
+      if (isLoading) return;
 
-    setIsLoading(true);
-    try {
-      const offset = (page - 1) * pageSize;
-      const result = await getIdeas({ limit: pageSize, offset, sortBy });
+      setIsLoading(true);
+      try {
+        const offset = (page - 1) * pageSize;
+        const result = await getIdeas({
+          limit: pageSize,
+          offset,
+          sortBy,
+          search: searchQuery,
+        });
 
-      if (result && "ideas" in result && Array.isArray(result.ideas)) {
-        setIdeas(result.ideas);
-        if ("totalCount" in result) {
-          setTotalItems(result.totalCount);
+        if (result && "ideas" in result && Array.isArray(result.ideas)) {
+          setIdeas(result.ideas);
+          if ("totalCount" in result) {
+            setTotalItems(result.totalCount);
+          }
+        } else {
+          console.warn("Unexpected result format:", result);
+          setIdeas([]);
+          setTotalItems(0);
         }
-      } else {
-        console.warn("Unexpected result format:", result);
-        setIdeas([]);
-        setTotalItems(0);
+      } catch (error) {
+        console.error("Error fetching ideas:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching ideas:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [isLoading]
+  );
 
   const handlePageChange = async (page: number) => {
     setCurrentPage(page);
-    await fetchIdeas(page, itemsPerPage, selectedSort);
+    await fetchIdeas(page, itemsPerPage, selectedSort, debouncedSearchQuery);
   };
 
   const handlePageSizeChange = async (value: string) => {
     const newPageSize = parseInt(value, 10);
     setItemsPerPage(newPageSize);
     setCurrentPage(1); // Reset to first page when changing page size
-    await fetchIdeas(1, newPageSize, selectedSort);
+    await fetchIdeas(1, newPageSize, selectedSort, debouncedSearchQuery);
   };
 
   const handleSortChange = async (value: string) => {
     setSelectedSort(value);
     setCurrentPage(1); // Reset to first page when sort changes
-    await fetchIdeas(1, itemsPerPage, value);
+    await fetchIdeas(1, itemsPerPage, value, debouncedSearchQuery);
   };
 
   useEffect(() => {
     setIdeas(initialIdeas ?? []);
     setTotalItems(initialTotalCount ?? 0);
   }, [initialIdeas, initialTotalCount]);
+
+  useEffect(() => {
+    // Fetch ideas whenever the debounced search query changes
+    handlePageChange(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery]);
 
   return (
     <>
@@ -124,8 +151,10 @@ export default function Ideas({
 
           <Input
             type="search"
-            placeholder="Search ideas..."
+            placeholder="Search for startup ideas by keyword, industry, or problem..."
             className="pl-8 w-full sm:w-[200px] md:w-[250px]"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
