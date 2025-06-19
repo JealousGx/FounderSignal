@@ -23,7 +23,7 @@ import (
 // Test data for generating ideas
 var (
 	// This will be the UserID for the creator of the ideas
-	ideaOwnerUserID = "user_2wtkjhN28g1uuQA3tjs00x5KDek"
+	ideaOwnerUserID = "user_2yj7pmealNgGD2w9ZcczTuxnuAg"
 
 	titles = []string{
 		"AI-Powered Personal Finance Manager", "Smart Home Energy Optimizer", "Language Learning App with AR",
@@ -277,6 +277,11 @@ func seedIdeas(ctx context.Context, db *gorm.DB, uniqueIdeaTitles []string, coun
 		err := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			if err := tx.Create(idea).Error; err != nil {
 				return fmt.Errorf("failed to create idea: %w", err)
+			}
+
+			searchableText := fmt.Sprintf("%s %s %s", idea.Title, idea.Description, idea.TargetAudience)
+			if err := tx.Model(idea).UpdateColumn("search_vector", gorm.Expr("to_tsvector('english', ?)", searchableText)).Error; err != nil {
+				return err
 			}
 
 			mvp.IdeaID = idea.ID
