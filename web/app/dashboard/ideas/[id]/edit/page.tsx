@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import BasicDetailsForm from "@/components/dashboard/ideas/single/edit/basic-details-form";
 import DangerZone from "@/components/dashboard/ideas/single/edit/danger-zone";
 import EditHeader from "@/components/dashboard/ideas/single/edit/header";
-import LandingPageForm from "@/components/dashboard/ideas/single/edit/landing-page-form";
 import { Link } from "@/components/ui/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,7 +27,6 @@ export default async function EditIdeaPage({ params }: EditIdeaPageProps) {
   }
 
   const idea = data?.idea;
-  const landingPage = data?.landingPage;
 
   return (
     <div className="space-y-6">
@@ -53,12 +51,6 @@ export default async function EditIdeaPage({ params }: EditIdeaPageProps) {
         <TabsContent value="basic">
           <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
             <BasicDetailsForm idea={idea} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="landing">
-          <Suspense fallback={<Skeleton className="h-[600px] w-full" />}>
-            <LandingPageForm landingPage={landingPage} />
           </Suspense>
         </TabsContent>
 
