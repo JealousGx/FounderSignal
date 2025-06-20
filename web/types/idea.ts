@@ -23,10 +23,7 @@ export interface Idea {
 
 export interface LandingPage {
   ideaId: string;
-  headline: string;
-  subheadline: string;
-  ctaText: string;
-  ctaButtonText: string;
+  htmlContent: string;
 }
 
 export type IdeaStatus =
