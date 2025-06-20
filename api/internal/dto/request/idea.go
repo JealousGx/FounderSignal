@@ -19,8 +19,5 @@ type UpdateIdea struct {
 }
 
 type UpdateMVP struct {
-	Headline    string `json:"headline"`
-	Subheadline string `json:"subheadline"`
-	CTAButton   string `json:"ctaButtonText"`
-	CTAText     string `json:"ctaText"`
+	HTMLContent string `json:"htmlContent" binding:"required"`
 }
