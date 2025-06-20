@@ -38,8 +38,6 @@ func (s *mvpService) GetByIdea(ctx context.Context, ideaId uuid.UUID) (*domain.M
 		return nil, nil
 	}
 
-	mvp.HTMLContent = generateLandingPageContent(*mvp)
-
 	return mvp, nil
 }
 
@@ -59,10 +57,7 @@ func (s *mvpService) Update(ctx context.Context, ideaId uuid.UUID, userId string
 
 	mvp := &domain.MVPSimulator{
 		IdeaID:      idea.ID,
-		Headline:    req.Headline,
-		Subheadline: req.Subheadline,
-		CTAText:     req.CTAText,
-		CTAButton:   req.CTAButton,
+		HTMLContent: req.HTMLContent,
 	}
 
 	return s.repo.Update(ctx, mvp)

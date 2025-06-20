@@ -40,16 +40,29 @@ export default function EditHeader({ idea }: EditHeaderProps) {
               </h1>
             </div>
 
-            <Link
-              size="sm"
-              className="h-9"
-              variant="secondary"
-              href={`/mvp/${idea.id}`}
-              target="_blank"
-            >
-              <ExternalLink className="h-4 w-4 mr-1" />
-              Preview Landing Page
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                size="sm"
+                className="h-9"
+                variant="secondary"
+                href={`/mvp/${idea.id}`}
+                target="_blank"
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Preview Landing Page
+              </Link>
+
+              <Link
+                size="sm"
+                className="h-9 ml-2"
+                variant="default"
+                href={`/mvp/${idea.id}/edit`}
+                target="_blank"
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Edit Landing Page
+              </Link>
+            </div>
           </div>
         </div>
       </div>
