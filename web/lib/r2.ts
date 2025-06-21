@@ -37,6 +37,7 @@ export async function getSignedUrlForUpload(
     Bucket: R2_BUCKET,
     Key: key,
     ContentType: contentType,
+    ACL: "public-read",
   });
 
   try {
