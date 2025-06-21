@@ -107,15 +107,18 @@ export default function EditLandingPage() {
       return;
     }
 
-    const html = getValidatedHtml(
+    const { html, shouldBreak, errorMessage } = getValidatedHtml(
       ideaId,
       bodyContent,
       metaTitle,
       metaDescription
     );
 
-    if (!html) {
-      // If validation failed, getValidatedHtml will show an error toast
+    if (!html || shouldBreak) {
+      toast.error(errorMessage || "Invalid HTML content. Please fix errors.", {
+        duration: 5000,
+      });
+
       return;
     }
 
@@ -355,8 +358,7 @@ function getValidatedHtml(
   }
 
   if (_shouldBreak) {
-    toast.error(errorMessage, { duration: 5000 });
-    return; // Stop further processing if validation fails
+    return { shouldBreak: _shouldBreak, errorMessage };
   }
 
   // Sanitize with comprehensive landing page support
@@ -587,7 +589,7 @@ function getValidatedHtml(
       /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|xxx|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
   });
 
-  return cleanHtml;
+  return { html: cleanHtml, shouldBreak: false, errorMessage: "" };
 }
 
 const getTrackingScript = (ideaId: string) => `<script>(function() {
