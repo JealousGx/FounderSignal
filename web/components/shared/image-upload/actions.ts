@@ -21,14 +21,7 @@ export const uploadImageWithSignedUrl = async (
       };
     }
 
-    const lastDotIndex = fileKey.lastIndexOf(".");
-    const fileKeyWithoutExt =
-      lastDotIndex > 0 ? fileKey.substring(0, lastDotIndex) : fileKey;
-
-    const signedUrl = await getSignedUrlForUpload(
-      fileKeyWithoutExt,
-      contentType
-    );
+    const signedUrl = await getSignedUrlForUpload(fileKey, contentType);
 
     if (!signedUrl) {
       return {
@@ -57,7 +50,7 @@ export const uploadImageWithSignedUrl = async (
       };
     }
 
-    const imageUrl = `${process.env.NEXT_PUBLIC_R2_ENDPOINT}/${fileKeyWithoutExt}`;
+    const imageUrl = `${process.env.NEXT_PUBLIC_R2_ENDPOINT}/${fileKey}`;
 
     return {
       uploaded: true,

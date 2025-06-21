@@ -100,11 +100,8 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
       formData.append("targetSignups", String(data.targetSignups));
 
       if (selectedFile) {
-        const fileName = generateIconFileName(
-          selectedFile.name,
-          idea.id,
-          idea.title
-        );
+        const fileName = generateIconFileName(idea.id);
+
         setFileUploaded(false);
         setUploadError("");
         setIsUploading(true);
@@ -569,18 +566,6 @@ function validateIconFile(file: File) {
   return { valid: true };
 }
 
-function generateIconFileName(
-  originalName: string,
-  ideaId: string,
-  ideaTitle: string
-) {
-  const extension = originalName.split(".").pop() || "png";
-
-  const sanitizedTitle = ideaTitle
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-
-  return `icons/${ideaId}/${sanitizedTitle}.${extension}`;
+function generateIconFileName(ideaId: string) {
+  return `icons/${ideaId}`;
 }
