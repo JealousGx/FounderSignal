@@ -20,6 +20,8 @@ import {
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { ImageUpload } from "@/components/shared/image-upload";
+import { uploadImageWithSignedUrl } from "@/components/shared/image-upload/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,7 +40,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { IconUpload } from "@/components/ui/icon-upload";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -64,7 +65,9 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
   >(updateIdea, null);
 
   const [, startTransition] = useTransition();
+
   const [iconUrl, setIconUrl] = useState(idea.imageUrl || "");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState<string>();
   const [isUploading, setIsUploading] = useState(false);
   const [fileUploaded, setFileUploaded] = useState(false);
@@ -96,8 +99,44 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
       formData.append("targetAudience", data.targetAudience);
       formData.append("targetSignups", String(data.targetSignups));
 
-      if (iconUrl) {
-        formData.append("imageUrl", iconUrl);
+      if (selectedFile) {
+        const fileName = generateIconFileName(
+          selectedFile.name,
+          idea.id,
+          idea.title
+        );
+        setFileUploaded(false);
+        setUploadError("");
+        setIsUploading(true);
+
+        const contentType = selectedFile.type || "image/png";
+
+        const _buff = await selectedFile.arrayBuffer();
+        const base64String = Buffer.from(_buff).toString("base64");
+
+        const uploadResult = await uploadImageWithSignedUrl(
+          base64String,
+          fileName,
+          contentType
+        );
+
+        setIsUploading(false);
+        setFileUploaded(uploadResult.uploaded);
+
+        if (uploadResult.error) {
+          setUploadError(uploadResult.error);
+          toast.error("Error uploading icon", {
+            description: uploadResult.error,
+            duration: 5000,
+          });
+
+          return;
+        }
+
+        if (uploadResult.imageUrl) {
+          setIconUrl(uploadResult.imageUrl);
+          formData.append("imageUrl", uploadResult.imageUrl);
+        }
       }
 
       startTransition(() => {
@@ -112,11 +151,6 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
     }
   }
 
-  // function handleIconChange(url: string) {
-  //   setIconUrl(url);
-  //   form.setValue("imageUrl", url);
-  // }
-
   function handleIconRemove() {
     setIconUrl("");
     setUploadError("");
@@ -130,13 +164,8 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
       return;
     }
 
-    const fileName = generateIconFileName(file.name, idea.id, idea.title);
-
-    setFileUploaded(false);
+    setSelectedFile(file);
     setUploadError("");
-    setIsUploading(true);
-    // Handle upload here
-    // uploadFile(file);
   };
 
   useEffect(() => {
@@ -236,7 +265,7 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
                       Product Icon
                     </FormLabel>
                     <FormControl>
-                      <IconUpload
+                      <ImageUpload
                         value={iconUrl}
                         onChange={handleFileSelect}
                         onRemove={() => handleIconRemove()}
