@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import DOMPurify from "dompurify";
-import grapesjs, { Editor } from "grapesjs";
+import grapesjs, { Asset, Assets, Editor } from "grapesjs";
 import grapesjsBlocksBasic from "grapesjs-blocks-basic";
 import grapesjsPresetWebpage from "grapesjs-preset-webpage";
 import "grapesjs/dist/css/grapes.min.css";
@@ -28,6 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import { uploadImageWithSignedUrl } from "@/components/shared/image-upload/actions";
 import { getMVP } from "../action";
 import { updateMVP } from "./action";
 
@@ -56,6 +57,7 @@ export default function EditLandingPage() {
       height: "100vh",
       width: "100%",
       storageManager: false,
+      assetManager: {},
       plugins: [grapesjsBlocksBasic, grapesjsPresetWebpage],
       pluginsOpts: {
         "grapesjs-preset-webpage": {},
@@ -97,9 +99,101 @@ export default function EditLandingPage() {
     }
   }, [ideaId, grapeEditor]);
 
+  const handleAssets = async (assets: Assets) => {
+    if (!ideaId || !grapeEditor) return;
+
+    const models = assets.models;
+
+    const assetsToUpload = models.filter((m: Asset) =>
+      (m.id as string).startsWith("data:image")
+    ) as Asset[];
+
+    if (!assetsToUpload || assetsToUpload.length === 0) return;
+
+    console.log("Found assets to upload:", assetsToUpload.length);
+
+    const uploadPromises = assetsToUpload.map(async (asset) => {
+      const dataUrl = asset.id as string;
+      const fileName = getImageFileName(ideaId, asset.attributes.name);
+
+      // Extract content type and base64 data from data URL
+      const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (!matches) {
+        throw new Error("Invalid data URL format");
+      }
+
+      const contentType = matches[1];
+      const base64String = matches[2];
+
+      console.log("Uploading image:", fileName, "Content-Type:", contentType);
+
+      const uploadResponse = await uploadImageWithSignedUrl(
+        base64String,
+        fileName,
+        contentType
+      );
+      if (uploadResponse.error || !uploadResponse.imageUrl) {
+        toast.error(
+          `Failed to upload image: ${uploadResponse.error}. Please try again.`,
+          {
+            duration: 5000,
+          }
+        );
+
+        throw new Error(uploadResponse.error || "Upload failed");
+      }
+
+      console.log("Image uploaded successfully:", uploadResponse.imageUrl);
+
+      // Test if the image is accessible
+      try {
+        const testResponse = await fetch(uploadResponse.imageUrl, {
+          method: "HEAD",
+        });
+        console.log(
+          "Image accessibility test:",
+          testResponse.ok ? "SUCCESS" : "FAILED",
+          testResponse.status
+        );
+      } catch (error) {
+        console.error("Image accessibility test failed:", error);
+      }
+
+      return { base64String: dataUrl, cloudUrl: uploadResponse.imageUrl };
+    });
+
+    const uploadedAssets = await Promise.all(uploadPromises);
+    const urlMap = new Map(
+      uploadedAssets.map((a) => [a.base64String, a.cloudUrl])
+    );
+
+    console.log("URL mapping:", Array.from(urlMap.entries()));
+
+    assets.forEach((asset: Asset) => {
+      const currentSrc = asset.get("src");
+      if (urlMap.has(currentSrc)) {
+        const newSrc = urlMap.get(currentSrc);
+
+        console.log(
+          "Replacing asset src:",
+          currentSrc.substring(0, 50) + "...",
+          "->",
+          newSrc
+        );
+
+        asset.set("src", newSrc);
+      }
+    });
+
+    return urlMap;
+  };
+
   async function handleSave() {
     if (!ideaId || !grapeEditor) return;
 
+    const uploadedAssetsRes = await handleAssets(
+      grapeEditor.AssetManager.getAllVisible()
+    );
     const bodyContent = grapeEditor.getHtml({ cleanId: true });
 
     if (!bodyContent.trim()) {
@@ -107,12 +201,15 @@ export default function EditLandingPage() {
       return;
     }
 
-    const { html, shouldBreak, errorMessage } = getValidatedHtml(
+    const validatedHtmlRes = getValidatedHtml(
       ideaId,
       bodyContent,
       metaTitle,
       metaDescription
     );
+
+    const { shouldBreak, errorMessage } = validatedHtmlRes;
+    let html = validatedHtmlRes.html;
 
     if (!html || shouldBreak) {
       toast.error(errorMessage || "Invalid HTML content. Please fix errors.", {
@@ -121,6 +218,18 @@ export default function EditLandingPage() {
 
       return;
     }
+
+    // Replace all base64 strings in the HTML with the new cloud URLs
+    uploadedAssetsRes?.forEach((cloudUrl, base64Src) => {
+      const escapedSrc = base64Src.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const beforeCount = (html!.match(new RegExp(escapedSrc, "g")) || [])
+        .length;
+      html = html!.replace(new RegExp(escapedSrc, "g"), cloudUrl);
+      const afterCount = (html!.match(new RegExp(cloudUrl, "g")) || []).length;
+      console.log(
+        `Replaced ${beforeCount} occurrences of base64 with ${afterCount} cloud URLs`
+      );
+    });
 
     setSaving(true);
 
@@ -661,3 +770,7 @@ const getTrackingScript = (ideaId: string) => `<script>(function() {
 
         })();
     </script>`;
+
+const getImageFileName = (ideaId: string, imageName: string) => {
+  return `${ideaId}/${imageName}`;
+};
