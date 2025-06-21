@@ -567,5 +567,5 @@ function validateIconFile(file: File) {
 }
 
 function generateIconFileName(ideaId: string) {
-  return `icons/${ideaId}`;
+  return `${ideaId}/icon`;
 }
