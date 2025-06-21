@@ -2,12 +2,12 @@
 
 import { cn } from "@/lib/utils";
 import { AlertCircle, Image as ImageIcon, X } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from "@/components/ui/image";
 
-interface IconUploadProps {
+interface ImageUploadProps {
   value?: string;
   onChange: (file: File) => void;
   onRemove: () => void;
@@ -17,7 +17,7 @@ interface IconUploadProps {
   isUploading?: boolean;
 }
 
-export function IconUpload({
+export function ImageUpload({
   value,
   onChange,
   onRemove,
@@ -25,13 +25,23 @@ export function IconUpload({
   className,
   error,
   isUploading = false,
-}: IconUploadProps) {
+}: ImageUploadProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [isDragReject, setIsDragReject] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(value || null);
 
   const handleFileSelect = useCallback(
     (file: File) => {
       if (!file) return;
+      const url = URL.createObjectURL(file);
+      setPreviewUrl((prev) => {
+        if (prev) {
+          URL.revokeObjectURL(prev);
+        }
+
+        return url;
+      });
+
       onChange(file);
     },
     [onChange]
@@ -46,6 +56,15 @@ export function IconUpload({
     },
     [handleFileSelect]
   );
+
+  const handleRemove = useCallback(() => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+
+    onRemove();
+  }, [previewUrl, onRemove]);
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -107,24 +126,41 @@ export function IconUpload({
     [handleFileSelect]
   );
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  useEffect(() => {
+    if (value && value !== previewUrl) {
+      setPreviewUrl(value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
   return (
     <div className={cn("space-y-4 w-max", className)}>
-      {value ? (
+      {previewUrl ? (
         <div className="relative group">
           <div className="relative w-24 h-24 mx-auto rounded-xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200">
             <OptimizedImage
-              src={value}
+              src={previewUrl}
               alt="Product icon"
-              fill
+              width={96}
+              height={96}
               className="object-contain p-2"
             />
           </div>
+
           <Button
             type="button"
             variant="destructive"
             size="icon"
             className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={onRemove}
+            onClick={handleRemove}
             disabled={disabled || isUploading}
           >
             <X className="h-3 w-3" />
