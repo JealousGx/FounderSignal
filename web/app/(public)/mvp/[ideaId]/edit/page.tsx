@@ -1,5 +1,6 @@
 "use client";
 
+import { Info, Save, Settings } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -12,6 +13,12 @@ import "grapesjs/dist/css/grapes.min.css";
 import "grapesjs/dist/grapes.min.js";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +28,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { Info } from "lucide-react";
 import { getMVP } from "../action";
 import { updateMVP } from "./action";
 
@@ -35,6 +41,8 @@ export default function EditLandingPage() {
   const [grapeEditor, setGrapeEditor] = useState<Editor | null>(null);
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +53,7 @@ export default function EditLandingPage() {
     const editor = grapesjs.init({
       container: editorRef.current,
       fromElement: true,
-      height: "calc(100vh - 150px)",
+      height: "100vh",
       width: "100%",
       storageManager: false,
       plugins: [grapesjsBlocksBasic, grapesjsPresetWebpage],
@@ -71,6 +79,7 @@ export default function EditLandingPage() {
       getMVP(ideaId).then((data) => {
         if (data.htmlContent) {
           grapeEditor.setComponents(data.htmlContent);
+
           // Parse meta title/description from loaded HTML
           try {
             const parser = new DOMParser();
@@ -98,15 +107,18 @@ export default function EditLandingPage() {
       return;
     }
 
-    const html = getValidatedHtml(
+    const { html, shouldBreak, errorMessage } = getValidatedHtml(
       ideaId,
       bodyContent,
       metaTitle,
       metaDescription
     );
 
-    if (!html) {
-      // If validation failed, getValidatedHtml will show an error toast
+    if (!html || shouldBreak) {
+      toast.error(errorMessage || "Invalid HTML content. Please fix errors.", {
+        duration: 5000,
+      });
+
       return;
     }
 
@@ -126,62 +138,156 @@ export default function EditLandingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background flex flex-col items-center">
-      <div className="w-full flex items-center max-w-7xl p-6 flex-col">
-        <div className="w-full flex items-center justify-between">
-          <h1 className="text-3xl font-bold mb-2 text-primary">
-            Edit Your Landing Page
+    <div className="relative w-full h-screen">
+      <div ref={editorRef} className="w-full h-full">
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-4xl font-bold text-center mb-8">
+            Your Landing Page
           </h1>
-
-          <Button onClick={handleSave} disabled={saving} className="ml-auto">
-            {saving ? "Saving..." : "Save"}
-          </Button>
-        </div>
-
-        {/* Meta fields UI */}
-        <div className="w-full flex justify-between gap-4 p-4">
-          <div className="flex-1">
-            <Label
-              className="flex gap-2 items-center text-sm font-medium mb-1"
-              htmlFor="meta-title"
+          <p className="text-lg text-center mb-8">
+            Start building your MVP landing page!
+          </p>
+          <div className="text-center">
+            <button
+              id="ctaButton"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             >
-              Page Title
-              <CustomTooltip text="This is the title of your page, which appears in the browser tab and is important for SEO." />
-            </Label>
-            <Input
-              id="meta-title"
-              type="text"
-              className="w-full border rounded px-3 py-2"
-              value={metaTitle}
-              onChange={(e) => setMetaTitle(e.target.value)}
-              placeholder="Enter page title (for SEO and browser tab)"
-              maxLength={60}
-            />
-          </div>
-
-          <div className="flex-1">
-            <Label
-              className="flex gap-2 items-center text-sm font-medium mb-1"
-              htmlFor="meta-description"
-            >
-              Meta
-              <CustomTooltip text="This is the meta description for your page, which appears in search results and social media previews." />
-            </Label>
-            <Textarea
-              id="meta-description"
-              className="w-full border rounded px-3 py-2"
-              value={metaDescription}
-              onChange={(e) => setMetaDescription(e.target.value)}
-              placeholder="Enter meta description (for SEO and social sharing)"
-              maxLength={160}
-              rows={2}
-            />
+              Get Started
+            </button>
           </div>
         </div>
       </div>
 
-      <div ref={editorRef} />
-    </main>
+      <div
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2"
+        onMouseEnter={() => setIsMenuOpen(true)}
+        onMouseLeave={() => setIsMenuOpen(false)}
+      >
+        <div
+          className={`flex bg-background/50 backdrop-blur-sm p-2 rounded-full items-center gap-2 transition-all duration-300 ${
+            isMenuOpen
+              ? "opacity-100 translate-x-0 pointer-events-auto"
+              : "opacity-0 translate-x-4 pointer-events-none"
+          }`}
+        >
+          {/* Save Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-white rounded-full w-10 h-10 p-0 shadow-lg"
+              >
+                <Save className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Save Landing Page</p>
+            </TooltipContent>
+          </Tooltip>
+
+          {/* Meta Settings Modal Trigger */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-background hover:bg-accent text-foreground rounded-full w-10 h-10 p-0 shadow-lg border"
+                onClick={() => setIsModalOpen(true)}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Page Settings</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        {/* Pencil Icon Trigger */}
+        <div className="cursor-pointer">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-white rounded-full w-14 h-14 p-0 shadow-lg"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
+                </svg>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Page Settings</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+
+      {/* Meta Settings Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Page Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-7 mt-4">
+            <div className="flex flex-col gap-4">
+              <div>
+                <Label
+                  className="flex gap-2 items-center text-sm font-medium mb-1"
+                  htmlFor="meta-title"
+                >
+                  Page Title
+                  <CustomTooltip text="This is the title of your page, which appears in the browser tab and is important for SEO." />
+                </Label>
+                <Input
+                  id="meta-title"
+                  type="text"
+                  value={metaTitle}
+                  onChange={(e) => setMetaTitle(e.target.value)}
+                  placeholder="Enter page title (for SEO and browser tab)"
+                  maxLength={60}
+                />
+              </div>
+
+              <div>
+                <Label
+                  className="flex gap-2 items-center text-sm font-medium mb-1"
+                  htmlFor="meta-description"
+                >
+                  Meta Description
+                  <CustomTooltip text="This is the meta description for your page, which appears in search results and social media previews." />
+                </Label>
+                <Textarea
+                  id="meta-description"
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  placeholder="Enter meta description (for SEO and social sharing)"
+                  maxLength={160}
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button onClick={() => setIsModalOpen(false)}>Save</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
@@ -252,8 +358,7 @@ function getValidatedHtml(
   }
 
   if (_shouldBreak) {
-    toast.error(errorMessage, { duration: 5000 });
-    return; // Stop further processing if validation fails
+    return { shouldBreak: _shouldBreak, errorMessage };
   }
 
   // Sanitize with comprehensive landing page support
@@ -484,7 +589,7 @@ function getValidatedHtml(
       /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|xxx|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
   });
 
-  return cleanHtml;
+  return { html: cleanHtml, shouldBreak: false, errorMessage: "" };
 }
 
 const getTrackingScript = (ideaId: string) => `<script>(function() {
