@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.r2.cloudflarestorage.com",
+        hostname: "pub-*.r2.dev",
       },
     ],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
