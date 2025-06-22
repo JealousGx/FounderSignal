@@ -40,6 +40,8 @@ export const optimizeHtmlImages = (
     }
 
     // --- General Optimizations ---
+    // Responsive images
+    img.setAttribute("style", "max-width:100%;height:auto");
 
     // Add async decoding to all images
     img.setAttribute("decoding", "async");
