@@ -38,6 +38,7 @@ export default function EditLandingPage() {
   const [metaDescription, setMetaDescription] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentAssets, setCurrentAssets] = useState<Set<string>>(new Set());
+  const [isDirty, setIsDirty] = useState(false);
 
   const assetUrlMapRef = useRef<
     Map<
@@ -45,7 +46,7 @@ export default function EditLandingPage() {
       { cloudUrl: string; dimensions: { width: number; height: number } }
     >
   >(new Map());
-
+  const isSavingRef = useRef(false);
   const editorRef = useRef<HTMLDivElement>(null);
 
   // GrapeJS init
@@ -67,6 +68,17 @@ export default function EditLandingPage() {
       },
     });
 
+    const setDirty = () => {
+      if (!isSavingRef.current) {
+        setIsDirty(true);
+      }
+    };
+
+    editor.on("component:update", () => setDirty);
+    editor.on("asset:add", () => setDirty);
+    editor.on("asset:remove", () => setDirty);
+    editor.on("change", () => setDirty);
+
     setGrapeEditor(editor);
 
     return () => {
@@ -74,6 +86,20 @@ export default function EditLandingPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isDirty]);
 
   useEffect(() => {
     if (ideaId && grapeEditor) {
@@ -332,6 +358,8 @@ export default function EditLandingPage() {
   const handleSave = useCallback(async () => {
     if (!ideaId || !grapeEditor) return;
 
+    isSavingRef.current = true;
+
     try {
       if (!grapeEditor.getHtml({ cleanId: true }).trim()) {
         toast.error("Please add some content before saving.");
@@ -382,11 +410,13 @@ export default function EditLandingPage() {
       if (data.error) throw new Error(data.error || "Save failed");
 
       toast.success("Landing page saved!");
+      setIsDirty(false);
     } catch (error) {
       const err = error as Error;
       toast.error(err.message || "Failed to save landing page.");
     } finally {
       setSaving(false);
+      isSavingRef.current = false;
     }
   }, [
     ideaId,
@@ -396,6 +426,16 @@ export default function EditLandingPage() {
     metaDescription,
     cleanupOrphanedAssets,
   ]);
+
+  const handleMetaTitleChange = (newTitle: string) => {
+    setMetaTitle(newTitle);
+    setIsDirty(true);
+  };
+
+  const handleMetaDescriptionChange = (newDescription: string) => {
+    setMetaDescription(newDescription);
+    setIsDirty(true);
+  };
 
   return (
     <div className="relative w-full h-screen">
@@ -463,9 +503,9 @@ export default function EditLandingPage() {
         isModalOpen={isModalOpen}
         setIsModalOpen={setIsModalOpen}
         metaTitle={metaTitle}
-        setMetaTitle={setMetaTitle}
+        setMetaTitle={handleMetaTitleChange}
         metaDescription={metaDescription}
-        setMetaDescription={setMetaDescription}
+        setMetaDescription={handleMetaDescriptionChange}
       />
     </div>
   );
