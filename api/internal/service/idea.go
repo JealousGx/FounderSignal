@@ -95,6 +95,8 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		CTAButton:   req.CTAButton,
 	}
 
+	mvp.HTMLContent = generateLandingPageContent(*mvp)
+
 	ideaId, err := s.repo.CreateWithMVP(ctx, idea, mvp)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to create idea: %w", err)
@@ -422,33 +424,36 @@ func (s *ideaService) getUserDashboardStats(ctx context.Context, userId string) 
 }
 
 func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
-	return fmt.Sprintf(`
-<!DOCTYPE html>
+	const TAILWIND_CSS_URL = "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+
+	return fmt.Sprintf(
+		`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>%s</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; text-align: center; min-height: 100vh; box-sizing: border-box; background-color: #f4f7f6; color: #333; }
-        .mvp-container { max-width: 600px; margin: auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; margin-bottom: 15px; }
-        p { color: #555; line-height: 1.6; margin-bottom: 25px; }
-        button { background-color: #3498db; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s ease; }
-        button:hover { background-color: #2980b9; }
-        .spacer { height: 1000px; } /* For scroll testing */
-    </style>
+    <meta name="description" content="%s">
+    <link href="%s" rel="stylesheet">
 </head>
 <body>
-    <div class="mvp-container">
-        <h1>%s</h1>
-        <p>%s</p>
-        <button id="ctaButton">%s</button>
-    </div>
-    <div class="spacer"></div>
-
-    <script>
-        (function() {
+    <div className="container mx-auto px-4 py-8">
+          <h1 className="text-4xl font-bold text-center mb-8">
+            Your Landing Page
+          </h1>
+          <p className="text-lg text-center mb-8">
+            Start building your MVP landing page!
+          </p>
+          <div className="text-center">
+            <button
+              id="ctaButton"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              %s
+            </button>
+          </div>
+        </div>
+    <script data-founder-signal-script="true">(function() {
             const ideaId = "%s";
             const postTrackEvent = (eventType, metadata) => {
                 if (window.parent && window.parent.postMessage) {
@@ -460,10 +465,10 @@ func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
             postTrackEvent('pageview', { path: window.location.pathname, title: document.title });
 
             // 2. Track CTA Click
-            const ctaButton = document.getElementById('ctaButton');
-            if (ctaButton) {
-                ctaButton.addEventListener('click', function() {
-                    postTrackEvent('cta_click', { buttonText: ctaButton.innerText, ctaElementId: ctaButton.id });
+            const $ctaButton = document.getElementById('ctaButton');
+            if ($ctaButton) {
+                $ctaButton.addEventListener('click', function() {
+                    postTrackEvent('cta_click', { buttonText: $ctaButton.innerText, ctaElementId: $ctaButton.id });
                     alert('Thanks for your interest!'); // Optional: client-side feedback
                 });
             }
@@ -492,7 +497,7 @@ func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
                             scrollReached[depth] = true;
                         }
                     });
-                }, 150); // Debounce scroll events
+                }, ${SCROLL_DEBOUNCE_MS}); // Debounce scroll events
             }
             // Initial check in case content is not scrollable but covers depths
             handleScroll(); 
@@ -518,7 +523,13 @@ func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
         })();
     </script>
 </body>
-</html>`, mvpDetails.Headline, mvpDetails.Headline, mvpDetails.Subheadline, mvpDetails.CTAButton, mvpDetails.IdeaID.String())
+</html>`,
+		mvpDetails.Headline,
+		mvpDetails.Subheadline,
+		TAILWIND_CSS_URL,
+		mvpDetails.CTAButton,
+		mvpDetails.IdeaID.String(),
+	)
 }
 
 // calculateTrendRatio calculates the percentage change as a ratio.
