@@ -1,4 +1,11 @@
-import { Loader2, Pencil, Save, Settings } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle,
+  Loader,
+  Pencil,
+  Save,
+  Settings,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -8,16 +15,33 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+type SaveStatus = "idle" | "saving" | "success" | "error";
+
 export const FloatingActionMenu = ({
   onSave,
   onSettingsClick,
   isSaving,
+  saveStatus,
 }: {
   onSave: () => void;
   onSettingsClick: () => void;
   isSaving: boolean;
+  saveStatus: SaveStatus;
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const getSaveButtonContent = () => {
+    switch (saveStatus) {
+      case "saving":
+        return <Loader className="h-4 w-4 animate-spin" />;
+      case "success":
+        return <CheckCircle className="h-4 w-4" />;
+      case "error":
+        return <AlertCircle className="h-4 w-4" />;
+      default:
+        return <Save className="h-4 w-4" />;
+    }
+  };
 
   return (
     <div
@@ -40,7 +64,7 @@ export const FloatingActionMenu = ({
               size="sm"
               className="bg-primary hover:bg-primary/90 text-white rounded-full w-10 h-10 p-0 shadow-lg"
             >
-              <Save className="w-4 h-4" />
+              {getSaveButtonContent()}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -70,7 +94,7 @@ export const FloatingActionMenu = ({
             className="bg-primary hover:bg-primary/90 text-white rounded-full w-14 h-14 p-0 shadow-lg"
           >
             {isSaving ? (
-              <Loader2 className="w-6 h-6 animate-spin" />
+              <Loader className="w-6 h-6 animate-spin" />
             ) : (
               <Pencil className="w-6 h-6" />
             )}

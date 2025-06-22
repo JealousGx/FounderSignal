@@ -1,30 +1,21 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import grapesjs, { Asset, Assets, Component, Editor } from "grapesjs";
-import grapesjsBlocksBasic from "grapesjs-blocks-basic";
-import grapesjsPresetWebpage from "grapesjs-preset-webpage";
 import "grapesjs/dist/css/grapes.min.css";
 import "grapesjs/dist/grapes.min.js";
 
 import { getMVP } from "../action";
-import { deleteAsset, updateMVP } from "./action";
 import { FloatingActionMenu } from "./floating-menu";
-import {
-  extractFileNameFromUrl,
-  getImageFileName,
-  optimizeHtmlImages,
-  preloadImages,
-} from "./helpers";
+import { extractFileNameFromUrl } from "./hooks/helpers";
 import { MetaSettingsModal } from "./meta-settings";
-import { getValidatedHtml } from "./validation";
 
-import { uploadImageWithSignedUrl } from "@/components/shared/image-upload/actions";
-
-const CTA_BUTTON_ID = "ctaButton";
+import { useAssets } from "./hooks/use-assets";
+import { useAutoSave } from "./hooks/use-auto-save";
+import { useGrapesEditor } from "./hooks/use-grapes-editor";
+import { useUnsavedChanges } from "./hooks/use-unsaved-changes";
 
 export default function EditLandingPage() {
   const params = useParams();
@@ -32,74 +23,29 @@ export default function EditLandingPage() {
     ? params.ideaId[0]
     : params.ideaId;
 
-  const [saving, setSaving] = useState(false);
-  const [grapeEditor, setGrapeEditor] = useState<Editor | null>(null);
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentAssets, setCurrentAssets] = useState<Set<string>>(new Set());
-  const [isDirty, setIsDirty] = useState(false);
 
-  const assetUrlMapRef = useRef<
-    Map<
-      string,
-      { cloudUrl: string; dimensions: { width: number; height: number } }
-    >
-  >(new Map());
+  const [isDirty, setIsDirty, setDirty] = useUnsavedChanges();
   const isSavingRef = useRef(false);
   const editorRef = useRef<HTMLDivElement>(null);
 
-  // GrapeJS init
-  useEffect(() => {
-    if (!editorRef.current || grapeEditor) return;
+  const grapeEditor = useGrapesEditor(editorRef, isSavingRef, setDirty);
+  const { setCurrentAssets, handleImageUploads, cleanupOrphanedAssets } =
+    useAssets(ideaId, grapeEditor);
 
-    const editor = grapesjs.init({
-      container: editorRef.current,
-      fromElement: true,
-      height: "100vh",
-      width: "100%",
-      storageManager: false,
-      assetManager: {},
-      plugins: [grapesjsBlocksBasic, grapesjsPresetWebpage],
-      canvas: {
-        styles: [
-          "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css",
-        ],
-      },
-    });
-
-    const setDirty = () => {
-      if (!isSavingRef.current) {
-        setIsDirty(true);
-      }
-    };
-
-    editor.on("component:update", () => setDirty);
-    editor.on("asset:add", () => setDirty);
-    editor.on("asset:remove", () => setDirty);
-    editor.on("change", () => setDirty);
-
-    setGrapeEditor(editor);
-
-    return () => {
-      editor.destroy();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [isDirty]);
+  const { handleSave, saveStatus } = useAutoSave({
+    ideaId,
+    grapeEditor,
+    isDirty,
+    setIsDirty,
+    metaTitle,
+    metaDescription,
+    handleImageUploads,
+    cleanupOrphanedAssets,
+    isSavingRef,
+  });
 
   useEffect(() => {
     if (ideaId && grapeEditor) {
@@ -145,6 +91,7 @@ export default function EditLandingPage() {
             });
 
             setCurrentAssets(existingAssets);
+            setIsDirty(false);
           } catch (error) {
             console.error("Failed to parse existing HTML:", error);
             toast.error("Could not load existing page content.");
@@ -152,283 +99,7 @@ export default function EditLandingPage() {
         }
       });
     }
-  }, [ideaId, grapeEditor]);
-
-  // Update image sources in GrapeJS editor without full re-render
-  const updateImageSources = useCallback(
-    (
-      urlMap: Map<
-        string,
-        { cloudUrl: string; dimensions: { width: number; height: number } }
-      >
-    ) => {
-      if (!grapeEditor) return;
-
-      // Get all components in the editor
-      const allComponents = grapeEditor.Components.getComponents();
-      const imageComponents = allComponents.filter(
-        (comp: Component) => comp.getType() === "image"
-      );
-
-      imageComponents.forEach((img: Component) => {
-        const currentSrc = img.getAttributes().src;
-        if (currentSrc && urlMap.has(currentSrc)) {
-          const assetData = urlMap.get(currentSrc)!;
-
-          // Update the image source and dimensions
-          img.setAttributes({
-            src: assetData.cloudUrl,
-            width: assetData.dimensions.width,
-            height: assetData.dimensions.height,
-          });
-
-          console.log("Updated image source in editor:", assetData.cloudUrl);
-        }
-      });
-
-      // also update the asset manager
-      const assetManager = grapeEditor.AssetManager;
-      if (assetManager) {
-        urlMap.forEach((data, base64String) => {
-          const existingAsset = assetManager.get(base64String);
-          if (existingAsset) {
-            existingAsset.set({
-              src: data.cloudUrl,
-              width: data.dimensions.width,
-              height: data.dimensions.height,
-            });
-          } else {
-            // If the asset doesn't exist, create a new one
-            assetManager.add({
-              src: data.cloudUrl,
-              width: data.dimensions.width,
-              height: data.dimensions.height,
-            });
-          }
-        });
-      }
-    },
-    [grapeEditor]
-  );
-
-  const handleImageUploads = useCallback(
-    async (assets: Assets) => {
-      if (!ideaId) return new Map();
-
-      const assetsToUpload = assets.models.filter(
-        (m: Asset) => typeof m.id === "string" && m.id.startsWith("data:image")
-      ) as Asset[];
-
-      if (!assetsToUpload || assetsToUpload.length === 0) return new Map();
-
-      console.log("Found assets to upload:", assetsToUpload.length);
-
-      const uploadPromises = assetsToUpload.map(async (asset) => {
-        const dataUrl = asset.id as string;
-        const fileName = getImageFileName(ideaId, asset.attributes.name);
-
-        const dimensions = {
-          width: asset.attributes.width,
-          height: asset.attributes.height,
-        };
-
-        // Extract content type and base64 data from data URL
-        const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-        if (!matches) {
-          throw new Error("Invalid data URL format");
-        }
-
-        const [, contentType, base64String] = matches;
-
-        console.log("Uploading image:", fileName, "Content-Type:", contentType);
-
-        const uploadResponse = await uploadImageWithSignedUrl(
-          base64String,
-          fileName,
-          contentType
-        );
-        if (uploadResponse.error || !uploadResponse.imageUrl) {
-          toast.error(
-            `Failed to upload image: ${uploadResponse.error}. Please try again.`,
-            {
-              duration: 5000,
-            }
-          );
-
-          throw new Error(uploadResponse.error || "Upload failed");
-        }
-
-        console.log("Image uploaded successfully:", uploadResponse.imageUrl);
-
-        // Add to current assets tracking
-        setCurrentAssets((prev) => new Set(prev).add(fileName));
-
-        return {
-          base64String: dataUrl,
-          cloudUrl: uploadResponse.imageUrl,
-          dimensions,
-        };
-      });
-
-      const uploadedAssets = await Promise.all(uploadPromises);
-      const urlMap = new Map(
-        uploadedAssets.map((a) => [
-          a.base64String,
-          { cloudUrl: a.cloudUrl, dimensions: a.dimensions },
-        ])
-      );
-
-      const combinedMap = new Map([...assetUrlMapRef.current, ...urlMap]);
-      assetUrlMapRef.current = combinedMap;
-
-      await preloadImages(urlMap);
-      updateImageSources(urlMap);
-
-      return combinedMap;
-    },
-    [ideaId, updateImageSources]
-  );
-
-  const cleanupOrphanedAssets = useCallback(
-    async (finalHtml: string) => {
-      try {
-        // Parse the final HTML to get all image sources
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(finalHtml, "text/html");
-        const images = doc.querySelectorAll("img[src]");
-
-        const usedAssets = new Set<string>();
-        images.forEach((img) => {
-          const src = img.getAttribute("src");
-          if (src && !src.startsWith("data:")) {
-            const fileName = extractFileNameFromUrl(src);
-            if (fileName) {
-              usedAssets.add(fileName);
-            }
-          }
-        });
-
-        // Find orphaned assets (in currentAssets but not in usedAssets)
-        const orphanedAssets = Array.from(currentAssets).filter(
-          (asset) => !usedAssets.has(asset)
-        );
-
-        if (orphanedAssets.length === 0) return;
-
-        console.log("Cleaning up orphaned assets:", orphanedAssets.length);
-
-        // Delete orphaned assets
-        const deletePromises = orphanedAssets.map(async (fileName) => {
-          try {
-            const result = await deleteAsset(fileName);
-            if (result.error) {
-              console.error(
-                "Failed to delete orphaned asset:",
-                fileName,
-                result.error
-              );
-
-              return { fileName, success: false, error: result.error };
-            } else {
-              console.log("Orphaned asset deleted:", fileName);
-
-              return { fileName, success: true };
-            }
-          } catch (error) {
-            console.error("Error deleting orphaned asset:", fileName, error);
-
-            return { fileName, success: false, error: error };
-          }
-        });
-
-        const results = await Promise.all(deletePromises);
-        const failedDeletions = results.filter((r) => !r.success);
-
-        if (failedDeletions.length > 0) {
-          console.warn(
-            "Some orphaned assets could not be deleted:",
-            failedDeletions
-          );
-        }
-
-        // Update current assets tracking
-        setCurrentAssets(usedAssets);
-      } catch (error) {
-        console.error("Error during asset cleanup:", error);
-      }
-    },
-    [currentAssets]
-  );
-
-  const handleSave = useCallback(async () => {
-    if (!ideaId || !grapeEditor) return;
-
-    isSavingRef.current = true;
-
-    try {
-      if (!grapeEditor.getHtml({ cleanId: true }).trim()) {
-        toast.error("Please add some content before saving.");
-        return;
-      }
-
-      const uploadedAssetsRes = await handleImageUploads(
-        grapeEditor.AssetManager.getAllVisible()
-      );
-
-      const bodyContent = grapeEditor.getHtml({ cleanId: true });
-      const styles = grapeEditor.getCss({ avoidProtected: true });
-
-      const validatedHtmlRes = getValidatedHtml(
-        ideaId,
-        bodyContent,
-        styles,
-        metaTitle,
-        metaDescription,
-        CTA_BUTTON_ID
-      );
-
-      const { isValid, errorMessage } = validatedHtmlRes;
-      let html = validatedHtmlRes.html;
-
-      if (!html || !isValid) {
-        toast.error(
-          errorMessage || "Invalid HTML content. Please fix errors.",
-          {
-            duration: 5000,
-          }
-        );
-
-        return;
-      }
-
-      // Replace all base64 strings in the HTML with the new cloud URLs
-      html = optimizeHtmlImages(html, uploadedAssetsRes);
-
-      // Clean up orphaned assets
-      await cleanupOrphanedAssets(html);
-
-      setSaving(true);
-
-      const data = await updateMVP(ideaId, html);
-      if (data.error) throw new Error(data.error || "Save failed");
-
-      toast.success("Landing page saved!");
-      setIsDirty(false);
-    } catch (error) {
-      const err = error as Error;
-      toast.error(err.message || "Failed to save landing page.");
-    } finally {
-      setSaving(false);
-      isSavingRef.current = false;
-    }
-  }, [
-    ideaId,
-    grapeEditor,
-    handleImageUploads,
-    metaTitle,
-    metaDescription,
-    cleanupOrphanedAssets,
-  ]);
+  }, [ideaId, grapeEditor, setCurrentAssets, setIsDirty]);
 
   const handleMetaTitleChange = (newTitle: string) => {
     setMetaTitle(newTitle);
@@ -499,7 +170,8 @@ export default function EditLandingPage() {
       <FloatingActionMenu
         onSave={handleSave}
         onSettingsClick={() => setIsModalOpen(true)}
-        isSaving={saving}
+        isSaving={saveStatus === "saving"}
+        saveStatus={saveStatus}
       />
 
       <MetaSettingsModal
