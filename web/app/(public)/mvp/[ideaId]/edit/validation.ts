@@ -9,7 +9,6 @@ export function getValidatedHtml(
   ideaId: string,
   bodyContent: string,
   styles: string | undefined,
-  customJs: string | undefined,
   metaTitle: string,
   metaDescription: string,
   ctaBtnId: string
@@ -98,7 +97,6 @@ export function getValidatedHtml(
 <body>
     ${cleanBodyContent}
     ${trackingScriptExists ? "" : getTrackingScript(ideaId, ctaBtnId)}
-    ${customJs ? `<script>${customJs}</script>` : ""}
 </body>
 </html>`;
 
