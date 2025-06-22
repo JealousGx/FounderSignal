@@ -1,4 +1,4 @@
-import { Save, Settings } from "lucide-react";
+import { Loader2, Pencil, Save, Settings } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ export const FloatingActionMenu = ({
   return (
     <div
       className="fixed bottom-6 right-6 z-50 flex items-center gap-2"
-      onMouseEnter={() => setIsMenuOpen(true)}
+      onMouseEnter={() => !isSaving && setIsMenuOpen(true)}
       onMouseLeave={() => setIsMenuOpen(false)}
     >
       <div
@@ -69,24 +69,15 @@ export const FloatingActionMenu = ({
             size="sm"
             className="bg-primary hover:bg-primary/90 text-white rounded-full w-14 h-14 p-0 shadow-lg"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-              />
-            </svg>
+            {isSaving ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : (
+              <Pencil className="w-6 h-6" />
+            )}
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Edit & Save</p>
+          {isSaving ? "Saving..." : <p>Edit & Save</p>}
         </TooltipContent>
       </Tooltip>
     </div>
