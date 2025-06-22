@@ -77,6 +77,10 @@ export function getValidatedHtml(
       /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|xxx|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
   });
 
+  const trackingScriptExists = cleanBodyContent.includes(
+    'data-founder-signal-script="true"'
+  );
+
   const fullHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -88,7 +92,7 @@ export function getValidatedHtml(
 </head>
 <body>
     ${cleanBodyContent}
-    ${getTrackingScript(ideaId, ctaBtnId)}
+    ${trackingScriptExists ? "" : getTrackingScript(ideaId, ctaBtnId)}
 </body>
 </html>`;
 
