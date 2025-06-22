@@ -83,7 +83,5 @@ export const optimizeHtmlImages = (
     }
   });
 
-  console.log("Outer HTML after optimizations:", doc.documentElement.outerHTML);
-
   return doc.documentElement.outerHTML;
 };
