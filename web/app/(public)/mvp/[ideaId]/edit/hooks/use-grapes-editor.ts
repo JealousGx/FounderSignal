@@ -44,8 +44,10 @@ export function useGrapesEditor(
     return () => {
       editor.destroy();
     };
+
+    // Note: `isSavingRef` is excluded from the dependency array because it is a mutable ref object, and changes to `.current` do not trigger re-renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editorRef, isSavingRef, setDirty]);
+  }, [editorRef, setDirty, grapeEditor]);
 
   return grapeEditor;
 }
