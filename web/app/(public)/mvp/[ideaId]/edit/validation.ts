@@ -8,6 +8,8 @@ const TAILWIND_CSS_URL =
 export function getValidatedHtml(
   ideaId: string,
   bodyContent: string,
+  styles: string | undefined,
+  customJs: string | undefined,
   metaTitle: string,
   metaDescription: string,
   ctaBtnId: string
@@ -63,6 +65,7 @@ export function getValidatedHtml(
       "input",
       "label",
       "textarea",
+      "iframe",
       "br",
       "hr",
       "figure",
@@ -88,10 +91,14 @@ export function getValidatedHtml(
     <title>${metaTitle}</title>
     <meta name="description" content="${metaDescription}">
     <link href="${TAILWIND_CSS_URL}" rel="stylesheet">
+    <style>
+        ${styles || ""}
+    </style>
 </head>
 <body>
     ${cleanBodyContent}
     ${trackingScriptExists ? "" : getTrackingScript(ideaId, ctaBtnId)}
+    ${customJs ? `<script>${customJs}</script>` : ""}
 </body>
 </html>`;
 

@@ -343,10 +343,14 @@ export default function EditLandingPage() {
       );
 
       const bodyContent = grapeEditor.getHtml({ cleanId: true });
+      const styles = grapeEditor.getCss({ avoidProtected: true });
+      const customJs = grapeEditor.getJs();
 
       const validatedHtmlRes = getValidatedHtml(
         ideaId,
         bodyContent,
+        styles,
+        customJs,
         metaTitle,
         metaDescription,
         CTA_BUTTON_ID
