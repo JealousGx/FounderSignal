@@ -118,6 +118,11 @@ export default function EditLandingPage() {
             setMetaTitle(title);
             setMetaDescription(desc);
 
+            const styleTag = doc.head.querySelector("style");
+            if (styleTag) {
+              grapeEditor.setStyle(styleTag.innerHTML);
+            }
+
             // remove any script / link tags from the body.
             // only set the body content
             doc.body
