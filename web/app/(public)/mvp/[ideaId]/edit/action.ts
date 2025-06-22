@@ -1,8 +1,10 @@
 "use server";
 
-import { api } from "@/lib/api";
 import { auth } from "@clerk/nextjs/server";
 import { revalidateTag } from "next/cache";
+
+import { api } from "@/lib/api";
+import { deleteFile } from "@/lib/r2";
 
 export const updateMVP = async (ideaId: string, htmlContent: string) => {
   const user = await auth();
@@ -39,6 +41,26 @@ export const updateMVP = async (ideaId: string, htmlContent: string) => {
 
     return {
       error: "Error updating MVP",
+    };
+  }
+};
+
+export const deleteAsset = async (fileName: string) => {
+  const user = await auth();
+  if (!user) {
+    return { error: "You must be signed in to delete assets." };
+  }
+
+  try {
+    await deleteFile(fileName);
+    return {
+      message: "Asset deleted successfully!",
+    };
+  } catch (err) {
+    console.log("Error deleting asset", err);
+
+    return {
+      error: "Error deleting asset",
     };
   }
 };

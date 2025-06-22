@@ -60,7 +60,6 @@ export const updateIdea = async (
   }
 
   const updatedIdea = validatedFields.data;
-  updatedIdea.imageUrl = ""; // remove this line when image upload is implemented
 
   try {
     const response = await updateIdeaRequest(ideaId, updatedIdea);
