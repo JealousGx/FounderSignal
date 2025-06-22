@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import DOMPurify from "dompurify";
-import grapesjs, { Asset, Assets, Editor } from "grapesjs";
+import grapesjs, { Asset, Assets, Component, Editor } from "grapesjs";
 import grapesjsBlocksBasic from "grapesjs-blocks-basic";
 import grapesjsPresetWebpage from "grapesjs-preset-webpage";
 import "grapesjs/dist/css/grapes.min.css";
@@ -30,7 +30,7 @@ import {
 
 import { uploadImageWithSignedUrl } from "@/components/shared/image-upload/actions";
 import { getMVP } from "../action";
-import { updateMVP } from "./action";
+import { deleteAsset, updateMVP } from "./action";
 
 export default function EditLandingPage() {
   const params = useParams();
@@ -44,6 +44,7 @@ export default function EditLandingPage() {
   const [metaDescription, setMetaDescription] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentAssets, setCurrentAssets] = useState<Set<string>>(new Set());
 
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -80,24 +81,131 @@ export default function EditLandingPage() {
     if (ideaId && grapeEditor) {
       getMVP(ideaId).then((data) => {
         if (data.htmlContent) {
-          grapeEditor.setComponents(data.htmlContent);
-
           // Parse meta title/description from loaded HTML
           try {
             const parser = new DOMParser();
             const doc = parser.parseFromString(data.htmlContent, "text/html");
-            const title = doc.querySelector("title")?.textContent || "";
-            const desc =
-              doc
-                .querySelector('meta[name="description"]')
-                ?.getAttribute("content") || "";
-            setMetaTitle(title);
-            setMetaDescription(desc);
+
+            updateEditorData(data.htmlContent);
+
+            // Track existing assets from loaded HTML
+            const images = doc.querySelectorAll("img[src]");
+            const existingAssets = new Set<string>();
+            images.forEach((img) => {
+              const src = img.getAttribute("src");
+              if (src && !src.startsWith("data:")) {
+                const fileName = extractFileNameFromUrl(src);
+                if (fileName) {
+                  existingAssets.add(fileName);
+                }
+              }
+            });
+            setCurrentAssets(existingAssets);
           } catch {}
         }
       });
     }
   }, [ideaId, grapeEditor]);
+
+  // Track asset changes and handle removals
+  useEffect(() => {
+    if (!grapeEditor) return;
+
+    const handleAssetRemove = async (asset: Asset) => {
+      const assetSrc = asset.get("src");
+      if (!assetSrc || assetSrc.startsWith("data:")) return;
+
+      // Extract fileName from the cloud URL
+      const fileName = extractFileNameFromUrl(assetSrc);
+      if (!fileName) return;
+
+      console.log("Asset removed from editor:", fileName);
+
+      try {
+        const result = await deleteAsset(fileName);
+        if (result.error) {
+          console.error("Failed to delete asset:", result.error);
+          toast.error(`Failed to delete asset: ${result.error}`);
+        } else {
+          console.log("Asset deleted from cloud:", fileName);
+          // Remove from current assets tracking
+          setCurrentAssets((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(fileName);
+            return newSet;
+          });
+        }
+      } catch (error) {
+        console.error("Error deleting asset:", error);
+        toast.error("Failed to delete asset from cloud storage");
+      }
+    };
+
+    // const handleAssetAdd = (asset: Asset) => {
+    //   const assetSrc = asset.get("src");
+    //   if (!assetSrc || assetSrc.startsWith("data:")) return;
+
+    //   const fileName = extractFileNameFromUrl(assetSrc);
+    //   if (fileName) {
+    //     setCurrentAssets((prev) => new Set(prev).add(fileName));
+    //   }
+    // };
+
+    // Handle component removal to check for orphaned assets
+    const handleComponentRemove = async (component: Component) => {
+      // Get all images in the removed component
+      const images = component.findType("image");
+      for (const img of images) {
+        const src = img.getAttributes().src;
+        if (src && !src.startsWith("data:")) {
+          const fileName = extractFileNameFromUrl(src);
+          if (fileName && currentAssets.has(fileName)) {
+            // Check if this image is still used elsewhere in the editor
+            const allComponents = grapeEditor.getComponents();
+            const isStillUsed = allComponents.find((comp: Component) => {
+              const compImages = comp.findType("image");
+              return compImages.some(
+                (img: Component) => img.getAttributes().src === src
+              );
+            });
+
+            if (!isStillUsed) {
+              console.log("Orphaned asset detected:", fileName);
+              try {
+                const result = await deleteAsset(fileName);
+                if (result.error) {
+                  console.error(
+                    "Failed to delete orphaned asset:",
+                    result.error
+                  );
+                } else {
+                  console.log("Orphaned asset deleted from cloud:", fileName);
+                  setCurrentAssets((prev) => {
+                    const newSet = new Set(prev);
+                    newSet.delete(fileName);
+                    return newSet;
+                  });
+                }
+              } catch (error) {
+                console.error("Error deleting orphaned asset:", error);
+              }
+            }
+          }
+        }
+      }
+    };
+
+    // Listen for asset removal events
+    grapeEditor.on("asset:remove", handleAssetRemove);
+    // grapeEditor.on("asset:add", handleAssetAdd);
+    grapeEditor.on("component:remove", handleComponentRemove);
+
+    return () => {
+      grapeEditor.off("asset:remove", handleAssetRemove);
+      // grapeEditor.off("asset:add", handleAssetAdd);
+      grapeEditor.off("component:remove", handleComponentRemove);
+    };
+  }, [grapeEditor, currentAssets]);
 
   const handleAssets = async (assets: Assets) => {
     if (!ideaId || !grapeEditor) return;
@@ -159,6 +267,9 @@ export default function EditLandingPage() {
         console.error("Image accessibility test failed:", error);
       }
 
+      // Add to current assets tracking
+      setCurrentAssets((prev) => new Set(prev).add(fileName));
+
       return { base64String: dataUrl, cloudUrl: uploadResponse.imageUrl };
     });
 
@@ -166,8 +277,6 @@ export default function EditLandingPage() {
     const urlMap = new Map(
       uploadedAssets.map((a) => [a.base64String, a.cloudUrl])
     );
-
-    console.log("URL mapping:", Array.from(urlMap.entries()));
 
     assets.forEach((asset: Asset) => {
       const currentSrc = asset.get("src");
@@ -231,6 +340,10 @@ export default function EditLandingPage() {
       );
     });
 
+    updateEditorData(html);
+    // Clean up orphaned assets
+    await cleanupOrphanedAssets(html);
+
     setSaving(true);
 
     try {
@@ -245,6 +358,90 @@ export default function EditLandingPage() {
       setSaving(false);
     }
   }
+
+  const cleanupOrphanedAssets = async (finalHtml: string) => {
+    try {
+      // Parse the final HTML to get all image sources
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(finalHtml, "text/html");
+      const images = doc.querySelectorAll("img[src]");
+
+      const usedAssets = new Set<string>();
+      images.forEach((img) => {
+        const src = img.getAttribute("src");
+        if (src && !src.startsWith("data:")) {
+          const fileName = extractFileNameFromUrl(src);
+          if (fileName) {
+            usedAssets.add(fileName);
+          }
+        }
+      });
+
+      // Find orphaned assets (in currentAssets but not in usedAssets)
+      const orphanedAssets = Array.from(currentAssets).filter(
+        (asset) => !usedAssets.has(asset)
+      );
+
+      if (orphanedAssets.length > 0) {
+        console.log("Cleaning up orphaned assets:", orphanedAssets.length);
+
+        // Delete orphaned assets
+        const deletePromises = orphanedAssets.map(async (fileName) => {
+          try {
+            const result = await deleteAsset(fileName);
+            if (result.error) {
+              console.error(
+                "Failed to delete orphaned asset:",
+                fileName,
+                result.error
+              );
+              return { fileName, success: false, error: result.error };
+            } else {
+              console.log("Orphaned asset deleted:", fileName);
+              return { fileName, success: true };
+            }
+          } catch (error) {
+            console.error("Error deleting orphaned asset:", fileName, error);
+            return { fileName, success: false, error: error };
+          }
+        });
+
+        const results = await Promise.all(deletePromises);
+        const failedDeletions = results.filter((r) => !r.success);
+
+        if (failedDeletions.length > 0) {
+          console.warn(
+            "Some orphaned assets could not be deleted:",
+            failedDeletions
+          );
+        }
+
+        // Update current assets tracking
+        setCurrentAssets(usedAssets);
+      }
+    } catch (error) {
+      console.error("Error during asset cleanup:", error);
+    }
+  };
+
+  const updateEditorData = (html: string) => {
+    if (!grapeEditor) return;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const title = doc.querySelector("title")?.textContent || "";
+    const desc =
+      doc.querySelector('meta[name="description"]')?.getAttribute("content") ||
+      "";
+    setMetaTitle(title);
+    setMetaDescription(desc);
+
+    // remove any script / link tags from the body.
+    // only set the body content
+    doc.body.querySelectorAll("script, link").forEach((el) => el.remove());
+    const bodyContent = doc.body.innerHTML;
+    grapeEditor.setComponents(bodyContent);
+  };
 
   return (
     <div className="relative w-full h-screen">
@@ -701,7 +898,9 @@ function getValidatedHtml(
   return { html: cleanHtml, shouldBreak: false, errorMessage: "" };
 }
 
-const getTrackingScript = (ideaId: string) => `<script>(function() {
+const getTrackingScript = (
+  ideaId: string
+) => `<script data-founder-signal-script="true">(function() {
             const ideaId = "${ideaId}";
             const postTrackEvent = (eventType, metadata) => {
                 if (window.parent && window.parent.postMessage) {
@@ -773,4 +972,18 @@ const getTrackingScript = (ideaId: string) => `<script>(function() {
 
 const getImageFileName = (ideaId: string, imageName: string) => {
   return `${ideaId}/${imageName}`;
+};
+
+const extractFileNameFromUrl = (url: string): string | null => {
+  try {
+    // Extract the path from the URL
+    const urlObj = new URL(url);
+    const path = urlObj.pathname;
+
+    // Remove leading slash and return the path
+    return path.startsWith("/") ? path.substring(1) : path;
+  } catch (error) {
+    console.error("Error extracting fileName from URL:", error);
+    return null;
+  }
 };
