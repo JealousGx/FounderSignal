@@ -497,7 +497,7 @@ func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
                             scrollReached[depth] = true;
                         }
                     });
-                }, ${SCROLL_DEBOUNCE_MS}); // Debounce scroll events
+                }, 150); // Debounce scroll events
             }
             // Initial check in case content is not scrollable but covers depths
             handleScroll(); 
