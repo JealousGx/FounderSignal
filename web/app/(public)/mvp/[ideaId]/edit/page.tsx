@@ -170,7 +170,6 @@ export default function EditLandingPage() {
       <FloatingActionMenu
         onSave={handleSave}
         onSettingsClick={() => setIsModalOpen(true)}
-        isSaving={saveStatus === "saving"}
         saveStatus={saveStatus}
       />
 

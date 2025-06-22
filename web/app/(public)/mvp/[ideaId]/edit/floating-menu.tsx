@@ -20,12 +20,10 @@ type SaveStatus = "idle" | "saving" | "success" | "error";
 export const FloatingActionMenu = ({
   onSave,
   onSettingsClick,
-  isSaving,
   saveStatus,
 }: {
   onSave: () => void;
   onSettingsClick: () => void;
-  isSaving: boolean;
   saveStatus: SaveStatus;
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -42,6 +40,8 @@ export const FloatingActionMenu = ({
         return <Save className="h-4 w-4" />;
     }
   };
+
+  const isSaving = saveStatus === "saving";
 
   return (
     <div
