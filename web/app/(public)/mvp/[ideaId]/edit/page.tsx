@@ -17,6 +17,7 @@ import {
   extractFileNameFromUrl,
   getImageFileName,
   optimizeHtmlImages,
+  preloadImages,
 } from "./helpers";
 import { MetaSettingsModal } from "./meta-settings";
 import { getValidatedHtml } from "./validation";
@@ -39,31 +40,6 @@ export default function EditLandingPage() {
   const [currentAssets, setCurrentAssets] = useState<Set<string>>(new Set());
 
   const editorRef = useRef<HTMLDivElement>(null);
-
-  const updateEditorData = useCallback(
-    (html: string) => {
-      if (!grapeEditor) return;
-
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-
-      const title = doc.querySelector("title")?.textContent || "";
-      const desc =
-        doc
-          .querySelector('meta[name="description"]')
-          ?.getAttribute("content") || "";
-
-      setMetaTitle(title);
-      setMetaDescription(desc);
-
-      // remove any script / link tags from the body.
-      // only set the body content
-      doc.body.querySelectorAll("script, link").forEach((el) => el.remove());
-      const bodyContent = doc.body.innerHTML;
-      grapeEditor.setComponents(bodyContent);
-    },
-    [grapeEditor]
-  );
 
   // GrapeJS init
   useEffect(() => {
@@ -97,10 +73,27 @@ export default function EditLandingPage() {
       getMVP(ideaId).then((data) => {
         if (data.htmlContent) {
           try {
-            updateEditorData(data.htmlContent);
+            // updateEditorData(data.htmlContent);
 
             const parser = new DOMParser();
             const doc = parser.parseFromString(data.htmlContent, "text/html");
+
+            const title = doc.querySelector("title")?.textContent || "";
+            const desc =
+              doc
+                .querySelector('meta[name="description"]')
+                ?.getAttribute("content") || "";
+
+            setMetaTitle(title);
+            setMetaDescription(desc);
+
+            // remove any script / link tags from the body.
+            // only set the body content
+            doc.body
+              .querySelectorAll("script, link")
+              .forEach((el) => el.remove());
+            const bodyContent = doc.body.innerHTML;
+            grapeEditor.setComponents(bodyContent);
 
             // Track existing assets from loaded HTML
             const images = doc.querySelectorAll("img[src]");
@@ -123,15 +116,24 @@ export default function EditLandingPage() {
         }
       });
     }
-  }, [ideaId, grapeEditor, updateEditorData]);
+  }, [ideaId, grapeEditor]);
 
   // Track asset changes and handle removals
   useEffect(() => {
     if (!grapeEditor) return;
 
     const handleAssetRemove = async (asset: Asset) => {
-      const assetSrc = asset.get("src");
-      if (!assetSrc || assetSrc.startsWith("data:")) return;
+      let assetSrc = asset.get("src");
+      if (
+        !assetSrc ||
+        (typeof assetSrc === "string" && assetSrc.startsWith("data:"))
+      )
+        return;
+
+      if (assetSrc.cloudUrl) {
+        // If asset has a cloud URL, use that
+        assetSrc = assetSrc.cloudUrl;
+      }
 
       // Extract fileName from the cloud URL
       const fileName = extractFileNameFromUrl(assetSrc);
@@ -170,12 +172,15 @@ export default function EditLandingPage() {
           const fileName = extractFileNameFromUrl(src);
           if (fileName && currentAssets.has(fileName)) {
             // Check if this image is still used elsewhere in the editor
-            const allComponents = grapeEditor.getComponents();
-            const isStillUsed = allComponents.find((comp: Component) => {
-              const compImages = comp.findType("image");
-              return compImages.some(
-                (img: Component) => img.getAttributes().src === src
-              );
+
+            const allComponents = grapeEditor.Components.getComponents();
+            const imageComponents = allComponents.filter(
+              (comp: Component) => comp.getType() === "image"
+            );
+
+            const isStillUsed = imageComponents.some((imgComp: Component) => {
+              const imgSrc = imgComp.getAttributes().src;
+              return imgSrc === src;
             });
 
             if (!isStillUsed) {
@@ -213,6 +218,63 @@ export default function EditLandingPage() {
       grapeEditor.off("component:remove", handleComponentRemove);
     };
   }, [grapeEditor, currentAssets]);
+
+  // Update image sources in GrapeJS editor without full re-render
+  const updateImageSources = useCallback(
+    (
+      urlMap: Map<
+        string,
+        { cloudUrl: string; dimensions: { width: number; height: number } }
+      >
+    ) => {
+      if (!grapeEditor) return;
+
+      // Get all components in the editor
+      const allComponents = grapeEditor.Components.getComponents();
+      const imageComponents = allComponents.filter(
+        (comp: Component) => comp.getType() === "image"
+      );
+
+      imageComponents.forEach((img: Component) => {
+        const currentSrc = img.getAttributes().src;
+        if (currentSrc && urlMap.has(currentSrc)) {
+          const assetData = urlMap.get(currentSrc)!;
+
+          // Update the image source and dimensions
+          img.setAttributes({
+            src: assetData.cloudUrl,
+            width: assetData.dimensions.width,
+            height: assetData.dimensions.height,
+          });
+
+          console.log("Updated image source in editor:", assetData.cloudUrl);
+        }
+      });
+
+      // also update the asset manager
+      const assetManager = grapeEditor.AssetManager;
+      if (assetManager) {
+        urlMap.forEach((data, base64String) => {
+          const existingAsset = assetManager.get(base64String);
+          if (existingAsset) {
+            existingAsset.set({
+              src: data.cloudUrl,
+              width: data.dimensions.width,
+              height: data.dimensions.height,
+            });
+          } else {
+            // If the asset doesn't exist, create a new one
+            assetManager.add({
+              src: data.cloudUrl,
+              width: data.dimensions.width,
+              height: data.dimensions.height,
+            });
+          }
+        });
+      }
+    },
+    [grapeEditor]
+  );
 
   const handleImageUploads = useCallback(
     async (assets: Assets) => {
@@ -281,6 +343,9 @@ export default function EditLandingPage() {
         ])
       );
 
+      await preloadImages(urlMap);
+      updateImageSources(urlMap);
+
       assets.forEach((asset: Asset) => {
         const currentSrc = asset.get("src");
         if (urlMap.has(currentSrc)) {
@@ -299,7 +364,7 @@ export default function EditLandingPage() {
 
       return urlMap;
     },
-    [ideaId]
+    [ideaId, updateImageSources]
   );
 
   const cleanupOrphanedAssets = useCallback(
@@ -411,10 +476,8 @@ export default function EditLandingPage() {
       }
 
       // Replace all base64 strings in the HTML with the new cloud URLs
-      // html = updateHtmlWithImageUrls(uploadedAssetsRes, html);
       html = optimizeHtmlImages(html, uploadedAssetsRes);
 
-      updateEditorData(html);
       // Clean up orphaned assets
       await cleanupOrphanedAssets(html);
 
@@ -436,12 +499,46 @@ export default function EditLandingPage() {
     handleImageUploads,
     metaTitle,
     metaDescription,
-    updateEditorData,
     cleanupOrphanedAssets,
   ]);
 
   return (
     <div className="relative w-full h-screen">
+      <style jsx global>{`
+        /* Smooth transitions for images in GrapeJS editor */
+        .gjs-frame img {
+          transition: opacity 0.3s ease-in-out;
+        }
+
+        .image-transition {
+          transition: opacity 0.3s ease-in-out !important;
+        }
+
+        /* Prevent layout shift during image loading */
+        .gjs-frame img[src*="data:image"] {
+          opacity: 0.8;
+        }
+
+        .gjs-frame img[src*="data:image"]:not([src*="data:image/svg+xml"]) {
+          background: linear-gradient(
+            90deg,
+            #f0f0f0 25%,
+            #e0e0e0 50%,
+            #f0f0f0 75%
+          );
+          background-size: 200% 100%;
+          animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+          0% {
+            background-position: 200% 0;
+          }
+          100% {
+            background-position: -200% 0;
+          }
+        }
+      `}</style>
       <div ref={editorRef} className="w-full h-full">
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-4xl font-bold text-center mb-8">

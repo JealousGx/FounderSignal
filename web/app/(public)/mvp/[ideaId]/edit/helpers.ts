@@ -39,6 +39,15 @@ export const optimizeHtmlImages = (
       img.setAttribute("height", String(assetData.dimensions.height));
     }
 
+    // Add a fade transition class if not already present
+    if (!img.classList.contains("image-transition")) {
+      img.classList.add("image-transition");
+      img.style.transition = "opacity 0.3s ease-in-out";
+    }
+
+    // Temporarily reduce opacity for smooth transition
+    img.style.opacity = "0.7";
+
     // --- General Optimizations ---
     // Responsive images
     img.setAttribute("style", "max-width:100%;height:auto");
@@ -84,4 +93,29 @@ export const optimizeHtmlImages = (
   });
 
   return doc.documentElement.outerHTML;
+};
+
+// Preload images to prevent flickering when replacing base64 with cloud URLs
+export const preloadImages = async (
+  urlMap: Map<
+    string,
+    { cloudUrl: string; dimensions: { width: number; height: number } }
+  >
+) => {
+  const preloadPromises = Array.from(urlMap.values()).map(({ cloudUrl }) => {
+    return new Promise<void>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve();
+      img.onerror = () =>
+        reject(new Error(`Failed to preload image: ${cloudUrl}`));
+      img.src = cloudUrl;
+    });
+  });
+
+  try {
+    await Promise.all(preloadPromises);
+    console.log("All images preloaded successfully");
+  } catch (error) {
+    console.warn("Some images failed to preload:", error);
+  }
 };
