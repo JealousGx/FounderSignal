@@ -16,7 +16,7 @@ import { FloatingActionMenu } from "./floating-menu";
 import {
   extractFileNameFromUrl,
   getImageFileName,
-  updateHtmlWithImageUrls,
+  optimizeHtmlImages,
 } from "./helpers";
 import { MetaSettingsModal } from "./meta-settings";
 import { getValidatedHtml } from "./validation";
@@ -216,20 +216,24 @@ export default function EditLandingPage() {
 
   const handleImageUploads = useCallback(
     async (assets: Assets) => {
-      if (!ideaId) return new Map<string, string>();
+      if (!ideaId) return new Map();
 
-      const assetsToUpload = assets.models.filter((m: Asset) =>
-        (m.id as string).startsWith("data:image")
+      const assetsToUpload = assets.models.filter(
+        (m: Asset) => typeof m.id === "string" && m.id.startsWith("data:image")
       ) as Asset[];
 
-      if (!assetsToUpload || assetsToUpload.length === 0)
-        return new Map<string, string>();
+      if (!assetsToUpload || assetsToUpload.length === 0) return new Map();
 
       console.log("Found assets to upload:", assetsToUpload.length);
 
       const uploadPromises = assetsToUpload.map(async (asset) => {
         const dataUrl = asset.id as string;
         const fileName = getImageFileName(ideaId, asset.attributes.name);
+
+        const dimensions = {
+          width: asset.attributes.width,
+          height: asset.attributes.height,
+        };
 
         // Extract content type and base64 data from data URL
         const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -262,12 +266,19 @@ export default function EditLandingPage() {
         // Add to current assets tracking
         setCurrentAssets((prev) => new Set(prev).add(fileName));
 
-        return { base64String: dataUrl, cloudUrl: uploadResponse.imageUrl };
+        return {
+          base64String: dataUrl,
+          cloudUrl: uploadResponse.imageUrl,
+          dimensions,
+        };
       });
 
       const uploadedAssets = await Promise.all(uploadPromises);
       const urlMap = new Map(
-        uploadedAssets.map((a) => [a.base64String, a.cloudUrl])
+        uploadedAssets.map((a) => [
+          a.base64String,
+          { cloudUrl: a.cloudUrl, dimensions: a.dimensions },
+        ])
       );
 
       assets.forEach((asset: Asset) => {
@@ -400,7 +411,8 @@ export default function EditLandingPage() {
       }
 
       // Replace all base64 strings in the HTML with the new cloud URLs
-      html = updateHtmlWithImageUrls(uploadedAssetsRes, html);
+      // html = updateHtmlWithImageUrls(uploadedAssetsRes, html);
+      html = optimizeHtmlImages(html, uploadedAssetsRes);
 
       updateEditorData(html);
       // Clean up orphaned assets

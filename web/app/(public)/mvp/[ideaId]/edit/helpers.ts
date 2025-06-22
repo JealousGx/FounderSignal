@@ -16,23 +16,72 @@ export const extractFileNameFromUrl = (url: string): string | null => {
   }
 };
 
-export const updateHtmlWithImageUrls = (
-  base64ToUrlMap: Map<string, string>,
-  html: string
-) => {
-  base64ToUrlMap.forEach((cloudUrl, base64Src) => {
-    const escapedSrc = base64Src.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+export const optimizeHtmlImages = (
+  html: string,
+  urlMap: Map<
+    string,
+    { cloudUrl: string; dimensions: { width: number; height: number } }
+  >
+): string => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const images = doc.querySelectorAll("img");
+  let isFirstImage = true;
 
-    const beforeCount = (html!.match(new RegExp(escapedSrc, "g")) || []).length;
+  images.forEach((img) => {
+    const originalSrc = img.getAttribute("src");
 
-    html = html!.replace(new RegExp(escapedSrc, "g"), cloudUrl);
+    // Replace src and add dimensions for newly uploaded images
+    if (originalSrc && urlMap.has(originalSrc)) {
+      const assetData = urlMap.get(originalSrc)!;
+      img.setAttribute("src", assetData.cloudUrl);
+      img.setAttribute("width", String(assetData.dimensions.width));
+      img.setAttribute("height", String(assetData.dimensions.height));
+    }
 
-    const afterCount = (html!.match(new RegExp(cloudUrl, "g")) || []).length;
+    // --- General Optimizations ---
 
-    console.log(
-      `Replaced ${beforeCount} occurrences of base64 with ${afterCount} cloud URLs`
-    );
+    // Add async decoding to all images
+    img.setAttribute("decoding", "async");
+
+    // Prioritize the first image (potential LCP element)
+    if (isFirstImage) {
+      img.removeAttribute("loading"); // Eager is default, but remove just in case
+      img.setAttribute("fetchpriority", "high");
+      isFirstImage = false;
+    } else {
+      // Lazy load all other images
+      img.setAttribute("loading", "lazy");
+    }
+
+    // Ensure alt attribute exists for accessibility
+    if (!img.hasAttribute("alt") || img.getAttribute("alt") === "") {
+      const currentSrc = img.getAttribute("src");
+      if (currentSrc) {
+        try {
+          const pathname = new URL(currentSrc).pathname;
+          const filenameWithExt = pathname.substring(
+            pathname.lastIndexOf("/") + 1
+          );
+
+          // Remove the extension
+          const filename =
+            filenameWithExt.lastIndexOf(".") > 0
+              ? filenameWithExt.substring(0, filenameWithExt.lastIndexOf("."))
+              : filenameWithExt;
+
+          // A simple transformation for better alt text
+          const altText = decodeURIComponent(filename).replace(/[-_]/g, " ");
+          img.setAttribute("alt", altText);
+        } catch {
+          // If src is not a valid URL or something goes wrong, set an empty alt attribute
+          img.setAttribute("alt", "");
+        }
+      }
+    }
   });
 
-  return html;
+  console.log("Outer HTML after optimizations:", doc.documentElement.outerHTML);
+
+  return doc.documentElement.outerHTML;
 };
