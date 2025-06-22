@@ -1,36 +1,29 @@
 "use client";
 
-import { Info, Save, Settings } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import DOMPurify from "dompurify";
 import grapesjs, { Asset, Assets, Component, Editor } from "grapesjs";
 import grapesjsBlocksBasic from "grapesjs-blocks-basic";
 import grapesjsPresetWebpage from "grapesjs-preset-webpage";
 import "grapesjs/dist/css/grapes.min.css";
 import "grapesjs/dist/grapes.min.js";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
-import { uploadImageWithSignedUrl } from "@/components/shared/image-upload/actions";
 import { getMVP } from "../action";
 import { deleteAsset, updateMVP } from "./action";
+import { FloatingActionMenu } from "./floating-menu";
+import {
+  extractFileNameFromUrl,
+  getImageFileName,
+  updateHtmlWithImageUrls,
+} from "./helpers";
+import { MetaSettingsModal } from "./meta-settings";
+import { getValidatedHtml } from "./validation";
+
+import { uploadImageWithSignedUrl } from "@/components/shared/image-upload/actions";
+
+const CTA_BUTTON_ID = "ctaButton";
 
 export default function EditLandingPage() {
   const params = useParams();
@@ -42,15 +35,39 @@ export default function EditLandingPage() {
   const [grapeEditor, setGrapeEditor] = useState<Editor | null>(null);
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentAssets, setCurrentAssets] = useState<Set<string>>(new Set());
 
   const editorRef = useRef<HTMLDivElement>(null);
 
+  const updateEditorData = useCallback(
+    (html: string) => {
+      if (!grapeEditor) return;
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+
+      const title = doc.querySelector("title")?.textContent || "";
+      const desc =
+        doc
+          .querySelector('meta[name="description"]')
+          ?.getAttribute("content") || "";
+
+      setMetaTitle(title);
+      setMetaDescription(desc);
+
+      // remove any script / link tags from the body.
+      // only set the body content
+      doc.body.querySelectorAll("script, link").forEach((el) => el.remove());
+      const bodyContent = doc.body.innerHTML;
+      grapeEditor.setComponents(bodyContent);
+    },
+    [grapeEditor]
+  );
+
   // GrapeJS init
   useEffect(() => {
-    if (!editorRef.current) return;
+    if (!editorRef.current || grapeEditor) return;
 
     const editor = grapesjs.init({
       container: editorRef.current,
@@ -60,9 +77,6 @@ export default function EditLandingPage() {
       storageManager: false,
       assetManager: {},
       plugins: [grapesjsBlocksBasic, grapesjsPresetWebpage],
-      pluginsOpts: {
-        "grapesjs-preset-webpage": {},
-      },
       canvas: {
         styles: [
           "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css",
@@ -75,18 +89,18 @@ export default function EditLandingPage() {
     return () => {
       editor.destroy();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (ideaId && grapeEditor) {
       getMVP(ideaId).then((data) => {
         if (data.htmlContent) {
-          // Parse meta title/description from loaded HTML
           try {
+            updateEditorData(data.htmlContent);
+
             const parser = new DOMParser();
             const doc = parser.parseFromString(data.htmlContent, "text/html");
-
-            updateEditorData(data.htmlContent);
 
             // Track existing assets from loaded HTML
             const images = doc.querySelectorAll("img[src]");
@@ -100,12 +114,16 @@ export default function EditLandingPage() {
                 }
               }
             });
+
             setCurrentAssets(existingAssets);
-          } catch {}
+          } catch (error) {
+            console.error("Failed to parse existing HTML:", error);
+            toast.error("Could not load existing page content.");
+          }
         }
       });
     }
-  }, [ideaId, grapeEditor]);
+  }, [ideaId, grapeEditor, updateEditorData]);
 
   // Track asset changes and handle removals
   useEffect(() => {
@@ -141,20 +159,11 @@ export default function EditLandingPage() {
       }
     };
 
-    // const handleAssetAdd = (asset: Asset) => {
-    //   const assetSrc = asset.get("src");
-    //   if (!assetSrc || assetSrc.startsWith("data:")) return;
-
-    //   const fileName = extractFileNameFromUrl(assetSrc);
-    //   if (fileName) {
-    //     setCurrentAssets((prev) => new Set(prev).add(fileName));
-    //   }
-    // };
-
     // Handle component removal to check for orphaned assets
     const handleComponentRemove = async (component: Component) => {
       // Get all images in the removed component
       const images = component.findType("image");
+
       for (const img of images) {
         const src = img.getAttributes().src;
         if (src && !src.startsWith("data:")) {
@@ -197,192 +206,117 @@ export default function EditLandingPage() {
 
     // Listen for asset removal events
     grapeEditor.on("asset:remove", handleAssetRemove);
-    // grapeEditor.on("asset:add", handleAssetAdd);
     grapeEditor.on("component:remove", handleComponentRemove);
 
     return () => {
       grapeEditor.off("asset:remove", handleAssetRemove);
-      // grapeEditor.off("asset:add", handleAssetAdd);
       grapeEditor.off("component:remove", handleComponentRemove);
     };
   }, [grapeEditor, currentAssets]);
 
-  const handleAssets = async (assets: Assets) => {
-    if (!ideaId || !grapeEditor) return;
+  const handleImageUploads = useCallback(
+    async (assets: Assets) => {
+      if (!ideaId) return new Map<string, string>();
 
-    const models = assets.models;
+      const assetsToUpload = assets.models.filter((m: Asset) =>
+        (m.id as string).startsWith("data:image")
+      ) as Asset[];
 
-    const assetsToUpload = models.filter((m: Asset) =>
-      (m.id as string).startsWith("data:image")
-    ) as Asset[];
+      if (!assetsToUpload || assetsToUpload.length === 0)
+        return new Map<string, string>();
 
-    if (!assetsToUpload || assetsToUpload.length === 0) return;
+      console.log("Found assets to upload:", assetsToUpload.length);
 
-    console.log("Found assets to upload:", assetsToUpload.length);
+      const uploadPromises = assetsToUpload.map(async (asset) => {
+        const dataUrl = asset.id as string;
+        const fileName = getImageFileName(ideaId, asset.attributes.name);
 
-    const uploadPromises = assetsToUpload.map(async (asset) => {
-      const dataUrl = asset.id as string;
-      const fileName = getImageFileName(ideaId, asset.attributes.name);
+        // Extract content type and base64 data from data URL
+        const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (!matches) {
+          throw new Error("Invalid data URL format");
+        }
 
-      // Extract content type and base64 data from data URL
-      const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-      if (!matches) {
-        throw new Error("Invalid data URL format");
-      }
+        const [, contentType, base64String] = matches;
 
-      const contentType = matches[1];
-      const base64String = matches[2];
+        console.log("Uploading image:", fileName, "Content-Type:", contentType);
 
-      console.log("Uploading image:", fileName, "Content-Type:", contentType);
-
-      const uploadResponse = await uploadImageWithSignedUrl(
-        base64String,
-        fileName,
-        contentType
-      );
-      if (uploadResponse.error || !uploadResponse.imageUrl) {
-        toast.error(
-          `Failed to upload image: ${uploadResponse.error}. Please try again.`,
-          {
-            duration: 5000,
-          }
+        const uploadResponse = await uploadImageWithSignedUrl(
+          base64String,
+          fileName,
+          contentType
         );
+        if (uploadResponse.error || !uploadResponse.imageUrl) {
+          toast.error(
+            `Failed to upload image: ${uploadResponse.error}. Please try again.`,
+            {
+              duration: 5000,
+            }
+          );
 
-        throw new Error(uploadResponse.error || "Upload failed");
-      }
+          throw new Error(uploadResponse.error || "Upload failed");
+        }
 
-      console.log("Image uploaded successfully:", uploadResponse.imageUrl);
+        console.log("Image uploaded successfully:", uploadResponse.imageUrl);
 
-      // Test if the image is accessible
-      try {
-        const testResponse = await fetch(uploadResponse.imageUrl, {
-          method: "HEAD",
-        });
-        console.log(
-          "Image accessibility test:",
-          testResponse.ok ? "SUCCESS" : "FAILED",
-          testResponse.status
-        );
-      } catch (error) {
-        console.error("Image accessibility test failed:", error);
-      }
+        // Add to current assets tracking
+        setCurrentAssets((prev) => new Set(prev).add(fileName));
 
-      // Add to current assets tracking
-      setCurrentAssets((prev) => new Set(prev).add(fileName));
-
-      return { base64String: dataUrl, cloudUrl: uploadResponse.imageUrl };
-    });
-
-    const uploadedAssets = await Promise.all(uploadPromises);
-    const urlMap = new Map(
-      uploadedAssets.map((a) => [a.base64String, a.cloudUrl])
-    );
-
-    assets.forEach((asset: Asset) => {
-      const currentSrc = asset.get("src");
-      if (urlMap.has(currentSrc)) {
-        const newSrc = urlMap.get(currentSrc);
-
-        console.log(
-          "Replacing asset src:",
-          currentSrc.substring(0, 50) + "...",
-          "->",
-          newSrc
-        );
-
-        asset.set("src", newSrc);
-      }
-    });
-
-    return urlMap;
-  };
-
-  async function handleSave() {
-    if (!ideaId || !grapeEditor) return;
-
-    const uploadedAssetsRes = await handleAssets(
-      grapeEditor.AssetManager.getAllVisible()
-    );
-    const bodyContent = grapeEditor.getHtml({ cleanId: true });
-
-    if (!bodyContent.trim()) {
-      toast.error("Please add some content before saving.");
-      return;
-    }
-
-    const validatedHtmlRes = getValidatedHtml(
-      ideaId,
-      bodyContent,
-      metaTitle,
-      metaDescription
-    );
-
-    const { shouldBreak, errorMessage } = validatedHtmlRes;
-    let html = validatedHtmlRes.html;
-
-    if (!html || shouldBreak) {
-      toast.error(errorMessage || "Invalid HTML content. Please fix errors.", {
-        duration: 5000,
+        return { base64String: dataUrl, cloudUrl: uploadResponse.imageUrl };
       });
 
-      return;
-    }
-
-    // Replace all base64 strings in the HTML with the new cloud URLs
-    uploadedAssetsRes?.forEach((cloudUrl, base64Src) => {
-      const escapedSrc = base64Src.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const beforeCount = (html!.match(new RegExp(escapedSrc, "g")) || [])
-        .length;
-      html = html!.replace(new RegExp(escapedSrc, "g"), cloudUrl);
-      const afterCount = (html!.match(new RegExp(cloudUrl, "g")) || []).length;
-      console.log(
-        `Replaced ${beforeCount} occurrences of base64 with ${afterCount} cloud URLs`
+      const uploadedAssets = await Promise.all(uploadPromises);
+      const urlMap = new Map(
+        uploadedAssets.map((a) => [a.base64String, a.cloudUrl])
       );
-    });
 
-    updateEditorData(html);
-    // Clean up orphaned assets
-    await cleanupOrphanedAssets(html);
+      assets.forEach((asset: Asset) => {
+        const currentSrc = asset.get("src");
+        if (urlMap.has(currentSrc)) {
+          const newSrc = urlMap.get(currentSrc);
 
-    setSaving(true);
+          console.log(
+            "Replacing asset src:",
+            currentSrc.substring(0, 50) + "...",
+            "->",
+            newSrc
+          );
 
-    try {
-      const data = await updateMVP(ideaId, html);
-      if (data.error) throw new Error(data.error || "Save failed");
-
-      toast.success("Landing page saved!");
-    } catch (e: unknown) {
-      const err = e as Error;
-      toast.error(err.message || "Failed to save");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const cleanupOrphanedAssets = async (finalHtml: string) => {
-    try {
-      // Parse the final HTML to get all image sources
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(finalHtml, "text/html");
-      const images = doc.querySelectorAll("img[src]");
-
-      const usedAssets = new Set<string>();
-      images.forEach((img) => {
-        const src = img.getAttribute("src");
-        if (src && !src.startsWith("data:")) {
-          const fileName = extractFileNameFromUrl(src);
-          if (fileName) {
-            usedAssets.add(fileName);
-          }
+          asset.set("src", newSrc);
         }
       });
 
-      // Find orphaned assets (in currentAssets but not in usedAssets)
-      const orphanedAssets = Array.from(currentAssets).filter(
-        (asset) => !usedAssets.has(asset)
-      );
+      return urlMap;
+    },
+    [ideaId]
+  );
 
-      if (orphanedAssets.length > 0) {
+  const cleanupOrphanedAssets = useCallback(
+    async (finalHtml: string) => {
+      try {
+        // Parse the final HTML to get all image sources
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(finalHtml, "text/html");
+        const images = doc.querySelectorAll("img[src]");
+
+        const usedAssets = new Set<string>();
+        images.forEach((img) => {
+          const src = img.getAttribute("src");
+          if (src && !src.startsWith("data:")) {
+            const fileName = extractFileNameFromUrl(src);
+            if (fileName) {
+              usedAssets.add(fileName);
+            }
+          }
+        });
+
+        // Find orphaned assets (in currentAssets but not in usedAssets)
+        const orphanedAssets = Array.from(currentAssets).filter(
+          (asset) => !usedAssets.has(asset)
+        );
+
+        if (orphanedAssets.length === 0) return;
+
         console.log("Cleaning up orphaned assets:", orphanedAssets.length);
 
         // Delete orphaned assets
@@ -395,13 +329,16 @@ export default function EditLandingPage() {
                 fileName,
                 result.error
               );
+
               return { fileName, success: false, error: result.error };
             } else {
               console.log("Orphaned asset deleted:", fileName);
+
               return { fileName, success: true };
             }
           } catch (error) {
             console.error("Error deleting orphaned asset:", fileName, error);
+
             return { fileName, success: false, error: error };
           }
         });
@@ -418,30 +355,78 @@ export default function EditLandingPage() {
 
         // Update current assets tracking
         setCurrentAssets(usedAssets);
+      } catch (error) {
+        console.error("Error during asset cleanup:", error);
       }
+    },
+    [currentAssets]
+  );
+
+  const handleSave = useCallback(async () => {
+    if (!ideaId || !grapeEditor) return;
+
+    try {
+      const bodyContent = grapeEditor.getHtml({ cleanId: true });
+
+      if (!bodyContent.trim()) {
+        toast.error("Please add some content before saving.");
+        return;
+      }
+
+      const uploadedAssetsRes = await handleImageUploads(
+        grapeEditor.AssetManager.getAllVisible()
+      );
+
+      const validatedHtmlRes = getValidatedHtml(
+        ideaId,
+        bodyContent,
+        metaTitle,
+        metaDescription,
+        CTA_BUTTON_ID
+      );
+
+      const { isValid, errorMessage } = validatedHtmlRes;
+      let html = validatedHtmlRes.html;
+
+      if (!html || !isValid) {
+        toast.error(
+          errorMessage || "Invalid HTML content. Please fix errors.",
+          {
+            duration: 5000,
+          }
+        );
+
+        return;
+      }
+
+      // Replace all base64 strings in the HTML with the new cloud URLs
+      html = updateHtmlWithImageUrls(uploadedAssetsRes, html);
+
+      updateEditorData(html);
+      // Clean up orphaned assets
+      await cleanupOrphanedAssets(html);
+
+      setSaving(true);
+
+      const data = await updateMVP(ideaId, html);
+      if (data.error) throw new Error(data.error || "Save failed");
+
+      toast.success("Landing page saved!");
     } catch (error) {
-      console.error("Error during asset cleanup:", error);
+      const err = error as Error;
+      toast.error(err.message || "Failed to save landing page.");
+    } finally {
+      setSaving(false);
     }
-  };
-
-  const updateEditorData = (html: string) => {
-    if (!grapeEditor) return;
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    const title = doc.querySelector("title")?.textContent || "";
-    const desc =
-      doc.querySelector('meta[name="description"]')?.getAttribute("content") ||
-      "";
-    setMetaTitle(title);
-    setMetaDescription(desc);
-
-    // remove any script / link tags from the body.
-    // only set the body content
-    doc.body.querySelectorAll("script, link").forEach((el) => el.remove());
-    const bodyContent = doc.body.innerHTML;
-    grapeEditor.setComponents(bodyContent);
-  };
+  }, [
+    ideaId,
+    grapeEditor,
+    handleImageUploads,
+    metaTitle,
+    metaDescription,
+    updateEditorData,
+    cleanupOrphanedAssets,
+  ]);
 
   return (
     <div className="relative w-full h-screen">
@@ -464,526 +449,20 @@ export default function EditLandingPage() {
         </div>
       </div>
 
-      <div
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2"
-        onMouseEnter={() => setIsMenuOpen(true)}
-        onMouseLeave={() => setIsMenuOpen(false)}
-      >
-        <div
-          className={`flex bg-background/50 backdrop-blur-sm p-2 rounded-full items-center gap-2 transition-all duration-300 ${
-            isMenuOpen
-              ? "opacity-100 translate-x-0 pointer-events-auto"
-              : "opacity-0 translate-x-4 pointer-events-none"
-          }`}
-        >
-          {/* Save Button */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handleSave}
-                disabled={saving}
-                size="sm"
-                className="bg-primary hover:bg-primary/90 text-white rounded-full w-10 h-10 p-0 shadow-lg"
-              >
-                <Save className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Save Landing Page</p>
-            </TooltipContent>
-          </Tooltip>
+      <FloatingActionMenu
+        onSave={handleSave}
+        onSettingsClick={() => setIsModalOpen(true)}
+        isSaving={saving}
+      />
 
-          {/* Meta Settings Modal Trigger */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-                className="bg-background hover:bg-accent text-foreground rounded-full w-10 h-10 p-0 shadow-lg border"
-                onClick={() => setIsModalOpen(true)}
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Page Settings</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-
-        {/* Pencil Icon Trigger */}
-        <div className="cursor-pointer">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="sm"
-                className="bg-primary hover:bg-primary/90 text-white rounded-full w-14 h-14 p-0 shadow-lg"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                  />
-                </svg>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Page Settings</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </div>
-
-      {/* Meta Settings Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Page Settings</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-7 mt-4">
-            <div className="flex flex-col gap-4">
-              <div>
-                <Label
-                  className="flex gap-2 items-center text-sm font-medium mb-1"
-                  htmlFor="meta-title"
-                >
-                  Page Title
-                  <CustomTooltip text="This is the title of your page, which appears in the browser tab and is important for SEO." />
-                </Label>
-                <Input
-                  id="meta-title"
-                  type="text"
-                  value={metaTitle}
-                  onChange={(e) => setMetaTitle(e.target.value)}
-                  placeholder="Enter page title (for SEO and browser tab)"
-                  maxLength={60}
-                />
-              </div>
-
-              <div>
-                <Label
-                  className="flex gap-2 items-center text-sm font-medium mb-1"
-                  htmlFor="meta-description"
-                >
-                  Meta Description
-                  <CustomTooltip text="This is the meta description for your page, which appears in search results and social media previews." />
-                </Label>
-                <Textarea
-                  id="meta-description"
-                  value={metaDescription}
-                  onChange={(e) => setMetaDescription(e.target.value)}
-                  placeholder="Enter meta description (for SEO and social sharing)"
-                  maxLength={160}
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <Button onClick={() => setIsModalOpen(false)}>Save</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <MetaSettingsModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        metaTitle={metaTitle}
+        setMetaTitle={setMetaTitle}
+        metaDescription={metaDescription}
+        setMetaDescription={setMetaDescription}
+      />
     </div>
   );
 }
-
-const CustomTooltip = ({ text }: { text: string }) => {
-  return (
-    <Tooltip>
-      <TooltipTrigger>
-        <Info className="text-muted-foreground w-4 h-4" />
-      </TooltipTrigger>
-      <TooltipContent
-        className="bg-accent-foreground"
-        arrowClasses="bg-accent-foreground fill-accent-foreground"
-      >
-        {text}
-      </TooltipContent>
-    </Tooltip>
-  );
-};
-
-function getValidatedHtml(
-  ideaId: string,
-  bodyContent: string,
-  metaTitle: string,
-  metaDescription: string
-) {
-  let _shouldBreak = false;
-  let errorMessage = "";
-
-  // Manually construct the complete HTML document
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${metaTitle}</title>
-    <meta name="description" content="${metaDescription}">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body>
-    ${bodyContent}
-    ${getTrackingScript(ideaId)}
-</body>
-</html>`;
-
-  // Validate CTA button exists
-  try {
-    const parser = new DOMParser();
-    const docObj = parser.parseFromString(html, "text/html");
-
-    docObj.querySelectorAll('[id="ctaButton"]').forEach((el) => {
-      if (el.tagName.toLowerCase() !== "button") {
-        el.removeAttribute("id");
-        _shouldBreak = true;
-        errorMessage =
-          "You've added an id to a non-button element. Please remove the id from the element and add a button instead.";
-      }
-    });
-
-    // Check if at least one <button id="ctaButton"> exists
-    const ctaButton = docObj.querySelector("button#ctaButton");
-    if (!ctaButton) {
-      _shouldBreak = true;
-      errorMessage =
-        "You must have at least one <button> with id='ctaButton' for tracking to work. Please add a CTA button.";
-    }
-  } catch (error) {
-    console.error("Error validating HTML:", error);
-  }
-
-  if (_shouldBreak) {
-    return { shouldBreak: _shouldBreak, errorMessage };
-  }
-
-  // Sanitize with comprehensive landing page support
-  const cleanHtml = DOMPurify.sanitize(html, {
-    WHOLE_DOCUMENT: true,
-    // Allow all standard HTML elements for landing pages
-    ADD_TAGS: [
-      // Document structure
-      "html",
-      "head",
-      "body",
-      "title",
-      "meta",
-      "link",
-      "style",
-      "script",
-      // Content sections
-      "header",
-      "main",
-      "section",
-      "article",
-      "aside",
-      "footer",
-      "nav",
-      // Text content
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "h5",
-      "h6",
-      "p",
-      "span",
-      "div",
-      "strong",
-      "em",
-      "small",
-      "mark",
-      "del",
-      "ins",
-      "sub",
-      "sup",
-      "blockquote",
-      "cite",
-      "q",
-      "abbr",
-      "address",
-      "time",
-      // Lists
-      "ul",
-      "ol",
-      "li",
-      "dl",
-      "dt",
-      "dd",
-      // Tables
-      "table",
-      "thead",
-      "tbody",
-      "tfoot",
-      "tr",
-      "th",
-      "td",
-      "caption",
-      "colgroup",
-      "col",
-      // Forms
-      "form",
-      "input",
-      "textarea",
-      "select",
-      "option",
-      "optgroup",
-      "button",
-      "label",
-      "fieldset",
-      "legend",
-      "datalist",
-      "output",
-      // Media
-      "img",
-      "picture",
-      "source",
-      "figure",
-      "figcaption",
-      "video",
-      "audio",
-      "track",
-      "embed",
-      "object",
-      "param",
-      "iframe",
-      "canvas",
-      "svg",
-      "math",
-      // Interactive
-      "details",
-      "summary",
-      "dialog",
-      // Generic
-      "br",
-      "hr",
-      "wbr",
-      "pre",
-      "code",
-      "kbd",
-      "samp",
-      "var",
-    ],
-    // Allow comprehensive attributes for modern landing pages
-    ADD_ATTR: [
-      // Global attributes
-      "id",
-      "class",
-      "style",
-      "title",
-      "lang",
-      "dir",
-      "tabindex",
-      "accesskey",
-      "contenteditable",
-      "draggable",
-      "hidden",
-      "spellcheck",
-      "translate",
-      "role",
-      "aria-*",
-      "data-*",
-      // Meta and linking
-      "charset",
-      "name",
-      "content",
-      "http-equiv",
-      "property",
-      "href",
-      "rel",
-      "type",
-      "media",
-      "sizes",
-      "integrity",
-      "crossorigin",
-      // Media attributes
-      "src",
-      "alt",
-      "width",
-      "height",
-      "loading",
-      "decoding",
-      "srcset",
-      "sizes",
-      "poster",
-      "preload",
-      "autoplay",
-      "controls",
-      "loop",
-      "muted",
-      "playsinline",
-      // Form attributes
-      "action",
-      "method",
-      "enctype",
-      "target",
-      "autocomplete",
-      "novalidate",
-      "value",
-      "placeholder",
-      "required",
-      "readonly",
-      "disabled",
-      "checked",
-      "selected",
-      "multiple",
-      "size",
-      "maxlength",
-      "minlength",
-      "max",
-      "min",
-      "step",
-      "pattern",
-      "accept",
-      "capture",
-      // Table attributes
-      "colspan",
-      "rowspan",
-      "headers",
-      "scope",
-      // Interactive attributes
-      "open",
-      "controls",
-      "defer",
-      "async",
-      // Frame attributes
-      "frameborder",
-      "allowfullscreen",
-      "allowpaymentrequest",
-      "sandbox",
-      "srcdoc",
-      "allow",
-      // Styling and layout
-      "align",
-      "valign",
-      "bgcolor",
-      "border",
-      "cellpadding",
-      "cellspacing",
-      // Event handlers (commonly used in landing pages)
-      "onclick",
-      "onsubmit",
-      "onload",
-      "onerror",
-      "onchange",
-      "oninput",
-      "onfocus",
-      "onblur",
-      "onmouseover",
-      "onmouseout",
-      "onkeydown",
-      "onkeyup",
-    ],
-    // Keep comments for debugging
-    KEEP_CONTENT: true,
-    // Allow data URIs for inline images
-    ALLOW_DATA_ATTR: true,
-    // Allow unknown protocols (for custom schemes)
-    ALLOW_UNKNOWN_PROTOCOLS: false,
-    // Custom URL schemes commonly used in landing pages
-    ALLOWED_URI_REGEXP:
-      /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|xxx|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
-  });
-
-  return { html: cleanHtml, shouldBreak: false, errorMessage: "" };
-}
-
-const getTrackingScript = (
-  ideaId: string
-) => `<script data-founder-signal-script="true">(function() {
-            const ideaId = "${ideaId}";
-            const postTrackEvent = (eventType, metadata) => {
-                if (window.parent && window.parent.postMessage) {
-                    window.parent.postMessage({ type: 'founderSignalTrack', eventType: eventType, ideaId: ideaId, metadata: metadata }, '*');
-                }
-            };
-
-            // 1. Track Page View
-            postTrackEvent('pageview', { path: window.location.pathname, title: document.title });
-
-            // 2. Track CTA Click
-            const ctaButton = document.getElementById('ctaButton');
-            if (ctaButton) {
-                ctaButton.addEventListener('click', function() {
-                    postTrackEvent('cta_click', { buttonText: ctaButton.innerText, ctaElementId: ctaButton.id });
-                    alert('Thanks for your interest!'); // Optional: client-side feedback
-                });
-            }
-
-            // 3. Track Scroll Depth
-            let scrollReached = { 25: false, 50: false, 75: false, 100: false };
-            let scrollTimeout;
-            function handleScroll() {
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(() => {
-                    const docElem = document.documentElement;
-                    const scrollHeight = docElem.scrollHeight - docElem.clientHeight;
-                    if (scrollHeight === 0) { // Content not scrollable or fully visible
-                        if (!scrollReached[100]) {
-                            postTrackEvent('scroll_depth', { percentage: 100 });
-                            scrollReached[100] = true;
-                        }
-                        return;
-                    }
-                    const scrollTop = window.pageYOffset || docElem.scrollTop;
-                    const currentPercentage = Math.min(100, Math.round((scrollTop / scrollHeight) * 100));
-
-                    [25, 50, 75, 100].forEach(depth => {
-                        if (currentPercentage >= depth && !scrollReached[depth]) {
-                            postTrackEvent('scroll_depth', { percentage: depth });
-                            scrollReached[depth] = true;
-                        }
-                    });
-                }, 150); // Debounce scroll events
-            }
-            // Initial check in case content is not scrollable but covers depths
-            handleScroll(); 
-            window.addEventListener('scroll', handleScroll, { passive: true });
-
-            // 4. Track Time on Page
-            const startTime = Date.now();
-            const sendTimeOnPage = () => {
-                const durationSeconds = Math.round((Date.now() - startTime) / 1000);
-                postTrackEvent('time_on_page', { duration_seconds: durationSeconds });
-            };
-            
-            // More reliable way to send data on page unload
-            window.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'hidden') {
-                    sendTimeOnPage();
-                }
-            });
-            // As a fallback, though 'pagehide' or 'beforeunload' can be unreliable for async.
-            // The postMessage should be synchronous enough.
-            window.addEventListener('pagehide', sendTimeOnPage);
-
-        })();
-    </script>`;
-
-const getImageFileName = (ideaId: string, imageName: string) => {
-  return `${ideaId}/${imageName}`;
-};
-
-const extractFileNameFromUrl = (url: string): string | null => {
-  try {
-    // Extract the path from the URL
-    const urlObj = new URL(url);
-    const path = urlObj.pathname;
-
-    // Remove leading slash and return the path
-    return path.startsWith("/") ? path.substring(1) : path;
-  } catch (error) {
-    console.error("Error extracting fileName from URL:", error);
-    return null;
-  }
-};
