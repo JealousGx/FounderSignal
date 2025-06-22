@@ -39,6 +39,13 @@ export default function EditLandingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentAssets, setCurrentAssets] = useState<Set<string>>(new Set());
 
+  const assetUrlMapRef = useRef<
+    Map<
+      string,
+      { cloudUrl: string; dimensions: { width: number; height: number } }
+    >
+  >(new Map());
+
   const editorRef = useRef<HTMLDivElement>(null);
 
   // GrapeJS init
@@ -73,8 +80,6 @@ export default function EditLandingPage() {
       getMVP(ideaId).then((data) => {
         if (data.htmlContent) {
           try {
-            // updateEditorData(data.htmlContent);
-
             const parser = new DOMParser();
             const doc = parser.parseFromString(data.htmlContent, "text/html");
 
@@ -117,107 +122,6 @@ export default function EditLandingPage() {
       });
     }
   }, [ideaId, grapeEditor]);
-
-  // Track asset changes and handle removals
-  useEffect(() => {
-    if (!grapeEditor) return;
-
-    const handleAssetRemove = async (asset: Asset) => {
-      let assetSrc = asset.get("src");
-      if (
-        !assetSrc ||
-        (typeof assetSrc === "string" && assetSrc.startsWith("data:"))
-      )
-        return;
-
-      if (assetSrc.cloudUrl) {
-        // If asset has a cloud URL, use that
-        assetSrc = assetSrc.cloudUrl;
-      }
-
-      // Extract fileName from the cloud URL
-      const fileName = extractFileNameFromUrl(assetSrc);
-      if (!fileName) return;
-
-      console.log("Asset removed from editor:", fileName);
-
-      try {
-        const result = await deleteAsset(fileName);
-        if (result.error) {
-          console.error("Failed to delete asset:", result.error);
-          toast.error(`Failed to delete asset: ${result.error}`);
-        } else {
-          console.log("Asset deleted from cloud:", fileName);
-          // Remove from current assets tracking
-          setCurrentAssets((prev) => {
-            const newSet = new Set(prev);
-            newSet.delete(fileName);
-            return newSet;
-          });
-        }
-      } catch (error) {
-        console.error("Error deleting asset:", error);
-        toast.error("Failed to delete asset from cloud storage");
-      }
-    };
-
-    // Handle component removal to check for orphaned assets
-    const handleComponentRemove = async (component: Component) => {
-      // Get all images in the removed component
-      const images = component.findType("image");
-
-      for (const img of images) {
-        const src = img.getAttributes().src;
-        if (src && !src.startsWith("data:")) {
-          const fileName = extractFileNameFromUrl(src);
-          if (fileName && currentAssets.has(fileName)) {
-            // Check if this image is still used elsewhere in the editor
-
-            const allComponents = grapeEditor.Components.getComponents();
-            const imageComponents = allComponents.filter(
-              (comp: Component) => comp.getType() === "image"
-            );
-
-            const isStillUsed = imageComponents.some((imgComp: Component) => {
-              const imgSrc = imgComp.getAttributes().src;
-              return imgSrc === src;
-            });
-
-            if (!isStillUsed) {
-              console.log("Orphaned asset detected:", fileName);
-              try {
-                const result = await deleteAsset(fileName);
-                if (result.error) {
-                  console.error(
-                    "Failed to delete orphaned asset:",
-                    result.error
-                  );
-                } else {
-                  console.log("Orphaned asset deleted from cloud:", fileName);
-                  setCurrentAssets((prev) => {
-                    const newSet = new Set(prev);
-                    newSet.delete(fileName);
-                    return newSet;
-                  });
-                }
-              } catch (error) {
-                console.error("Error deleting orphaned asset:", error);
-              }
-            }
-          }
-        }
-      }
-    };
-
-    // Listen for asset removal events
-    grapeEditor.on("asset:remove", handleAssetRemove);
-    grapeEditor.on("component:remove", handleComponentRemove);
-
-    return () => {
-      grapeEditor.off("asset:remove", handleAssetRemove);
-      grapeEditor.off("component:remove", handleComponentRemove);
-    };
-  }, [grapeEditor, currentAssets]);
 
   // Update image sources in GrapeJS editor without full re-render
   const updateImageSources = useCallback(
@@ -343,26 +247,13 @@ export default function EditLandingPage() {
         ])
       );
 
+      const combinedMap = new Map([...assetUrlMapRef.current, ...urlMap]);
+      assetUrlMapRef.current = combinedMap;
+
       await preloadImages(urlMap);
       updateImageSources(urlMap);
 
-      assets.forEach((asset: Asset) => {
-        const currentSrc = asset.get("src");
-        if (urlMap.has(currentSrc)) {
-          const newSrc = urlMap.get(currentSrc);
-
-          console.log(
-            "Replacing asset src:",
-            currentSrc.substring(0, 50) + "...",
-            "->",
-            newSrc
-          );
-
-          asset.set("src", newSrc);
-        }
-      });
-
-      return urlMap;
+      return combinedMap;
     },
     [ideaId, updateImageSources]
   );
@@ -442,9 +333,7 @@ export default function EditLandingPage() {
     if (!ideaId || !grapeEditor) return;
 
     try {
-      const bodyContent = grapeEditor.getHtml({ cleanId: true });
-
-      if (!bodyContent.trim()) {
+      if (!grapeEditor.getHtml({ cleanId: true }).trim()) {
         toast.error("Please add some content before saving.");
         return;
       }
@@ -452,6 +341,8 @@ export default function EditLandingPage() {
       const uploadedAssetsRes = await handleImageUploads(
         grapeEditor.AssetManager.getAllVisible()
       );
+
+      const bodyContent = grapeEditor.getHtml({ cleanId: true });
 
       const validatedHtmlRes = getValidatedHtml(
         ideaId,

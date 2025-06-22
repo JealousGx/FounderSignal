@@ -14,9 +14,8 @@ export function getValidatedHtml(
 ) {
   // Sanitize with a stricter policy to prevent XSS
   const cleanBodyContent = DOMPurify.sanitize(bodyContent, {
-    WHOLE_DOCUMENT: true,
     // Disallow script tags and inline event handlers from user content
-    FORBID_TAGS: ["script", "style"],
+    FORBID_TAGS: ["script"],
     FORBID_ATTR: [
       "onclick",
       "onerror",
