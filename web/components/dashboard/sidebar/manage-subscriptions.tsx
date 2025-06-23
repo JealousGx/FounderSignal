@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import { Link as CustomLink } from "@/components/ui/link";
 import { getIdeaLimitByTier } from "@/constants/pricing-tier";
-import { getCustomerPortalUrlAndUser } from "@/lib/paddle/get-customer-portal-url";
+import { getCustomerPortalUrlAndUser } from "@/lib/paddle/get-customer-and-portal-url";
 
 export const ManageSubscriptions = () => {
   const [paddleCustomerPortalUrl, setPaddleCustomerPortalUrl] = useState<

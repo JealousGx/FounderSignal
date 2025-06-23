@@ -9,7 +9,7 @@ import (
 type UserPlan string
 
 const (
-	FreePlan     UserPlan = "free"
+	StarterPlan  UserPlan = "starter"
 	ProPlan      UserPlan = "pro"
 	BusinessPlan UserPlan = "business"
 )
@@ -59,7 +59,7 @@ func GetIdeaLimitForPlan(plan UserPlan) int {
 		return 10
 	case BusinessPlan:
 		return 1000
-	case FreePlan:
+	case StarterPlan:
 		fallthrough
 	default:
 		return 1

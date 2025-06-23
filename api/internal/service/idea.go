@@ -167,7 +167,7 @@ func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUI
 		}
 	}
 
-	if req.IsPrivate != nil && *req.IsPrivate && user.Plan == domain.FreePlan {
+	if req.IsPrivate != nil && *req.IsPrivate && user.Plan == domain.StarterPlan {
 		return fmt.Errorf("private ideas are not allowed on the free plan. please upgrade your plan to create private ideas")
 	}
 

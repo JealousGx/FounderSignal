@@ -93,7 +93,7 @@ func (s *userService) ClerkUser(ctx context.Context, eventType string, clerkUser
 		}
 
 		newUser.CreatedAt = *parsedCreatedAt
-		newUser.Plan = domain.FreePlan
+		newUser.Plan = domain.StarterPlan
 
 		if err := s.userRepo.Create(ctx, newUser); err != nil {
 			log.Printf("Error creating user %s in DB: %v", clerkUser.ID, err)
