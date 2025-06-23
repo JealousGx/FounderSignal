@@ -158,7 +158,7 @@ func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUI
 
 		ideaLimit := domain.GetIdeaLimitForPlan(user.Plan)
 		if int(currentCount) >= ideaLimit {
-			return fmt.Errorf("you have reached your idea limit for the %s plan. please upgrade your plan to activate more ideas", user.Plan)
+			return fmt.Errorf("you have reached your idea limit for the %s plan. please upgrade your plan or deactivate an idea to activate more", user.Plan)
 		}
 	}
 
