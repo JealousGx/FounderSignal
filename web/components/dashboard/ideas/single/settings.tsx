@@ -69,35 +69,37 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
         </CardContent>
       </Card>
 
-      <IdeaVisibility ideaId={idea.id} isPrivate={idea.isPrivate} />
+      <div className="w-full flex space-x-4">
+        <IdeaVisibility ideaId={idea.id} isPrivate={idea.isPrivate} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Campaign Status</CardTitle>
-          <CardDescription>Control your validation campaign</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div className="flex flex-col space-y-2">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium">Current Status</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Your campaign is {idea.status.toLowerCase()}
-                  </p>
+        <Card className="flex-1">
+          <CardHeader>
+            <CardTitle>Campaign Status</CardTitle>
+            <CardDescription>Control your validation campaign</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="flex flex-col space-y-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">Current Status</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Your campaign is {idea.status.toLowerCase()}
+                    </p>
+                  </div>
+                  <Badge
+                    className={`${getStatusBadgeColor(idea.status)} capitalize`}
+                  >
+                    {idea.status}
+                  </Badge>
                 </div>
-                <Badge
-                  className={`${getStatusBadgeColor(idea.status)} capitalize`}
-                >
-                  {idea.status}
-                </Badge>
               </div>
-            </div>
 
-            <UpdateCampaign ideaId={idea.id} status={idea.status} />
-          </div>
-        </CardContent>
-      </Card>
+              <UpdateCampaign ideaId={idea.id} status={idea.status} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

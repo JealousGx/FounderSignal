@@ -28,7 +28,9 @@ export const UpdateCampaign = ({
         status: campaign,
       });
       if (response.error) {
-        return toast.error("Error updating visibility");
+        return toast.error(response.error, {
+          duration: 3000,
+        });
       }
 
       toast.success(
