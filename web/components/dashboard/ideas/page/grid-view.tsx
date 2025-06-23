@@ -33,7 +33,7 @@ export default function IdeasGridView({ ideas }: IdeasGridViewProps) {
                   src={idea.imageUrl}
                   alt={idea.title}
                   fill
-                  className="object-cover"
+                  objectFit="contain"
                 />
               )}
 

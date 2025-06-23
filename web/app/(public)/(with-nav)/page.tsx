@@ -144,6 +144,7 @@ export default function Home() {
                     alt="Founder portrait"
                     width={64}
                     height={64}
+                    objectFit="contain"
                   />
                 </div>
                 <div>
@@ -180,6 +181,7 @@ export default function Home() {
                     alt="Founder portrait"
                     width={64}
                     height={64}
+                    objectFit="contain"
                   />
                 </div>
                 <div>

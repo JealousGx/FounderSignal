@@ -28,7 +28,7 @@ export default async function FeedbackSection({
   const comments = data?.comments || [];
 
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader>
         <CardTitle>Feedback & Comments</CardTitle>
         <CardDescription>

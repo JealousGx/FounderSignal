@@ -47,7 +47,7 @@ interface MetricCardProps {
 
 function MetricCard({ label, valueFormatted, change }: MetricCardProps) {
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardContent className="p-4 md:p-6">
         <p className="text-sm text-muted-foreground">{label}</p>
 

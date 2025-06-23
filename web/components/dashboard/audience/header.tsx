@@ -19,7 +19,7 @@ export default function PageHeader({ totalSubscribers }: PageHeaderProps) {
         </p>
       </div>
       <div className="flex gap-2">
-        <Button variant="outline">
+        <Button variant="outline" className="bg-white">
           <Download className="mr-2 h-4 w-4" />
           Export CSV
         </Button>

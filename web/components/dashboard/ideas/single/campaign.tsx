@@ -28,7 +28,9 @@ export const UpdateCampaign = ({
         status: campaign,
       });
       if (response.error) {
-        return toast.error("Error updating visibility");
+        return toast.error(response.error, {
+          duration: 3000,
+        });
       }
 
       toast.success(
@@ -62,7 +64,7 @@ export const UpdateCampaign = ({
     );
   }
 
-  if (status === "paused") {
+  if (status === "paused" || status === "draft") {
     return (
       <Button
         disabled={isSaving}

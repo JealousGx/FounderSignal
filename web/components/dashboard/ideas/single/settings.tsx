@@ -19,7 +19,7 @@ import { getStatusBadgeColor } from "../utils";
 export function IdeaSettings({ idea }: { idea: Idea }) {
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-white border-gray-200">
         <CardHeader>
           <CardTitle>Idea Settings</CardTitle>
           <CardDescription>
@@ -50,7 +50,7 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
                 href={`/mvp/${idea.id}`}
                 target="_blank"
                 variant="outline"
-                className="w-full gap-2"
+                className="w-full gap-2 bg-white"
               >
                 <ExternalLink className="w-4 h-4" />
                 Preview Landing Page
@@ -59,7 +59,7 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
               <ShareIdeaUrl
                 ideaId={idea.id}
                 variant="outline"
-                className="w-full gap-2"
+                className="w-full gap-2 bg-white"
               >
                 <Share2 className="w-4 h-4" />
                 Share Idea
@@ -69,35 +69,41 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
         </CardContent>
       </Card>
 
-      <IdeaVisibility ideaId={idea.id} isPrivate={idea.isPrivate} />
+      <div className="w-full flex space-x-4">
+        <IdeaVisibility ideaId={idea.id} isPrivate={idea.isPrivate} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Campaign Status</CardTitle>
-          <CardDescription>Control your validation campaign</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div className="flex flex-col space-y-2">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium">Current Status</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Your campaign is {idea.status.toLowerCase()}
-                  </p>
+        <Card className="flex-1 bg-white border-gray-200">
+          <CardHeader>
+            <CardTitle>Campaign Status</CardTitle>
+            <CardDescription>Control your validation campaign</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="flex flex-col space-y-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">Current Status</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Your campaign is {idea.status.toLowerCase()}
+                    </p>
+                  </div>
+                  <Badge
+                    className={`${getStatusBadgeColor(idea.status)} capitalize`}
+                  >
+                    {idea.status}
+                  </Badge>
                 </div>
-                <Badge
-                  className={`${getStatusBadgeColor(idea.status)} capitalize`}
-                >
-                  {idea.status}
-                </Badge>
               </div>
-            </div>
 
-            <UpdateCampaign ideaId={idea.id} status={idea.status} />
-          </div>
-        </CardContent>
-      </Card>
+              <UpdateCampaign
+                ideaId={idea.id}
+                status={idea.status}
+                className="bg-white w-full"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

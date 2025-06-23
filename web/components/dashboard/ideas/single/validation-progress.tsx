@@ -56,7 +56,7 @@ export default function ValidationProgress({ idea }: ValidationProgressProps) {
   }
 
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>

@@ -35,7 +35,7 @@ export default function ReportOverview({
   overview,
 }: ReportOverviewProps) {
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader>
         <CardTitle>Performance Overview</CardTitle>
 

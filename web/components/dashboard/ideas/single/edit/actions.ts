@@ -29,7 +29,13 @@ export type UpdateMVPState = {
 export const updateIdeaRequest = async (
   ideaId: string,
   attributes: Record<string, unknown>
-) => api.put(`/dashboard/ideas/${ideaId}`, JSON.stringify(attributes));
+) =>
+  api
+    .put(`/dashboard/ideas/${ideaId}`, JSON.stringify(attributes))
+    .then((res) => {
+      revalidateTag(`idea-${ideaId}`);
+      return res;
+    });
 
 export const updateIdea = async (
   prevState: UpdateIdeaState | null,
@@ -195,11 +201,18 @@ export const updateIdeaAttributes = async (
   ideaId: string,
   attributes: Record<string, unknown>
 ) => {
-  return updateIdeaRequest(ideaId, attributes).then((res) => {
-    if (!res.ok) {
-      throw new Error("Failed to update idea attributes");
+  return updateIdeaRequest(ideaId, attributes).then(async (res) => {
+    const responseData = await res.json();
+    if (!res.ok || responseData.error) {
+      console.error(
+        "API Error:",
+        responseData.error || `Status: ${res.status}`
+      );
+      return {
+        error: responseData.error || "Failed to update idea. Please try again.",
+      };
     }
 
-    return res.json();
+    return responseData;
   });
 };

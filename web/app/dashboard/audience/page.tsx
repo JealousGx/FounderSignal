@@ -17,9 +17,7 @@ export default async function AudiencePage() {
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <h2 className="text-2xl font-bold">No audience data available</h2>
-        <p className="text-muted-foreground">
-          Please check back later or contact support.
-        </p>
+        <p className="text-muted-foreground">Please check back later.</p>
       </div>
     );
   }

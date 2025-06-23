@@ -43,7 +43,7 @@ export const PaginationWithPageSize = ({
           <SelectTrigger className="w-[80px]">
             <SelectValue placeholder={itemsPerPage} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white border-gray-200">
             {pageSizeOptions?.map((option) => (
               <SelectItem key={option} value={option.toString()}>
                 {option}

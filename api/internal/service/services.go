@@ -23,7 +23,7 @@ func NewServices(repos *repository.Repositories, broadcaster websocket.ActivityB
 	analyticsService := NewAnalyticsService(repos.Idea, repos.Signal, repos.Audience, repos.Feedback, repos.Report)
 
 	return &Services{
-		User:        NewUserService(repos.User),
+		User:        NewUserService(repos.User, repos.Idea),
 		Paddle:      NewPaddleService(repos.User, repos.Paddle),
 		Idea:        NewIdeasService(repos.Idea, repos.User, repos.Signal, repos.Audience),
 		Feedback:    NewFeedbackService(repos.Feedback, repos.Idea, broadcaster),

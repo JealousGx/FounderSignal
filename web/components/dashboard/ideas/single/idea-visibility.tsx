@@ -31,7 +31,9 @@ export const IdeaVisibility = ({
         isPrivate: checked,
       });
       if (response.error) {
-        return toast.error("Error updating visibility");
+        return toast.error(response.error, {
+          duration: 3000,
+        });
       }
       setIsPrivate(checked);
 
@@ -50,7 +52,7 @@ export const IdeaVisibility = ({
   };
 
   return (
-    <Card>
+    <Card className="flex-1 bg-white border-gray-200">
       <CardHeader>
         <CardTitle>Visibility</CardTitle>
         <CardDescription>

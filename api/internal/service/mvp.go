@@ -12,7 +12,7 @@ import (
 )
 
 type MVPService interface {
-	GetByIdea(ctx context.Context, ideaId uuid.UUID) (*domain.MVPSimulator, error)
+	GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string) (*domain.MVPSimulator, error)
 	Update(ctx context.Context, ideaId uuid.UUID, userId string, req request.UpdateMVP) error
 }
 
@@ -28,7 +28,20 @@ func NewMVPService(repo repository.MVPRepository, ideaRepo repository.IdeaReposi
 	}
 }
 
-func (s *mvpService) GetByIdea(ctx context.Context, ideaId uuid.UUID) (*domain.MVPSimulator, error) {
+func (s *mvpService) GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string) (*domain.MVPSimulator, error) {
+	idea, _, err := s.ideaRepo.GetByID(ctx, ideaId, nil)
+	if err != nil {
+		return nil, err
+	}
+	if idea == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	// if idea.Status is not active and the user is not the owner, return nil
+	if idea.Status != string(domain.IdeaStatusActive) && (userId == nil || *userId != idea.UserID) {
+		return nil, gorm.ErrRecordNotFound
+	}
+
 	mvp, err := s.repo.GetByIdea(ctx, ideaId)
 	if err != nil {
 		return nil, err

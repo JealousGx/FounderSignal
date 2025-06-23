@@ -151,7 +151,8 @@ export function ImageUpload({
               alt="Product icon"
               width={96}
               height={96}
-              className="object-contain p-2"
+              objectFit="contain"
+              className="p-2"
             />
           </div>
 

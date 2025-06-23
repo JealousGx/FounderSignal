@@ -42,7 +42,7 @@ export default async function ValidationReportsPage() {
 
       {data && data.reports?.length > 0 ? (
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 bg-gray-200">
             <TabsTrigger value="all">All Reports</TabsTrigger>
             <TabsTrigger value="insights">Key Insights</TabsTrigger>
             <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
@@ -100,7 +100,7 @@ function RecommendationCard({ report }: { report: ReportExtended }) {
   }
 
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div>
@@ -128,10 +128,10 @@ function RecommendationCard({ report }: { report: ReportExtended }) {
 
       <CardFooter>
         <Link
-          href={`/dashboard/ideas/${report.ideaId}`}
+          href={`/dashboard/ideas/${report.idea?.id}`}
           variant="outline"
           size="sm"
-          className="mt-2"
+          className="mt-2 bg-white"
         >
           View Idea
           <ArrowRight className="ml-1 h-4 w-4" />

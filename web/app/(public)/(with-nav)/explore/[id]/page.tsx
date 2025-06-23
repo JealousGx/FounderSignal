@@ -129,10 +129,22 @@ export default async function IdeaPage({
                 </div>
               </div>
 
-              <div className="flex justify-between mb-6">
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                  {idea.title}
-                </h1>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                <div className="flex items-center gap-4 md:gap-6">
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                    <OptimizedImage
+                      src={idea.imageUrl || "/assets/images/placeholder.webp"}
+                      alt={idea.title}
+                      width={80}
+                      height={80}
+                      className="object-contain"
+                    />
+                  </div>
+
+                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+                    {idea.title}
+                  </h1>
+                </div>
 
                 <div className="flex items-center gap-2">
                   <CustomLink
@@ -185,6 +197,7 @@ export default async function IdeaPage({
                     width={40}
                     height={40}
                     quality={70}
+                    objectFit="contain"
                   />
                 </div>
 
@@ -315,13 +328,14 @@ export default async function IdeaPage({
                     className="block p-4 hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex gap-3">
-                      <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                         {relatedIdea.imageUrl ? (
                           <OptimizedImage
                             src={relatedIdea.imageUrl}
                             alt={relatedIdea.title!}
                             width={48}
                             height={48}
+                            objectFit="contain"
                           />
                         ) : (
                           <div className="w-full h-full bg-gray-200 animate-pulse"></div>

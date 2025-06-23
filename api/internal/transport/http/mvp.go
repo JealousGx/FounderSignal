@@ -37,7 +37,14 @@ func (h *mvpHandler) GetByIdea(c *gin.Context) {
 		return
 	}
 
-	mvp, err := h.service.GetByIdea(c.Request.Context(), parsedIdeaId)
+	var userIDPtr *string
+	if userIDVal, exists := c.Get("userId"); exists {
+		if userIDStr, ok := userIDVal.(string); ok {
+			userIDPtr = &userIDStr
+		}
+	}
+
+	mvp, err := h.service.GetByIdea(c.Request.Context(), parsedIdeaId, userIDPtr)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

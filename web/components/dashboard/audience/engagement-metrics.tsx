@@ -47,7 +47,7 @@ export default function EngagementMetrics({
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-white border-gray-200">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Distribution by Idea</CardTitle>
           <CardDescription>
@@ -141,7 +141,7 @@ export default function EngagementMetrics({
         </CardContent>
       </Card>
 
-      <Card className="bg-muted/50 border-none shadow-sm">
+      <Card className="bg-white border-gray-200">
         <CardContent className="p-6">
           <div className="flex flex-col space-y-2">
             <p className="text-sm font-medium">Quick Stats</p>

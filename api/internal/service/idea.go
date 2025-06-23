@@ -56,8 +56,21 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 	if user == nil {
 		return uuid.Nil, fmt.Errorf("user not found")
 	}
-	if user.UsedFreeTrial && user.Plan == domain.FreePlan {
-		return uuid.Nil, fmt.Errorf("you have already used your free trial. Upgrade to Pro or Business plan to create more ideas")
+
+	// The following commented-out code is a placeholder for future logic to handle starter trial limits.
+	// if !user.IsPaying && user.UsedFreeTrial {
+	// 	return uuid.Nil, fmt.Errorf("you have reached your idea limit for the starter plan. please upgrade your plan to create more ideas")
+	// }
+
+	ideaStatus := domain.IdeaStatusActive
+	ideaLimit := domain.GetIdeaLimitForPlan(user.Plan)
+	activeStatus := domain.IdeaStatusActive
+	currentCount, err := s.repo.GetCountForUser(ctx, userId, nil, nil, &activeStatus)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to check idea count: %w", err)
+	}
+	if int(currentCount) >= ideaLimit {
+		ideaStatus = domain.IdeaStatusDraft // If user has reached their limit, set status to draft
 	}
 
 	if err := validator.Validate(req); err != nil {
@@ -86,6 +99,7 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		Description:    req.Description,
 		TargetAudience: req.TargetAudience,
 		Slug:           ideaSlug,
+		Status:         string(ideaStatus),
 	}
 
 	mvp := &domain.MVPSimulator{
@@ -102,8 +116,8 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		return uuid.Nil, fmt.Errorf("failed to create idea: %w", err)
 	}
 
-	// If the user is on the free plan, set the UsedFreeTrial flag to true
-	if user.Plan == domain.FreePlan && !user.UsedFreeTrial {
+	// If the user is on the starter plan / not paying, set the UsedFreeTrial flag to true
+	if !user.IsPaying && !user.UsedFreeTrial {
 		_user := &domain.User{
 			UsedFreeTrial: true,
 		}
@@ -118,6 +132,14 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 }
 
 func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUID, req request.UpdateIdea) error {
+	user, err := s.u.FindByID(ctx, userId)
+	if err != nil {
+		return fmt.Errorf("failed to find user: %w", err)
+	}
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+
 	// Check if the idea exists
 	existingIdea, _, err := s.repo.GetByID(ctx, ideaId, nil)
 	if err != nil {
@@ -130,6 +152,23 @@ func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUI
 
 	if existingIdea.UserID != userId {
 		return fmt.Errorf("user not authorized to update this idea")
+	}
+
+	if req.Status != nil && *req.Status == string(domain.IdeaStatusActive) && existingIdea.Status != string(domain.IdeaStatusActive) {
+		activeStatus := domain.IdeaStatusActive
+		currentCount, err := s.repo.GetCountForUser(ctx, userId, nil, nil, &activeStatus)
+		if err != nil {
+			return fmt.Errorf("failed to check idea count: %w", err)
+		}
+
+		ideaLimit := domain.GetIdeaLimitForPlan(user.Plan)
+		if int(currentCount) >= ideaLimit {
+			return fmt.Errorf("you have reached your idea limit for the %s plan. please upgrade your plan or deactivate an idea to activate more", user.Plan)
+		}
+	}
+
+	if req.IsPrivate != nil && *req.IsPrivate && user.Plan == domain.StarterPlan {
+		return fmt.Errorf("private ideas are not allowed on the starter plan. please upgrade your plan to create private ideas")
 	}
 
 	idea := &domain.Idea{
@@ -200,17 +239,10 @@ func (s *ideaService) GetByID(ctx context.Context, id uuid.UUID, userId string) 
 		return nil, err
 	}
 
-	if idea.Status != string(domain.IdeaStatusActive) {
+	// Only the owner can view non-active ideas
+	if idea.Status != string(domain.IdeaStatusActive) && idea.UserID != userId {
 		return nil, gorm.ErrRecordNotFound
 	}
-
-	// ideaJSON, err := json.MarshalIndent(idea, "", "  ") // Marshal to JSON with indentation
-	// if err != nil {
-	// 	fmt.Println("Error marshalling idea to JSON:", err)
-	// 	// Decide if you want to return the error or just log it and proceed
-	// } else {
-	// 	fmt.Println("Found idea (JSON):", string(ideaJSON))
-	// }
 
 	publicIdea := dto.ToPublicIdea(idea, relatedIdeas, userId)
 
@@ -218,10 +250,11 @@ func (s *ideaService) GetByID(ctx context.Context, id uuid.UUID, userId string) 
 }
 
 func (s *ideaService) GetIdeas(ctx context.Context, queryParams domain.QueryParams) (*response.IdeaListResponse, error) {
+	// This method is used for the /explore endpoint and only returns active ideas
 	includePrivateIdeas := false
 	ideasRaw, totalCount, err := s.repo.GetIdeas(ctx, queryParams, repository.IdeaQuerySpec{
 		IncludePrivate: &includePrivateIdeas,
-		Status:         domain.IdeaStatusActive,
+		Status:         domain.IdeaStatusActive, // Only active ideas
 		WithCounts:     true,
 	})
 	if err != nil {
@@ -258,6 +291,19 @@ func (s *ideaService) GetUserIdeas(ctx context.Context, userId string, getStats 
 }
 
 func (s *ideaService) RecordSignal(ctx context.Context, ideaID uuid.UUID, userID string, eventType string, ipAddress string, userAgent string, metadata map[string]interface{}) error {
+	idea, _, err := s.repo.GetByID(ctx, ideaID, nil)
+	if err != nil {
+		return fmt.Errorf("failed to get idea by ID: %w", err)
+	}
+	if idea == nil {
+		return fmt.Errorf("idea not found")
+	}
+
+	isPrivate := idea.IsPrivate != nil && *idea.IsPrivate
+	if idea.Status != string(domain.IdeaStatusActive) || isPrivate {
+		return fmt.Errorf("cannot record signal for idea that is either non-active or private")
+	}
+
 	signal := &domain.Signal{
 		IdeaID:    ideaID,
 		UserID:    userID,
@@ -274,7 +320,7 @@ func (s *ideaService) RecordSignal(ctx context.Context, ideaID uuid.UUID, userID
 		signal.Metadata = datatypes.JSON(metaJSON)
 	}
 
-	err := s.signalRepo.Create(ctx, signal)
+	err = s.signalRepo.Create(ctx, signal)
 	if err != nil {
 		return fmt.Errorf("failed to create signal: %w", err)
 	}

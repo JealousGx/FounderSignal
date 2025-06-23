@@ -59,7 +59,7 @@ export default function InsightsSection({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="bg-white border-gray-200">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -129,7 +129,7 @@ export default function InsightsSection({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border-gray-200">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -213,7 +213,7 @@ export default function InsightsSection({
         </Card>
       </div>
 
-      <Card>
+      <Card className="bg-white border-gray-200">
         <CardHeader>
           <CardTitle>Recent Key Insights</CardTitle>
 
@@ -270,6 +270,7 @@ export default function InsightsSection({
                         href={`/dashboard/reports/${insight.id}`}
                         variant="outline"
                         size="sm"
+                        className="bg-white"
                       >
                         View full report
                         <ArrowRight className="ml-1 h-4 w-4" />

@@ -15,7 +15,7 @@ interface SignupAnalyticsProps {
 
 export default function SignupAnalytics({ idea }: SignupAnalyticsProps) {
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader>
         <CardTitle>Signup Overview</CardTitle>
         <CardDescription>Track your validation progress</CardDescription>

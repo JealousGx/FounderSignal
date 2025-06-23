@@ -22,6 +22,7 @@ export default function IdeaHeader({ ideaId }: IdeaHeaderProps) {
           href={`/dashboard/ideas/${ideaId}/edit`}
           variant="outline"
           size="sm"
+          className="bg-white"
         >
           Edit Idea
         </Link>
