@@ -43,6 +43,7 @@ func (s *userService) FindById(ctx context.Context, userId string) (*domain.User
 	activeIdeaCount, err := s.ideaRepo.GetCountForUser(ctx, userId, nil, nil, &status)
 	if err != nil {
 		log.Printf("Error counting active ideas for user %s: %v", userId, err)
+		activeIdeaCount = 0 // Default to 0 if there's an error
 	}
 	user.ActiveIdeaCount = activeIdeaCount
 
