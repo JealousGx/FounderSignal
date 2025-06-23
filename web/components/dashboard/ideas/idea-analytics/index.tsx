@@ -246,20 +246,20 @@ export default function IdeaAnalytics({
 
       {/* Summary statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-4 border-t">
-        <div className="p-3 bg-muted rounded-lg">
-          <div className="text-sm text-muted-foreground">Total Views</div>
+        <div className="p-3 bg-gray-50 rounded-lg">
+          <div className="text-sm text-gray-600">Total Views</div>
           <div className="text-xl font-semibold">
             {analyticsData.totals.views.toLocaleString()}
           </div>
         </div>
-        <div className="p-3 bg-muted rounded-lg">
-          <div className="text-sm text-muted-foreground">Total Signups</div>
+        <div className="p-3 bg-gray-50 rounded-lg">
+          <div className="text-sm text-gray-600">Total Signups</div>
           <div className="text-xl font-semibold">
             {analyticsData.totals.signups.toLocaleString()}
           </div>
         </div>
-        <div className="p-3 bg-muted rounded-lg">
-          <div className="text-sm text-muted-foreground">Conversion Rate</div>
+        <div className="p-3 bg-gray-50 rounded-lg">
+          <div className="text-sm text-gray-600">Conversion Rate</div>
           <div className="text-xl font-semibold">
             {analyticsData.totals.averageConversionRate.toFixed(2)}%
           </div>

@@ -1,7 +1,7 @@
 import { ExternalLink } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { OptimizedImage } from "@/components/ui/image";
 import { Link } from "@/components/ui/link";
 
@@ -14,58 +14,55 @@ interface EditHeaderProps {
 
 export default function EditHeader({ idea }: EditHeaderProps) {
   return (
-    <Card className="border-none overflow-hidden shadow-sm pb-0">
-      <div className="relative h-32 md:h-40 w-full flex items-end">
-        <OptimizedImage
-          src={idea.imageUrl || "/placeholder-idea.jpg"}
-          alt={idea.title}
-          fill
-        />
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-
-        <div className="relative p-4 md:p-6 w-full">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="flex flex-wrap gap-2 mb-2">
-                <Badge
-                  className={`${getStatusBadgeColor(idea.status)} capitalize`}
-                >
-                  {idea.status}
-                </Badge>
-              </div>
-
-              <h1 className="text-xl md:text-2xl font-bold text-white mb-0">
-                {idea.title}
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Link
-                size="sm"
-                className="h-9"
-                variant="secondary"
-                href={`/mvp/${idea.id}`}
-                target="_blank"
+    <Card className="bg-white border-gray-200">
+      <CardHeader>
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+            <OptimizedImage
+              src={idea.imageUrl || "/assets/images/placeholder.webp"}
+              alt={idea.title}
+              width={64}
+              height={64}
+              objectFit="contain"
+            />
+          </div>
+          <div className="flex-grow">
+            <div className="flex flex-wrap gap-2 mb-2">
+              <Badge
+                className={`${getStatusBadgeColor(idea.status)} capitalize`}
               >
-                <ExternalLink className="h-4 w-4 mr-1" />
-                Preview Landing Page
-              </Link>
-
-              <Link
-                size="sm"
-                className="h-9 ml-2"
-                variant="default"
-                href={`/mvp/${idea.id}/edit`}
-                target="_blank"
-              >
-                <ExternalLink className="h-4 w-4 mr-1" />
-                Edit Landing Page
-              </Link>
+                {idea.status}
+              </Badge>
             </div>
+            <CardTitle className="text-xl md:text-2xl font-bold">
+              {idea.title}
+            </CardTitle>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link
+              size="sm"
+              className="h-9 bg-white"
+              variant="outline"
+              href={`/mvp/${idea.id}`}
+              target="_blank"
+            >
+              <ExternalLink className="h-4 w-4 mr-1" />
+              Preview Landing Page
+            </Link>
+
+            <Link
+              size="sm"
+              className="h-9"
+              variant="default"
+              href={`/mvp/${idea.id}/edit`}
+              target="_blank"
+            >
+              <ExternalLink className="h-4 w-4 mr-1" />
+              Edit Landing Page
+            </Link>
           </div>
         </div>
-      </div>
+      </CardHeader>
     </Card>
   );
 }

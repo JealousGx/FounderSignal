@@ -12,7 +12,13 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,96 +35,98 @@ import { formatDate, getStageBadgeColor, getStatusBadgeColor } from "../utils";
 
 export function IdeaOverview({ idea }: { idea: Idea }) {
   return (
-    <Card className="border-none overflow-hidden pb-0 gap-0">
-      <div className="w-full h-48 sm:h-56 md:h-64 relative">
-        <OptimizedImage
-          src={
-            idea.imageUrl ||
-            "https://images.unsplash.com/photo-1553877522-43269d4ea984?q=80&w=2000&auto=format&fit=crop"
-          }
-          alt={idea.title}
-          fill
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-
-        <div className="absolute bottom-0 left-0 p-4 md:p-6 w-full">
-          <div className="flex flex-wrap gap-2 mb-3">
-            <Badge className={`${getStatusBadgeColor(idea.status)} capitalize`}>
-              {idea.status}
-            </Badge>
-            <Badge
-              variant="outline"
-              className={`${getStageBadgeColor(idea.stage)} capitalize`}
-            >
-              {idea.stage}
-            </Badge>
+    <Card className="bg-white border-gray-200">
+      <CardHeader>
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 mx-auto md:mx-0">
+            <OptimizedImage
+              src={idea.imageUrl || "/assets/images/placeholder.webp"}
+              alt={idea.title}
+              width={96}
+              height={96}
+              objectFit="contain"
+            />
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
-            {idea.title}
-          </h1>
-
-          <p className="text-white/80 text-sm md:text-base line-clamp-2">
-            {idea.description}
-          </p>
-        </div>
-
-        <div className="absolute top-4 right-4 flex gap-2">
-          <CustomLink
-            href={`/mvp/${idea.id}`}
-            target="_blank"
-            variant="secondary"
-            size="sm"
-            className="h-9"
-          >
-            <ExternalLink className="h-4 w-4 mr-1" />
-            View Landing Page
-          </CustomLink>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon" className="h-9 w-9">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link
-                  href={`/dashboard/ideas/${idea.id}/edit`}
-                  className="cursor-pointer w-full"
+          <div className="flex-grow">
+            <div className="flex items-start justify-between">
+              <div className="flex flex-wrap gap-2 mb-2">
+                <Badge
+                  className={`${getStatusBadgeColor(idea.status)} capitalize`}
                 >
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Edit Idea
-                </Link>
-              </DropdownMenuItem>
-
-              <DropdownMenuItem asChild>
-                <ShareIdeaUrl
-                  ideaId={idea.id}
-                  variant="ghost"
-                  className="cursor-pointer justify-start w-full !px-2 py-1.5"
+                  {idea.status}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className={`${getStageBadgeColor(idea.stage)} capitalize`}
                 >
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </ShareIdeaUrl>
-              </DropdownMenuItem>
-
-              <DropdownMenuItem asChild>
-                <UpdateCampaign
-                  ideaId={idea.id}
-                  status={idea.status}
-                  variant="ghost"
-                  className="cursor-pointer justify-start w-full !px-2 py-1.5"
-                />
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  {idea.stage}
+                </Badge>
+              </div>
+              <div className="flex gap-2">
+                <CustomLink
+                  href={`/mvp/${idea.id}`}
+                  target="_blank"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 bg-white"
+                >
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  View Landing Page
+                </CustomLink>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 bg-white"
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-white">
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={`/dashboard/ideas/${idea.id}/edit`}
+                        className="cursor-pointer w-full"
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit Idea
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <ShareIdeaUrl
+                        ideaId={idea.id}
+                        variant="ghost"
+                        className="cursor-pointer justify-start w-full !px-2 py-1.5"
+                      >
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share
+                      </ShareIdeaUrl>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <UpdateCampaign
+                        ideaId={idea.id}
+                        status={idea.status}
+                        variant="ghost"
+                        className="cursor-pointer justify-start w-full !px-2 py-1.5"
+                      />
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+            <CardTitle className="text-2xl md:text-3xl font-bold mt-2">
+              {idea.title}
+            </CardTitle>
+            <CardDescription className="mt-2 text-base line-clamp-3">
+              {idea.description}
+            </CardDescription>
+          </div>
         </div>
-      </div>
-
-      <CardContent className="bg-white p-4 md:p-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 pt-6 border-t">
           <div className="flex flex-col">
             <span className="text-sm text-muted-foreground flex items-center">
               <Calendar className="h-4 w-4 mr-1" />
@@ -149,7 +157,9 @@ export function IdeaOverview({ idea }: { idea: Idea }) {
               Conversion
             </span>
             <span className="font-medium">
-              {Math.round((idea.signups / (idea.views || 1)) * 100)}%
+              {idea.views > 0
+                ? `${Math.round((idea.signups / idea.views) * 100)}%`
+                : "0%"}
             </span>
           </div>
         </div>

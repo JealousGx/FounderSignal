@@ -150,12 +150,12 @@ interface MetricCardProps {
 
 function MetricCard({ title, value, description }: MetricCardProps) {
   return (
-    <div className="bg-muted rounded-md p-4">
+    <div className="bg-gray-50 rounded-md p-4">
       <h3 className="font-medium text-sm">{title}</h3>
 
       <p className="text-2xl font-bold mt-2 mb-1">{value}</p>
 
-      <p className="text-xs text-muted-foreground">{description}</p>
+      <p className="text-xs text-gray-600">{description}</p>
     </div>
   );
 }

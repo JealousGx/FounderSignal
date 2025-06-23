@@ -98,6 +98,7 @@ export const CommentItem = ({
             width={40}
             height={40}
             quality={70}
+            objectFit="contain"
           />
         </div>
 
