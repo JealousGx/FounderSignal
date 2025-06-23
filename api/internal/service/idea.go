@@ -282,6 +282,19 @@ func (s *ideaService) GetUserIdeas(ctx context.Context, userId string, getStats 
 }
 
 func (s *ideaService) RecordSignal(ctx context.Context, ideaID uuid.UUID, userID string, eventType string, ipAddress string, userAgent string, metadata map[string]interface{}) error {
+	idea, _, err := s.repo.GetByID(ctx, ideaID, nil)
+	if err != nil {
+		return fmt.Errorf("failed to get idea by ID: %w", err)
+	}
+	if idea == nil {
+		return fmt.Errorf("idea not found")
+	}
+
+	isPrivate := idea.IsPrivate != nil && *idea.IsPrivate
+	if idea.Status != string(domain.IdeaStatusActive) || isPrivate {
+		return fmt.Errorf("cannot record signal for non-active idea")
+	}
+
 	signal := &domain.Signal{
 		IdeaID:    ideaID,
 		UserID:    userID,
@@ -298,7 +311,7 @@ func (s *ideaService) RecordSignal(ctx context.Context, ideaID uuid.UUID, userID
 		signal.Metadata = datatypes.JSON(metaJSON)
 	}
 
-	err := s.signalRepo.Create(ctx, signal)
+	err = s.signalRepo.Create(ctx, signal)
 	if err != nil {
 		return fmt.Errorf("failed to create signal: %w", err)
 	}
