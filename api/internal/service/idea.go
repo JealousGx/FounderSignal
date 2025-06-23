@@ -56,8 +56,16 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 	if user == nil {
 		return uuid.Nil, fmt.Errorf("user not found")
 	}
-	if user.UsedFreeTrial && user.Plan == domain.FreePlan {
-		return uuid.Nil, fmt.Errorf("you have already used your free trial. Upgrade to Pro or Business plan to create more ideas")
+
+	ideaStatus := domain.IdeaStatusActive
+	ideaLimit := domain.GetIdeaLimitForPlan(user.Plan)
+	activeStatus := domain.IdeaStatusActive
+	currentCount, err := s.repo.GetCountForUser(ctx, userId, nil, nil, &activeStatus)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to check idea count: %w", err)
+	}
+	if int(currentCount) >= ideaLimit {
+		ideaStatus = domain.IdeaStatusDraft // If user has reached their limit, set status to draft
 	}
 
 	if err := validator.Validate(req); err != nil {
@@ -86,6 +94,7 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		Description:    req.Description,
 		TargetAudience: req.TargetAudience,
 		Slug:           ideaSlug,
+		Status:         string(ideaStatus),
 	}
 
 	mvp := &domain.MVPSimulator{
@@ -130,6 +139,27 @@ func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUI
 
 	if existingIdea.UserID != userId {
 		return fmt.Errorf("user not authorized to update this idea")
+	}
+
+	if req.Status != nil && *req.Status == string(domain.IdeaStatusActive) && existingIdea.Status != string(domain.IdeaStatusActive) {
+		user, err := s.u.FindByID(ctx, userId)
+		if err != nil {
+			return fmt.Errorf("failed to find user: %w", err)
+		}
+		if user == nil {
+			return fmt.Errorf("user not found")
+		}
+
+		activeStatus := domain.IdeaStatusActive
+		currentCount, err := s.repo.GetCountForUser(ctx, userId, nil, nil, &activeStatus)
+		if err != nil {
+			return fmt.Errorf("failed to check idea count: %w", err)
+		}
+
+		ideaLimit := domain.GetIdeaLimitForPlan(user.Plan)
+		if int(currentCount) >= ideaLimit {
+			return fmt.Errorf("you have reached your idea limit for the %s plan. please upgrade your plan to activate more ideas", user.Plan)
+		}
 	}
 
 	idea := &domain.Idea{
