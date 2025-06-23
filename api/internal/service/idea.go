@@ -292,7 +292,7 @@ func (s *ideaService) RecordSignal(ctx context.Context, ideaID uuid.UUID, userID
 
 	isPrivate := idea.IsPrivate != nil && *idea.IsPrivate
 	if idea.Status != string(domain.IdeaStatusActive) || isPrivate {
-		return fmt.Errorf("cannot record signal for non-active idea")
+		return fmt.Errorf("cannot record signal for idea that is either non-active or private")
 	}
 
 	signal := &domain.Signal{
