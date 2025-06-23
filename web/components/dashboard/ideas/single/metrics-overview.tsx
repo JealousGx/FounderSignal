@@ -30,7 +30,7 @@ interface MetricsOverviewProps {
 
 export default function MetricsOverview({ overview }: MetricsOverviewProps) {
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader>
         <CardTitle>Performance Overview</CardTitle>
         <CardDescription>Signups and views over time</CardDescription>

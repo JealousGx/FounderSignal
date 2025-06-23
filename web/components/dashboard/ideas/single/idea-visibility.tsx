@@ -52,7 +52,7 @@ export const IdeaVisibility = ({
   };
 
   return (
-    <Card className="flex-1">
+    <Card className="flex-1 bg-white border-gray-200">
       <CardHeader>
         <CardTitle>Visibility</CardTitle>
         <CardDescription>

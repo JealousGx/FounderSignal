@@ -29,7 +29,7 @@ export default function ReportHeader({ report }: ReportHeaderProps) {
   };
 
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardContent className="p-4 md:p-6">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="space-y-1.5">
@@ -56,12 +56,13 @@ export default function ReportHeader({ report }: ReportHeaderProps) {
               href={`/dashboard/ideas/${report.idea?.id}`}
               variant="outline"
               size="sm"
+              className="bg-white"
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               View Idea
             </Link>
 
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="bg-white">
               <FileDown className="h-4 w-4 mr-2" />
               Download Report
             </Button>

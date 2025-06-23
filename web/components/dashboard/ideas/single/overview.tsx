@@ -29,7 +29,7 @@ import { formatDate, getStageBadgeColor, getStatusBadgeColor } from "../utils";
 
 export function IdeaOverview({ idea }: { idea: Idea }) {
   return (
-    <Card className="border-none overflow-hidden shadow-sm">
+    <Card className="border-none overflow-hidden pb-0 gap-0">
       <div className="w-full h-48 sm:h-56 md:h-64 relative">
         <OptimizedImage
           src={
@@ -117,7 +117,7 @@ export function IdeaOverview({ idea }: { idea: Idea }) {
         </div>
       </div>
 
-      <CardContent className="p-4 md:p-6">
+      <CardContent className="bg-white p-4 md:p-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           <div className="flex flex-col">
             <span className="text-sm text-muted-foreground flex items-center">

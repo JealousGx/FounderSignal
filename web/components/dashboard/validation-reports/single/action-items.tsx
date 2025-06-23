@@ -25,7 +25,7 @@ export default function ActionItems({ report, insights }: ActionItemsProps) {
   const actionItems = generateActionItems(report);
 
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader className="pb-3">
         <CardTitle>Next Steps</CardTitle>
 
@@ -66,7 +66,7 @@ export default function ActionItems({ report, insights }: ActionItemsProps) {
                 <Link
                   href={item.link}
                   variant="outline"
-                  className="w-full justify-start text-left h-auto py-3 font-normal"
+                  className="w-full justify-start text-left h-auto py-3 font-normal bg-white"
                 >
                   <span>{item.text}</span>
 

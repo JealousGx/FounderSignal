@@ -86,7 +86,7 @@ export default function IdeaAnalytics({
   // If no ideas are available, show a message
   if (analytics.length === 0) {
     return (
-      <Card className="p-6">
+      <Card className="p-6 bg-white border-gray-200">
         <div className="text-center py-8">
           <h2 className="text-lg font-medium mb-2">No ideas available</h2>
           <p className="text-sm text-gray-500">
@@ -100,7 +100,7 @@ export default function IdeaAnalytics({
   // If analytics data is not yet loaded
   if (!analyticsData) {
     return (
-      <Card className="p-6">
+      <Card className="p-6 bg-white border-gray-200">
         <div className="text-center py-8">
           <h2 className="text-lg font-medium">Loading analytics...</h2>
         </div>
@@ -109,7 +109,7 @@ export default function IdeaAnalytics({
   }
 
   return (
-    <Card className="p-4 md:p-6">
+    <Card className="p-4 md:p-6 bg-white border-gray-200">
       <div className="mb-4 md:mb-6">
         <h2 className="text-lg font-bold">Idea Performance</h2>
 
@@ -124,7 +124,7 @@ export default function IdeaAnalytics({
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select an idea" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border-gray-200">
               {analytics.map((idea) => (
                 <SelectItem key={idea.ideaId} value={idea.ideaId}>
                   {idea.ideaTitle}
@@ -136,7 +136,7 @@ export default function IdeaAnalytics({
       </div>
 
       <Tabs defaultValue="line" className="w-full">
-        <TabsList className="mb-4 md:mb-6 w-full grid grid-cols-2">
+        <TabsList className="mb-4 md:mb-6 w-full grid grid-cols-2 bg-gray-200 rounded-lg">
           <TabsTrigger value="line">Line Chart</TabsTrigger>
           <TabsTrigger value="bar">Bar Chart</TabsTrigger>
         </TabsList>
@@ -246,19 +246,19 @@ export default function IdeaAnalytics({
 
       {/* Summary statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-4 border-t">
-        <div className="p-3 bg-muted/40 rounded-lg">
+        <div className="p-3 bg-muted rounded-lg">
           <div className="text-sm text-muted-foreground">Total Views</div>
           <div className="text-xl font-semibold">
             {analyticsData.totals.views.toLocaleString()}
           </div>
         </div>
-        <div className="p-3 bg-muted/40 rounded-lg">
+        <div className="p-3 bg-muted rounded-lg">
           <div className="text-sm text-muted-foreground">Total Signups</div>
           <div className="text-xl font-semibold">
             {analyticsData.totals.signups.toLocaleString()}
           </div>
         </div>
-        <div className="p-3 bg-muted/40 rounded-lg">
+        <div className="p-3 bg-muted rounded-lg">
           <div className="text-sm text-muted-foreground">Conversion Rate</div>
           <div className="text-xl font-semibold">
             {analyticsData.totals.averageConversionRate.toFixed(2)}%

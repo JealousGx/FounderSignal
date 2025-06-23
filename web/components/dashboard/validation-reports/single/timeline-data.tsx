@@ -35,7 +35,7 @@ interface TimelineDataProps {
 
 export default function TimelineData({ timelineData }: TimelineDataProps) {
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader>
         <CardTitle>Timeline Analysis</CardTitle>
 
@@ -44,7 +44,7 @@ export default function TimelineData({ timelineData }: TimelineDataProps) {
 
       <CardContent>
         <Tabs defaultValue="daily">
-          <TabsList className="mb-4">
+          <TabsList className="mb-4 bg-gray-200">
             <TabsTrigger value="daily">Daily</TabsTrigger>
 
             <TabsTrigger value="weekly">Weekly</TabsTrigger>

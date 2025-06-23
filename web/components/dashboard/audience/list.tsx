@@ -172,7 +172,7 @@ export default function AudienceList({
   }, [debouncedSearchQuery]);
 
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -202,7 +202,10 @@ export default function AudienceList({
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
-              <SelectContent align="end" className="w-[200px]">
+              <SelectContent
+                align="end"
+                className="w-[200px] bg-white border-gray-200"
+              >
                 <SelectGroup>
                   <SelectLabel>Sort By</SelectLabel>
                   {sortOptions.map((option) => (

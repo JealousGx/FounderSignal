@@ -31,7 +31,7 @@ export default function ValidationStatus({
   const isValidated = report.validated;
 
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>

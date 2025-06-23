@@ -41,7 +41,7 @@ export default async function IdeaPage({ params }: IdeaPageProps) {
 
       <div className="space-y-6">
         <Tabs defaultValue="analytics" className="w-full">
-          <TabsList className="w-full md:w-auto grid grid-cols-3 mb-4">
+          <TabsList className="bg-gray-200 w-full md:w-auto grid grid-cols-3 mb-4">
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>

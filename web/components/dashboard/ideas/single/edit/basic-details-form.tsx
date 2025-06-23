@@ -242,7 +242,7 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
           className="space-y-8"
         >
           {/* Basic Information Section */}
-          <Card className="border-0 shadow-sm bg-gradient-to-br from-gray-50 to-white">
+          <Card className="bg-white border-gray-200">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-2">
                 <FileText className="h-4 w-4 text-blue-600" />
@@ -337,7 +337,7 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
           </Card>
 
           {/* Target Audience & Goals Section */}
-          <Card className="border-0 shadow-sm bg-gradient-to-br from-gray-50 to-white">
+          <Card className="bg-white border-gray-200">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-2">
                 <Target className="h-4 w-4 text-blue-600" />
@@ -401,7 +401,7 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm bg-gradient-to-br from-gray-50 to-white">
+          <Card className="bg-white border-gray-200">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-2">
                 <Settings className="h-4 w-4 text-blue-600" />
@@ -430,7 +430,7 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="bg-white">
                           <SelectItem value="active">
                             <div className="flex items-center space-x-2">
                               <Badge className={statusColors.active}>
@@ -486,7 +486,7 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
                             <SelectValue placeholder="Select development stage" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="bg-white">
                           <SelectItem value="ideation">
                             <div className="flex items-center space-x-2">
                               <Badge className={stageColors.ideation}>

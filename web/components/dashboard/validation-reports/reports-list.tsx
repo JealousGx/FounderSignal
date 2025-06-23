@@ -237,7 +237,7 @@ export default function ReportsList({
   }, [debouncedSearchQuery]);
 
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -268,7 +268,10 @@ export default function ReportsList({
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Filters" />
               </SelectTrigger>
-              <SelectContent align="end" className="w-[200px]">
+              <SelectContent
+                align="end"
+                className="w-[200px] bg-white border-gray-200"
+              >
                 <SelectGroup>
                   <SelectLabel>Filter by Type</SelectLabel>
                   {filters.map((filter) => (
@@ -287,7 +290,10 @@ export default function ReportsList({
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
-              <SelectContent align="end" className="w-[200px]">
+              <SelectContent
+                align="end"
+                className="w-[200px] bg-white border-gray-200"
+              >
                 <SelectGroup>
                   <SelectLabel>Sort By</SelectLabel>
                   {sortOptions.map((option) => (

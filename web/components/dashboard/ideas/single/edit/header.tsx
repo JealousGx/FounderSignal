@@ -14,7 +14,7 @@ interface EditHeaderProps {
 
 export default function EditHeader({ idea }: EditHeaderProps) {
   return (
-    <Card className="border-none overflow-hidden shadow-sm">
+    <Card className="border-none overflow-hidden shadow-sm pb-0">
       <div className="relative h-32 md:h-40 w-full flex items-end">
         <OptimizedImage
           src={idea.imageUrl || "/placeholder-idea.jpg"}

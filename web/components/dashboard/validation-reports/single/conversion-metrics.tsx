@@ -43,7 +43,7 @@ export default function ConversionMetrics({ report }: ConversionMetricsProps) {
   const overallConversionRate = report.conversionRate;
 
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader>
         <CardTitle>Conversion Metrics</CardTitle>
 
@@ -150,7 +150,7 @@ interface MetricCardProps {
 
 function MetricCard({ title, value, description }: MetricCardProps) {
   return (
-    <div className="bg-muted/50 rounded-md p-4">
+    <div className="bg-muted rounded-md p-4">
       <h3 className="font-medium text-sm">{title}</h3>
 
       <p className="text-2xl font-bold mt-2 mb-1">{value}</p>

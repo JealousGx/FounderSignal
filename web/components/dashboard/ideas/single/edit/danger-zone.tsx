@@ -72,7 +72,7 @@ export default function DangerZone({ ideaId, ideaTitle }: DangerZoneProps) {
   const isDeleteButtonDisabled = confirmText !== ideaTitle;
 
   return (
-    <Card className="border-red-200">
+    <Card className="bg-white border-red-200">
       <CardHeader className="text-red-700">
         <CardTitle>Danger Zone</CardTitle>
         <CardDescription className="text-red-600/80">

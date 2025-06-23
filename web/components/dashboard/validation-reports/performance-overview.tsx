@@ -39,7 +39,7 @@ export default function PerformanceOverview({
   } = overview;
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <Card>
+      <Card className="bg-white border-gray-200">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Validation Success</CardTitle>
 
@@ -112,14 +112,14 @@ function MetricCard({
   color = "blue",
 }: MetricCardProps) {
   const colors = {
-    green: "text-green-600 bg-green-50",
-    blue: "text-blue-600 bg-blue-50",
-    amber: "text-amber-600 bg-amber-50",
-    purple: "text-purple-600 bg-purple-50",
+    green: "text-green-600 bg-green-100",
+    blue: "text-blue-600 bg-blue-100",
+    amber: "text-amber-600 bg-amber-100",
+    purple: "text-purple-600 bg-purple-100",
   };
 
   return (
-    <Card>
+    <Card className="bg-white border-gray-200">
       <CardHeader className="pb-2">
         <div className="flex justify-between">
           <div>

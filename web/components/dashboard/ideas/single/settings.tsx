@@ -19,7 +19,7 @@ import { getStatusBadgeColor } from "../utils";
 export function IdeaSettings({ idea }: { idea: Idea }) {
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-white border-gray-200">
         <CardHeader>
           <CardTitle>Idea Settings</CardTitle>
           <CardDescription>
@@ -50,7 +50,7 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
                 href={`/mvp/${idea.id}`}
                 target="_blank"
                 variant="outline"
-                className="w-full gap-2"
+                className="w-full gap-2 bg-white"
               >
                 <ExternalLink className="w-4 h-4" />
                 Preview Landing Page
@@ -59,7 +59,7 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
               <ShareIdeaUrl
                 ideaId={idea.id}
                 variant="outline"
-                className="w-full gap-2"
+                className="w-full gap-2 bg-white"
               >
                 <Share2 className="w-4 h-4" />
                 Share Idea
@@ -72,7 +72,7 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
       <div className="w-full flex space-x-4">
         <IdeaVisibility ideaId={idea.id} isPrivate={idea.isPrivate} />
 
-        <Card className="flex-1">
+        <Card className="flex-1 bg-white border-gray-200">
           <CardHeader>
             <CardTitle>Campaign Status</CardTitle>
             <CardDescription>Control your validation campaign</CardDescription>
@@ -95,7 +95,11 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
                 </div>
               </div>
 
-              <UpdateCampaign ideaId={idea.id} status={idea.status} />
+              <UpdateCampaign
+                ideaId={idea.id}
+                status={idea.status}
+                className="bg-white w-full"
+              />
             </div>
           </CardContent>
         </Card>
