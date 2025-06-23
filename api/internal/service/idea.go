@@ -57,9 +57,10 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		return uuid.Nil, fmt.Errorf("user not found")
 	}
 
-	if user.Plan == domain.FreePlan && user.UsedFreeTrial {
-		return uuid.Nil, fmt.Errorf("you have reached your idea limit for the free plan. please upgrade your plan to create more ideas")
-	}
+	// The following commented-out code is a placeholder for future logic to handle free trial limits.
+	// if !user.IsPaying && user.UsedFreeTrial {
+	// 	return uuid.Nil, fmt.Errorf("you have reached your idea limit for the free plan. please upgrade your plan to create more ideas")
+	// }
 
 	ideaStatus := domain.IdeaStatusActive
 	ideaLimit := domain.GetIdeaLimitForPlan(user.Plan)
@@ -115,8 +116,8 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		return uuid.Nil, fmt.Errorf("failed to create idea: %w", err)
 	}
 
-	// If the user is on the free plan, set the UsedFreeTrial flag to true
-	if user.Plan == domain.FreePlan && !user.UsedFreeTrial {
+	// If the user is on the free plan / not paying, set the UsedFreeTrial flag to true
+	if !user.IsPaying && !user.UsedFreeTrial {
 		_user := &domain.User{
 			UsedFreeTrial: true,
 		}

@@ -64,7 +64,7 @@ export const UpdateCampaign = ({
     );
   }
 
-  if (status === "paused") {
+  if (status === "paused" || status === "draft") {
     return (
       <Button
         disabled={isSaving}

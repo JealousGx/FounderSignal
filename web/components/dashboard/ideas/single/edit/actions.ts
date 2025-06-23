@@ -29,7 +29,13 @@ export type UpdateMVPState = {
 export const updateIdeaRequest = async (
   ideaId: string,
   attributes: Record<string, unknown>
-) => api.put(`/dashboard/ideas/${ideaId}`, JSON.stringify(attributes));
+) =>
+  api
+    .put(`/dashboard/ideas/${ideaId}`, JSON.stringify(attributes))
+    .then((res) => {
+      revalidateTag(`idea-${ideaId}`);
+      return res;
+    });
 
 export const updateIdea = async (
   prevState: UpdateIdeaState | null,
@@ -207,6 +213,6 @@ export const updateIdeaAttributes = async (
       };
     }
 
-    return res.json();
+    return responseData;
   });
 };
