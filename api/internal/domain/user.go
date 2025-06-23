@@ -25,10 +25,12 @@ type User struct {
 
 	LastLoginAt *time.Time `gorm:"index" json:"lastLoginAt,omitempty"`
 
-	Plan          UserPlan `gorm:"default:'free'" json:"plan"`
+	Plan          UserPlan `gorm:"default:'starter'" json:"plan"`
 	IdeaLimit     int      `gorm:"not null" json:"ideaLimit"`
 	UsedFreeTrial bool     `gorm:"default:false" json:"usedFreeTrial"` // Indicates if the user has used the free plan. Allow only one idea creation on free plan. can be exploited by deleting and creating another idea.
 	IsPaying      bool     `gorm:"default:false" json:"isPaying"`      // Derived from active subscription
+
+	ActiveIdeaCount int64 `gorm:"-" json:"activeIdeaCount,omitempty"` // Populated at runtime
 
 	// paddle / subscription specific fields
 	PaddleSubscriptionID    *string    `gorm:"type:varchar(255);index" json:"paddleSubscriptionId,omitempty"`

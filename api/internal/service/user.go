@@ -20,10 +20,11 @@ type UserService interface {
 
 type userService struct {
 	userRepo repository.UserRepository
+	ideaRepo repository.IdeaRepository
 }
 
-func NewUserService(userRepo repository.UserRepository) *userService {
-	return &userService{userRepo: userRepo}
+func NewUserService(userRepo repository.UserRepository, ideaRepo repository.IdeaRepository) *userService {
+	return &userService{userRepo: userRepo, ideaRepo: ideaRepo}
 }
 
 func (s *userService) FindById(ctx context.Context, userId string) (*domain.User, error) {
@@ -37,6 +38,13 @@ func (s *userService) FindById(ctx context.Context, userId string) (*domain.User
 		log.Printf("Error finding user %s in DB: %v", userId, err)
 		return nil, err
 	}
+
+	status := domain.IdeaStatusActive
+	activeIdeaCount, err := s.ideaRepo.GetCountForUser(ctx, userId, nil, nil, &status)
+	if err != nil {
+		log.Printf("Error counting active ideas for user %s: %v", userId, err)
+	}
+	user.ActiveIdeaCount = activeIdeaCount
 
 	return user, nil
 }
