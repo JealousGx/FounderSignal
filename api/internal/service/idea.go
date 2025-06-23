@@ -57,9 +57,9 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		return uuid.Nil, fmt.Errorf("user not found")
 	}
 
-	// The following commented-out code is a placeholder for future logic to handle free trial limits.
+	// The following commented-out code is a placeholder for future logic to handle starter trial limits.
 	// if !user.IsPaying && user.UsedFreeTrial {
-	// 	return uuid.Nil, fmt.Errorf("you have reached your idea limit for the free plan. please upgrade your plan to create more ideas")
+	// 	return uuid.Nil, fmt.Errorf("you have reached your idea limit for the starter plan. please upgrade your plan to create more ideas")
 	// }
 
 	ideaStatus := domain.IdeaStatusActive
@@ -116,7 +116,7 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		return uuid.Nil, fmt.Errorf("failed to create idea: %w", err)
 	}
 
-	// If the user is on the free plan / not paying, set the UsedFreeTrial flag to true
+	// If the user is on the starter plan / not paying, set the UsedFreeTrial flag to true
 	if !user.IsPaying && !user.UsedFreeTrial {
 		_user := &domain.User{
 			UsedFreeTrial: true,
@@ -168,7 +168,7 @@ func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUI
 	}
 
 	if req.IsPrivate != nil && *req.IsPrivate && user.Plan == domain.StarterPlan {
-		return fmt.Errorf("private ideas are not allowed on the free plan. please upgrade your plan to create private ideas")
+		return fmt.Errorf("private ideas are not allowed on the starter plan. please upgrade your plan to create private ideas")
 	}
 
 	idea := &domain.Idea{

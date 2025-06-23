@@ -43,10 +43,7 @@ export const ManageSubscriptions = () => {
   }, []);
 
   const planLimit = getIdeaLimitByTier(plan);
-  const overLimit =
-    typeof planLimit === "number" && typeof userActiveIdeasCount === "number"
-      ? userActiveIdeasCount >= planLimit
-      : false;
+  const overLimit = userActiveIdeasCount >= planLimit;
 
   return (
     <>
