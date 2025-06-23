@@ -4,14 +4,17 @@ import { cache } from "react";
 import { getPaddleInstance } from ".";
 import { getUser } from "../auth";
 
-export const getCustomerPortalUrl = cache(async () => {
+export const getCustomerPortalUrlAndUser = cache(async () => {
   const user = await getUser();
-  if (!user || !user.paddleCustomerId) return null;
 
-  const portalSession = await getPaddleInstance().customerPortalSessions.create(
-    user.paddleCustomerId,
-    []
-  );
+  if (!user) return null;
 
-  return portalSession?.urls?.general?.overview ?? null;
+  const portalSession = user.paddleCustomerId
+    ? await getPaddleInstance().customerPortalSessions.create(
+        user.paddleCustomerId,
+        []
+      )
+    : null;
+
+  return { url: portalSession?.urls?.general?.overview ?? null, user };
 });

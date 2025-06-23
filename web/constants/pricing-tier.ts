@@ -67,3 +67,18 @@ export const PricingTier: Tier[] = [
     },
   },
 ];
+
+export const getIdeaLimitByTier = (
+  tierId: "starter" | "pro" | "business"
+): number => {
+  switch (tierId) {
+    case "starter":
+      return 1;
+    case "pro":
+      return 10;
+    case "business":
+      return 1000;
+    default:
+      return 1; // Default case if tierId is not recognized
+  }
+};
