@@ -57,6 +57,10 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		return uuid.Nil, fmt.Errorf("user not found")
 	}
 
+	if user.Plan == domain.FreePlan && user.UsedFreeTrial {
+		return uuid.Nil, fmt.Errorf("you have reached your idea limit for the free plan. please upgrade your plan to create more ideas")
+	}
+
 	ideaStatus := domain.IdeaStatusActive
 	ideaLimit := domain.GetIdeaLimitForPlan(user.Plan)
 	activeStatus := domain.IdeaStatusActive
@@ -127,6 +131,14 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 }
 
 func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUID, req request.UpdateIdea) error {
+	user, err := s.u.FindByID(ctx, userId)
+	if err != nil {
+		return fmt.Errorf("failed to find user: %w", err)
+	}
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+
 	// Check if the idea exists
 	existingIdea, _, err := s.repo.GetByID(ctx, ideaId, nil)
 	if err != nil {
@@ -142,14 +154,6 @@ func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUI
 	}
 
 	if req.Status != nil && *req.Status == string(domain.IdeaStatusActive) && existingIdea.Status != string(domain.IdeaStatusActive) {
-		user, err := s.u.FindByID(ctx, userId)
-		if err != nil {
-			return fmt.Errorf("failed to find user: %w", err)
-		}
-		if user == nil {
-			return fmt.Errorf("user not found")
-		}
-
 		activeStatus := domain.IdeaStatusActive
 		currentCount, err := s.repo.GetCountForUser(ctx, userId, nil, nil, &activeStatus)
 		if err != nil {
@@ -160,6 +164,10 @@ func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUI
 		if int(currentCount) >= ideaLimit {
 			return fmt.Errorf("you have reached your idea limit for the %s plan. please upgrade your plan or deactivate an idea to activate more", user.Plan)
 		}
+	}
+
+	if req.IsPrivate != nil && *req.IsPrivate && user.Plan == domain.FreePlan {
+		return fmt.Errorf("private ideas are not allowed on the free plan. please upgrade your plan to create private ideas")
 	}
 
 	idea := &domain.Idea{
