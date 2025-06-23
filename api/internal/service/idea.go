@@ -230,17 +230,10 @@ func (s *ideaService) GetByID(ctx context.Context, id uuid.UUID, userId string) 
 		return nil, err
 	}
 
-	if idea.Status != string(domain.IdeaStatusActive) {
+	// Only the owner can view non-active ideas
+	if idea.Status != string(domain.IdeaStatusActive) && idea.UserID != userId {
 		return nil, gorm.ErrRecordNotFound
 	}
-
-	// ideaJSON, err := json.MarshalIndent(idea, "", "  ") // Marshal to JSON with indentation
-	// if err != nil {
-	// 	fmt.Println("Error marshalling idea to JSON:", err)
-	// 	// Decide if you want to return the error or just log it and proceed
-	// } else {
-	// 	fmt.Println("Found idea (JSON):", string(ideaJSON))
-	// }
 
 	publicIdea := dto.ToPublicIdea(idea, relatedIdeas, userId)
 
@@ -248,10 +241,11 @@ func (s *ideaService) GetByID(ctx context.Context, id uuid.UUID, userId string) 
 }
 
 func (s *ideaService) GetIdeas(ctx context.Context, queryParams domain.QueryParams) (*response.IdeaListResponse, error) {
+	// This method is used for the /explore endpoint and only returns active ideas
 	includePrivateIdeas := false
 	ideasRaw, totalCount, err := s.repo.GetIdeas(ctx, queryParams, repository.IdeaQuerySpec{
 		IncludePrivate: &includePrivateIdeas,
-		Status:         domain.IdeaStatusActive,
+		Status:         domain.IdeaStatusActive, // Only active ideas
 		WithCounts:     true,
 	})
 	if err != nil {
