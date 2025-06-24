@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import "grapesjs/dist/css/grapes.min.css";
@@ -50,64 +50,78 @@ export default function EditLandingPage() {
     isSavingRef,
   });
 
+  const loadHtmlIntoEditor = useCallback(
+    (htmlContent: string, headline = "", subheadline = "", isNew = false) => {
+      if (!grapeEditor || !ideaId) return;
+
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, "text/html");
+
+        const title = doc.querySelector("title")?.textContent || headline;
+        const desc =
+          doc
+            .querySelector('meta[name="description"]')
+            ?.getAttribute("content") || subheadline;
+
+        setMetaTitle(title);
+        setMetaDescription(desc);
+
+        const styleTag = doc.head.querySelector("style");
+        if (styleTag) {
+          grapeEditor.setStyle(styleTag.innerHTML);
+        }
+
+        // remove any script / link tags from the body.
+        // only set the body content
+        doc.body.querySelectorAll("script, link").forEach((el) => el.remove());
+        const bodyContent = doc.body.innerHTML;
+        grapeEditor.setComponents(bodyContent);
+
+        // Track existing assets from loaded HTML
+        const images = doc.querySelectorAll("img[src]");
+        const existingAssets = new Set<string>();
+        images.forEach((img) => {
+          const src = img.getAttribute("src");
+          if (src && !src.startsWith("data:")) {
+            const fileName = extractFileNameFromUrl(src);
+            if (fileName) {
+              existingAssets.add(fileName);
+            }
+          }
+        });
+
+        setCurrentAssets(existingAssets);
+
+        if (isNew) {
+          setIsDirty(true);
+        } else {
+          // use a small timeout to prevent initial load from being marked as a dirty change
+          setTimeout(() => {
+            setIsDirty(false);
+          }, 500);
+        }
+      } catch (error) {
+        console.error("Failed to parse existing HTML:", error);
+        toast.error("Could not load existing page content.");
+      }
+    },
+    [grapeEditor, ideaId, setCurrentAssets, setIsDirty]
+  );
+
   useEffect(() => {
     if (!ideaId || !grapeEditor) return;
 
     const loadEditorContent = async () => {
       await getMVP(ideaId).then((data) => {
         if (data?.htmlContent) {
-          try {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(data.htmlContent, "text/html");
-
-            const title =
-              doc.querySelector("title")?.textContent || data.headline;
-            const desc =
-              doc
-                .querySelector('meta[name="description"]')
-                ?.getAttribute("content") || data.subheadline;
-
-            setMetaTitle(title);
-            setMetaDescription(desc);
-
-            const styleTag = doc.head.querySelector("style");
-            if (styleTag) {
-              grapeEditor.setStyle(styleTag.innerHTML);
-            }
-
-            // remove any script / link tags from the body.
-            // only set the body content
-            doc.body
-              .querySelectorAll("script, link")
-              .forEach((el) => el.remove());
-            const bodyContent = doc.body.innerHTML;
-            grapeEditor.setComponents(bodyContent);
-
-            // Track existing assets from loaded HTML
-            const images = doc.querySelectorAll("img[src]");
-            const existingAssets = new Set<string>();
-            images.forEach((img) => {
-              const src = img.getAttribute("src");
-              if (src && !src.startsWith("data:")) {
-                const fileName = extractFileNameFromUrl(src);
-                if (fileName) {
-                  existingAssets.add(fileName);
-                }
-              }
-            });
-
-            setCurrentAssets(existingAssets);
-            setIsDirty(false);
-          } catch (error) {
-            console.error("Failed to parse existing HTML:", error);
-            toast.error("Could not load existing page content.");
-          }
+          loadHtmlIntoEditor(data.htmlContent, data.headline, data.subheadline);
         }
       });
     };
 
     grapeEditor.onReady(loadEditorContent);
-  }, [ideaId, grapeEditor, setCurrentAssets, setIsDirty]);
+  }, [ideaId, grapeEditor, loadHtmlIntoEditor]);
 
   const handleAIGenerate = async (
     title: string,
@@ -145,26 +159,8 @@ export default function EditLandingPage() {
       return;
     }
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(result.htmlContent, "text/html");
-
-    const newTitle = doc.querySelector("title")?.textContent || "";
-    const newDesc =
-      doc.querySelector('meta[name="description"]')?.getAttribute("content") ||
-      "";
-    setMetaTitle(newTitle);
-    setMetaDescription(newDesc);
-
-    const styleTag = doc.head.querySelector("style");
-    grapeEditor.setStyle(styleTag ? styleTag.innerHTML : "");
-
-    const bodyContent = doc.body.innerHTML;
-    grapeEditor.setComponents(bodyContent);
-
+    loadHtmlIntoEditor(result.htmlContent, title, description, true);
     toast.success("New landing page generated and loaded!");
-    setIsDirty(true);
-
-    toast.success("Landing page generated successfully!");
   };
 
   const handleMetaTitleChange = (newTitle: string) => {
