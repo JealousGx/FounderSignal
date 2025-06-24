@@ -30,6 +30,7 @@ interface AIGenerateModalProps {
 
 const MAX_TITLE_LENGTH = 60;
 const MAX_DESCRIPTION_LENGTH = 160;
+const MAX_CTA_BTN_TEXT_LENGTH = 30;
 const MAX_INSTRUCTIONS_LENGTH = 500;
 
 export const AIGenerateModal = ({
@@ -148,7 +149,7 @@ export const AIGenerateModal = ({
                 value={ctaBtnText}
                 onChange={(e) => setCtaBtnText(e.target.value)}
                 placeholder="Enter call-to-action button text"
-                maxLength={MAX_DESCRIPTION_LENGTH}
+                maxLength={MAX_CTA_BTN_TEXT_LENGTH}
               />
             </div>
 

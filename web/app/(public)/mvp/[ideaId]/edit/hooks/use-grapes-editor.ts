@@ -44,7 +44,12 @@ export function useGrapesEditor(
 
     return () => {
       console.log("Cleaning up GrapesJS editor...");
+
+      editor.off("component:update", onContentChange);
+      editor.off("asset:add", onContentChange);
+      editor.off("asset:remove", onContentChange);
       editor.off("change", onContentChange);
+
       editor.destroy();
       setGrapeEditor(null);
     };
