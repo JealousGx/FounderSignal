@@ -112,16 +112,6 @@ export function getValidatedHtml(
         errorMessage: `You must have at least one <button> with id='${ctaBtnId}' for tracking to work.`,
       };
     }
-
-    for (const el of ctaButtons) {
-      if (el.tagName.toLowerCase() !== "button") {
-        return {
-          html: "",
-          isValid: false,
-          errorMessage: `The id '${ctaBtnId}' can only be used on <button> elements.`,
-        };
-      }
-    }
   } catch (error) {
     console.error("Error validating HTML:", error);
     return {

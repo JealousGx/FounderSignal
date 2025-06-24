@@ -39,15 +39,24 @@ export function useGrapesEditor(
     editor.on("asset:remove", onContentChange);
     editor.on("change", onContentChange);
 
+    console.log("GrapesJS editor initialized");
     setGrapeEditor(editor);
 
     return () => {
+      console.log("Cleaning up GrapesJS editor...");
+
+      editor.off("component:update", onContentChange);
+      editor.off("asset:add", onContentChange);
+      editor.off("asset:remove", onContentChange);
+      editor.off("change", onContentChange);
+
       editor.destroy();
+      setGrapeEditor(null);
     };
 
     // Note: `isSavingRef` is excluded from the dependency array because it is a mutable ref object, and changes to `.current` do not trigger re-renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editorRef, setDirty, grapeEditor]);
+  }, [editorRef, setDirty]);
 
   return grapeEditor;
 }

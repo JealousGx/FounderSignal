@@ -20,6 +20,7 @@ type Handlers struct {
 	Signal    SignalHandler
 	Report    ReportHandler
 	Dashboard DashboardHandler
+	AI        AIHandler
 }
 
 func NewHandlers(services *service.Services) *Handlers {
@@ -32,6 +33,7 @@ func NewHandlers(services *service.Services) *Handlers {
 		Signal:    NewSignalHandler(services.Idea),
 		Report:    NewReportHandler(services.Report),
 		Dashboard: NewDashboardHandler(services.Dashboard),
+		AI:        NewAIHandler(services.AI),
 	}
 }
 

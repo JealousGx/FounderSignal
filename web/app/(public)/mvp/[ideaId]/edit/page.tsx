@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import "grapesjs/dist/css/grapes.min.css";
@@ -12,6 +12,8 @@ import { FloatingActionMenu } from "./floating-menu";
 import { extractFileNameFromUrl } from "./hooks/helpers";
 import { MetaSettingsModal } from "./meta-settings";
 
+import { AIGenerateModal } from "./generate-modal";
+import { generateMVPWithAI } from "./hooks/actions";
 import { useAssets } from "./hooks/use-assets";
 import { useAutoSave } from "./hooks/use-auto-save";
 import { useGrapesEditor } from "./hooks/use-grapes-editor";
@@ -26,6 +28,7 @@ export default function EditLandingPage() {
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
   const [isDirty, setIsDirty, setDirty] = useUnsavedChanges();
   const isSavingRef = useRef(false);
@@ -47,59 +50,118 @@ export default function EditLandingPage() {
     isSavingRef,
   });
 
-  useEffect(() => {
-    if (ideaId && grapeEditor) {
-      getMVP(ideaId).then((data) => {
-        if (data.htmlContent) {
-          try {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(data.htmlContent, "text/html");
+  const loadHtmlIntoEditor = useCallback(
+    (htmlContent: string, headline = "", subheadline = "", isNew = false) => {
+      if (!grapeEditor || !ideaId) return;
 
-            const title = doc.querySelector("title")?.textContent || "";
-            const desc =
-              doc
-                .querySelector('meta[name="description"]')
-                ?.getAttribute("content") || "";
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, "text/html");
 
-            setMetaTitle(title);
-            setMetaDescription(desc);
+        const title = doc.querySelector("title")?.textContent || headline;
+        const desc =
+          doc
+            .querySelector('meta[name="description"]')
+            ?.getAttribute("content") || subheadline;
 
-            const styleTag = doc.head.querySelector("style");
-            if (styleTag) {
-              grapeEditor.setStyle(styleTag.innerHTML);
+        setMetaTitle(title);
+        setMetaDescription(desc);
+
+        const styleTag = doc.head.querySelector("style");
+        if (styleTag) {
+          grapeEditor.setStyle(styleTag.innerHTML);
+        }
+
+        // remove any script / link tags from the body.
+        // only set the body content
+        doc.body.querySelectorAll("script, link").forEach((el) => el.remove());
+        const bodyContent = doc.body.innerHTML;
+        grapeEditor.setComponents(bodyContent);
+
+        // Track existing assets from loaded HTML
+        const images = doc.querySelectorAll("img[src]");
+        const existingAssets = new Set<string>();
+        images.forEach((img) => {
+          const src = img.getAttribute("src");
+          if (src && !src.startsWith("data:")) {
+            const fileName = extractFileNameFromUrl(src);
+            if (fileName) {
+              existingAssets.add(fileName);
             }
-
-            // remove any script / link tags from the body.
-            // only set the body content
-            doc.body
-              .querySelectorAll("script, link")
-              .forEach((el) => el.remove());
-            const bodyContent = doc.body.innerHTML;
-            grapeEditor.setComponents(bodyContent);
-
-            // Track existing assets from loaded HTML
-            const images = doc.querySelectorAll("img[src]");
-            const existingAssets = new Set<string>();
-            images.forEach((img) => {
-              const src = img.getAttribute("src");
-              if (src && !src.startsWith("data:")) {
-                const fileName = extractFileNameFromUrl(src);
-                if (fileName) {
-                  existingAssets.add(fileName);
-                }
-              }
-            });
-
-            setCurrentAssets(existingAssets);
-            setIsDirty(false);
-          } catch (error) {
-            console.error("Failed to parse existing HTML:", error);
-            toast.error("Could not load existing page content.");
           }
+        });
+
+        setCurrentAssets(existingAssets);
+
+        if (isNew) {
+          setIsDirty(true);
+        } else {
+          // use a small timeout to prevent initial load from being marked as a dirty change
+          setTimeout(() => {
+            setIsDirty(false);
+          }, 500);
+        }
+      } catch (error) {
+        console.error("Failed to parse existing HTML:", error);
+        toast.error("Could not load existing page content.");
+      }
+    },
+    [grapeEditor, ideaId, setCurrentAssets, setIsDirty]
+  );
+
+  useEffect(() => {
+    if (!ideaId || !grapeEditor) return;
+
+    const loadEditorContent = async () => {
+      await getMVP(ideaId).then((data) => {
+        if (data?.htmlContent) {
+          loadHtmlIntoEditor(data.htmlContent, data.headline, data.subheadline);
         }
       });
+    };
+
+    grapeEditor.onReady(loadEditorContent);
+  }, [ideaId, grapeEditor, loadHtmlIntoEditor]);
+
+  const handleAIGenerate = async (
+    title: string,
+    description: string,
+    ctaBtnText?: string,
+    instructions?: string
+  ) => {
+    if (!ideaId) {
+      console.error("Idea ID is not available");
+      return;
     }
-  }, [ideaId, grapeEditor, setCurrentAssets, setIsDirty]);
+
+    if (!grapeEditor) {
+      console.error("GrapeJS editor is not initialized");
+      return;
+    }
+
+    toast.info("Generating landing page with AI...");
+    const result = await generateMVPWithAI(
+      ideaId,
+      title,
+      description,
+      ctaBtnText,
+      instructions
+    );
+
+    if (!result || result.error || !result.htmlContent) {
+      console.error("Error generating landing page with AI:", result.error);
+      toast.error(result.error, {
+        description:
+          "Please try again or contact support if the issue persists.",
+        duration: 5000,
+      });
+
+      return;
+    }
+
+    loadHtmlIntoEditor(result.htmlContent, title, description, true);
+    toast.success("New landing page generated and loaded!");
+  };
 
   const handleMetaTitleChange = (newTitle: string) => {
     setMetaTitle(newTitle);
@@ -170,6 +232,7 @@ export default function EditLandingPage() {
       <FloatingActionMenu
         onSave={handleSave}
         onSettingsClick={() => setIsModalOpen(true)}
+        onAIGenerateClick={() => setIsAIModalOpen(true)}
         saveStatus={saveStatus}
       />
 
@@ -180,6 +243,14 @@ export default function EditLandingPage() {
         setMetaTitle={handleMetaTitleChange}
         metaDescription={metaDescription}
         setMetaDescription={handleMetaDescriptionChange}
+      />
+
+      <AIGenerateModal
+        isModalOpen={isAIModalOpen}
+        setIsModalOpen={setIsAIModalOpen}
+        onGenerate={handleAIGenerate}
+        initialTitle={metaTitle}
+        initialDescription={metaDescription}
       />
     </div>
   );

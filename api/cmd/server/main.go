@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	cfg "foundersignal/cmd/config"
+	"foundersignal/internal/pkg/ai"
 	"foundersignal/internal/pkg/auth"
 	"foundersignal/internal/repository"
 	"foundersignal/internal/service"
@@ -49,8 +51,14 @@ func main() {
 
 	db := database.GetDB()
 
+	aiGenerator, err := ai.NewAIGenerator(context.Background(), ai.AIConfig{GeminiAPIKey: cfg.Envs.GeminiAPIKey, GeminiModelCode: cfg.Envs.GeminiModelCode})
+	if err != nil {
+		log.Fatalf("Failed to initialize AI generator: %v", err)
+	}
+	aiService := service.NewAIService(aiGenerator)
+
 	repos := repository.NewRepositories(db)
-	services := service.NewServices(repos, activityBroadcaster)
+	services := service.NewServices(repos, activityBroadcaster, aiService)
 	handlers := http.NewHandlers(services)
 	webhooks := wh.NewWebhooks(services, wh.Secrets{
 		ClerkWebhookSecret:  cfg.Envs.CLERK_WEBHOOK_SECRET,

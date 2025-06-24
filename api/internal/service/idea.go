@@ -8,6 +8,7 @@ import (
 	"foundersignal/internal/dto"
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/dto/response"
+	"foundersignal/internal/pkg/prompts"
 	"foundersignal/internal/repository"
 	"foundersignal/pkg/validator"
 	"log"
@@ -36,15 +37,18 @@ type ideaService struct {
 	repo         repository.IdeaRepository
 	signalRepo   repository.SignalRepository
 	audienceRepo repository.AudienceRepository
+
+	aiService AIService
 }
 
 func NewIdeasService(repo repository.IdeaRepository, u repository.UserRepository, signalRepo repository.SignalRepository,
-	audienceRepo repository.AudienceRepository) *ideaService {
+	audienceRepo repository.AudienceRepository, aiService AIService) *ideaService {
 	return &ideaService{
 		u:            u,
 		repo:         repo,
 		signalRepo:   signalRepo,
 		audienceRepo: audienceRepo,
+		aiService:    aiService,
 	}
 }
 
@@ -94,6 +98,7 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 	ideaSlug = fmt.Sprintf("%s-%s", ideaSlug, userIdSuffix)
 
 	idea := &domain.Idea{
+		Base:           domain.Base{ID: uuid.New()},
 		UserID:         userId,
 		Title:          req.Title,
 		Description:    req.Description,
@@ -109,7 +114,27 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		CTAButton:   req.CTAButton,
 	}
 
-	mvp.HTMLContent = generateLandingPageContent(*mvp)
+	promptData := prompts.LandingPagePromptData{
+		IdeaID:         idea.ID.String(),
+		Title:          idea.Title,
+		Description:    idea.Description,
+		TargetAudience: idea.TargetAudience,
+		CTAButtonText:  mvp.CTAButton,
+	}
+
+	prompt, err := prompts.BuildLandingPagePrompt(promptData)
+	if err != nil {
+		log.Printf("Error building landing page prompt for idea %s: %v", idea.ID, err)
+		mvp.HTMLContent = ""
+	} else {
+		htmlContent, err := s.aiService.Generate(ctx, prompt)
+		if err != nil {
+			log.Printf("Error generating AI landing page for idea %s: %v", idea.ID, err)
+			mvp.HTMLContent = generateLandingPageContent(*mvp)
+		} else {
+			mvp.HTMLContent = htmlContent
+		}
+	}
 
 	ideaId, err := s.repo.CreateWithMVP(ctx, idea, mvp)
 	if err != nil {
@@ -124,7 +149,6 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 
 		if err := s.u.Update(ctx, userId, _user); err != nil {
 			log.Printf("WARNING: Failed to update user after creating idea: %v", err)
-
 		}
 	}
 
