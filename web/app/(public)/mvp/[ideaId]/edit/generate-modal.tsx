@@ -30,6 +30,7 @@ interface AIGenerateModalProps {
 
 const MAX_TITLE_LENGTH = 60;
 const MAX_DESCRIPTION_LENGTH = 160;
+const MAX_INSTRUCTIONS_LENGTH = 500;
 
 export const AIGenerateModal = ({
   isModalOpen,
@@ -47,6 +48,23 @@ export const AIGenerateModal = ({
   const handleGenerateClick = async () => {
     if (!title || !description) {
       alert("Title and Description are required.");
+      return;
+    }
+
+    if (title.length > MAX_TITLE_LENGTH) {
+      alert(`Title cannot exceed ${MAX_TITLE_LENGTH} characters.`);
+      return;
+    }
+
+    if (description.length > MAX_DESCRIPTION_LENGTH) {
+      alert(`Description cannot exceed ${MAX_DESCRIPTION_LENGTH} characters.`);
+      return;
+    }
+
+    if (instructions.length > MAX_INSTRUCTIONS_LENGTH) {
+      alert(
+        `Instructions cannot exceed ${MAX_INSTRUCTIONS_LENGTH} characters.`
+      );
       return;
     }
 
@@ -147,8 +165,10 @@ export const AIGenerateModal = ({
                 id="instructions"
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
-                placeholder="e.g., Use a dark theme, make it playful, target audience is developers..."
+                placeholder="Anything including image urls to use in sections. e.g., Use a dark theme, make it playful, target audience is developers..."
                 rows={3}
+                maxLength={MAX_INSTRUCTIONS_LENGTH}
+                className="max-w-md"
               />
             </div>
           </div>
