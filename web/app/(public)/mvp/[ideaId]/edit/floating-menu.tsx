@@ -5,6 +5,7 @@ import {
   Pencil,
   Save,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -20,10 +21,12 @@ type SaveStatus = "idle" | "saving" | "success" | "error";
 export const FloatingActionMenu = ({
   onSave,
   onSettingsClick,
+  onAIGenerateClick,
   saveStatus,
 }: {
   onSave: () => void;
   onSettingsClick: () => void;
+  onAIGenerateClick: () => void;
   saveStatus: SaveStatus;
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -71,6 +74,27 @@ export const FloatingActionMenu = ({
             <p>Save Landing Page</p>
           </TooltipContent>
         </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              className="bg-gradient-to-br from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 border-0 rounded-full w-10 h-10 p-0 shadow-lg"
+              onClick={onAIGenerateClick}
+            >
+              <Sparkles className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>
+              Generate with AI
+              <br />
+              (Replaces current content)
+            </p>
+          </TooltipContent>
+        </Tooltip>
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -87,6 +111,7 @@ export const FloatingActionMenu = ({
           </TooltipContent>
         </Tooltip>
       </div>
+
       <Tooltip>
         <TooltipTrigger asChild>
           <Button

@@ -12,6 +12,8 @@ import { FloatingActionMenu } from "./floating-menu";
 import { extractFileNameFromUrl } from "./hooks/helpers";
 import { MetaSettingsModal } from "./meta-settings";
 
+import { AIGenerateModal } from "./generate-modal";
+import { generateMVPWithAI } from "./hooks/actions";
 import { useAssets } from "./hooks/use-assets";
 import { useAutoSave } from "./hooks/use-auto-save";
 import { useGrapesEditor } from "./hooks/use-grapes-editor";
@@ -26,6 +28,7 @@ export default function EditLandingPage() {
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
   const [isDirty, setIsDirty, setDirty] = useUnsavedChanges();
   const isSavingRef = useRef(false);
@@ -57,11 +60,12 @@ export default function EditLandingPage() {
             const parser = new DOMParser();
             const doc = parser.parseFromString(data.htmlContent, "text/html");
 
-            const title = doc.querySelector("title")?.textContent || "";
+            const title =
+              doc.querySelector("title")?.textContent || data.headline;
             const desc =
               doc
                 .querySelector('meta[name="description"]')
-                ?.getAttribute("content") || "";
+                ?.getAttribute("content") || data.subheadline;
 
             setMetaTitle(title);
             setMetaDescription(desc);
@@ -104,6 +108,64 @@ export default function EditLandingPage() {
 
     grapeEditor.onReady(loadEditorContent);
   }, [ideaId, grapeEditor, setCurrentAssets, setIsDirty]);
+
+  const handleAIGenerate = async (
+    title: string,
+    description: string,
+    ctaBtnText?: string,
+    instructions?: string
+  ) => {
+    if (!ideaId) {
+      console.error("Idea ID is not available");
+      return;
+    }
+
+    if (!grapeEditor) {
+      console.error("GrapeJS editor is not initialized");
+      return;
+    }
+
+    toast.info("Generating landing page with AI...");
+    const result = await generateMVPWithAI(
+      ideaId,
+      title,
+      description,
+      ctaBtnText,
+      instructions
+    );
+
+    if (!result || result.error || !result.htmlContent) {
+      console.error("Error generating landing page with AI:", result.error);
+      toast.error(result.error, {
+        description:
+          "Please try again or contact support if the issue persists.",
+        duration: 5000,
+      });
+
+      return;
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(result.htmlContent, "text/html");
+
+    const newTitle = doc.querySelector("title")?.textContent || "";
+    const newDesc =
+      doc.querySelector('meta[name="description"]')?.getAttribute("content") ||
+      "";
+    setMetaTitle(newTitle);
+    setMetaDescription(newDesc);
+
+    const styleTag = doc.head.querySelector("style");
+    grapeEditor.setStyle(styleTag ? styleTag.innerHTML : "");
+
+    const bodyContent = doc.body.innerHTML;
+    grapeEditor.setComponents(bodyContent);
+
+    toast.success("New landing page generated and loaded!");
+    setIsDirty(true);
+
+    toast.success("Landing page generated successfully!");
+  };
 
   const handleMetaTitleChange = (newTitle: string) => {
     setMetaTitle(newTitle);
@@ -174,6 +236,7 @@ export default function EditLandingPage() {
       <FloatingActionMenu
         onSave={handleSave}
         onSettingsClick={() => setIsModalOpen(true)}
+        onAIGenerateClick={() => setIsAIModalOpen(true)}
         saveStatus={saveStatus}
       />
 
@@ -184,6 +247,14 @@ export default function EditLandingPage() {
         setMetaTitle={handleMetaTitleChange}
         metaDescription={metaDescription}
         setMetaDescription={handleMetaDescriptionChange}
+      />
+
+      <AIGenerateModal
+        isModalOpen={isAIModalOpen}
+        setIsModalOpen={setIsAIModalOpen}
+        onGenerate={handleAIGenerate}
+        initialTitle={metaTitle}
+        initialDescription={metaDescription}
       />
     </div>
   );

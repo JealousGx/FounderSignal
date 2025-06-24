@@ -12,7 +12,7 @@ export const CustomTooltip = ({ text }: { text: string }) => {
         <Info className="text-muted-foreground w-4 h-4" />
       </TooltipTrigger>
       <TooltipContent
-        className="bg-accent-foreground"
+        className="bg-accent-foreground max-w-sm"
         arrowClasses="bg-accent-foreground fill-accent-foreground"
       >
         {text}
