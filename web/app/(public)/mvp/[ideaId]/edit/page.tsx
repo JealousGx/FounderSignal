@@ -48,9 +48,11 @@ export default function EditLandingPage() {
   });
 
   useEffect(() => {
-    if (ideaId && grapeEditor) {
-      getMVP(ideaId).then((data) => {
-        if (data.htmlContent) {
+    if (!ideaId || !grapeEditor) return;
+
+    const loadEditorContent = async () => {
+      await getMVP(ideaId).then((data) => {
+        if (data?.htmlContent) {
           try {
             const parser = new DOMParser();
             const doc = parser.parseFromString(data.htmlContent, "text/html");
@@ -98,7 +100,9 @@ export default function EditLandingPage() {
           }
         }
       });
-    }
+    };
+
+    grapeEditor.onReady(loadEditorContent);
   }, [ideaId, grapeEditor, setCurrentAssets, setIsDirty]);
 
   const handleMetaTitleChange = (newTitle: string) => {
