@@ -85,6 +85,15 @@ const LandingPagePromptTemplate = `As an expert web developer, create a complete
 
 6. Do not include any other "<script>" tags or external JavaScript files.
 7. The main call-to-action button must have id="ctaButton".
+8. The call-to-action button and section should not redirect to each other.
+9. On  clicking the call-to-action button, it should show a popup with the message "Thanks for your interest!".
+10. The landing page should not include any external links or references to other websites.
+11. The landing page should be responsive and work well on both desktop and mobile devices.
+12. Use semantic HTML5 elements where appropriate (e.g., <header>, <section>, <footer>).
+13. Ensure the page is accessible, with proper alt text for images and ARIA roles where necessary.
+14. The landing page should be SEO-friendly with appropriate meta tags.
+15. Do not include anything else on your own, such as styling, scripts. The output will be strictly checked for compliance.
+16. The landing page should be designed to convert visitors into leads or customers.
 
 **Idea Details:**
 *   **Idea Title/Name:** {{.Title}}
