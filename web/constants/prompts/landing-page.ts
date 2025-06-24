@@ -93,6 +93,8 @@ export const getLandingPagePromptTemplate = (
 14. The landing page should be SEO-friendly with appropriate meta tags.
 15. Do not include anything else on your own, such as styling, scripts. The output will be strictly checked for compliance.
 16. The landing page should be designed to convert visitors into leads or customers.
+17. If you are to add images, make sure they are high-quality and relevant to the product/idea. And that the images are loaded with a smooth transition effect and are optimized.
+18. The end result should not have a high LCP or CLS score, so ensure images are optimized and loaded properly.
 
 ${instructions ? `**Additional Instructions:** ${instructions}` : ""}
 
