@@ -17,6 +17,9 @@ type Config struct {
 
 	PADDLE_WEBHOOK_SECRET string
 
+	GeminiAPIKey    string
+	GeminiModelCode string
+
 	APP_ENV string
 }
 
@@ -43,6 +46,9 @@ func initConfig() Config {
 		CLERK_WEBHOOK_SECRET: getEnv("CLERK_WEBHOOK_SECRET", "whsec_abcdefghijklmnopqrstuvwxyz"),
 
 		PADDLE_WEBHOOK_SECRET: getEnv("PADDLE_WEBHOOK_SECRET", "abcd_abcd_abcd"),
+
+		GeminiAPIKey:    getEnv("GEMINI_API_KEY", "your-gemini-api-key"),
+		GeminiModelCode: getEnv("GEMINI_MODEL_CODE", "gemini-1.5-flash"),
 
 		APP_ENV: getEnv("APP_ENV", "development"),
 	}
