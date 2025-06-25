@@ -18,6 +18,14 @@ type UpdateIdea struct {
 	ImageURL       *string `json:"imageUrl"`
 }
 
-type UpdateMVP struct {
+type CreateMVP struct {
+	Name        string `json:"name" binding:"required"`
 	HTMLContent string `json:"htmlContent" binding:"required"`
+	IsActive    bool   `json:"isActive"`
+}
+
+type UpdateMVP struct {
+	Name        *string `json:"name"`
+	IsActive    *bool   `json:"isActive"`
+	HTMLContent string  `json:"htmlContent" binding:"required"`
 }

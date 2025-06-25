@@ -26,7 +26,13 @@ func registerProtectedRoutes(router *gin.RouterGroup, h *Handlers) {
 	ideasRouter.POST("/", h.Idea.Create)
 	ideasRouter.PUT("/:ideaId", h.Idea.Update)
 	ideasRouter.DELETE("/:ideaId", h.Idea.Delete)
-	ideasRouter.PUT("/:ideaId/mvp", h.MVP.Update)
+
+	ideasRouter.POST("/:ideaId/mvp", h.MVP.Create)
+	ideasRouter.PUT("/:ideaId/mvp/:mvpId", h.MVP.Update)
+	ideasRouter.GET("/:ideaId/mvp/:mvpId", h.MVP.GetByID)
+	ideasRouter.GET("/:ideaId/mvps", h.MVP.GetAllByIdea)
+	ideasRouter.PATCH("/:ideaId/mvp/:mvpId/active", h.MVP.SetActive)
+	ideasRouter.DELETE("/:ideaId/mvp/:mvpId", h.MVP.Delete)
 
 	ideasRouter.POST("/:ideaId/feedback", h.Feedback.Create)
 	ideasRouter.POST("/:ideaId/feedback/:feedbackId", h.Feedback.Create)

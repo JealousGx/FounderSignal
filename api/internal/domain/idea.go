@@ -31,7 +31,7 @@ type Idea struct {
 	DislikedByUser bool    `json:"dislikedByUser,omitempty"`
 
 	// Relationships
-	MVPSimulator    *MVPSimulator    `gorm:"foreignKey:IdeaID" json:"mvpSimulator,omitempty"`
+	MVPs            []MVPSimulator   `gorm:"foreignKey:IdeaID" json:"mvps,omitempty"`
 	Signals         []Signal         `gorm:"foreignKey:IdeaID" json:"signals,omitempty"`
 	Feedback        []Feedback       `gorm:"foreignKey:IdeaID" json:"comments,omitempty"`
 	AudienceMembers []AudienceMember `gorm:"foreignKey:IdeaID" json:"audience,omitempty"`
@@ -77,11 +77,10 @@ func (i *Idea) AfterFind(tx *gorm.DB) (err error) {
 
 // MVPSimulator represents the mock landing page for an idea
 type MVPSimulator struct {
+	Base
 	IdeaID      uuid.UUID `gorm:"type:uuid;not null;index" json:"ideaId"`
-	Headline    string    `json:"headline"`
-	Subheadline string    `json:"subheadline"`
-	CTAText     string    `json:"ctaText"`
-	CTAButton   string    `json:"ctaButtonText"`
+	Name        string    `gorm:"not null" json:"name"`
+	IsActive    bool      `gorm:"default:false;not null" json:"isActive"`
 	HTMLContent string    `gorm:"type:text" json:"htmlContent"`
 
 	// Relationships

@@ -11,15 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-func ToCreateIdeaRequest(idea *domain.Idea) *request.CreateIdea {
-	return &request.CreateIdea{
-		Title:          idea.Title,
-		Description:    idea.Description,
-		TargetAudience: idea.TargetAudience,
-		CTAButton:      idea.MVPSimulator.CTAButton,
-	}
-}
-
 func ToIdeasListResponse(ideas []*domain.Idea, count int64, stats *response.UserDashboardStats) *response.IdeaListResponse {
 	res := &response.IdeaListResponse{
 		Total: count,

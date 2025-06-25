@@ -264,10 +264,6 @@ func seedIdeas(ctx context.Context, db *gorm.DB, uniqueIdeaTitles []string, coun
 
 		mvp := &domain.MVPSimulator{
 			IdeaID:      idea.ID,
-			Headline:    idea.Title,
-			Subheadline: generateSubheadline(idea.Description, 10, 25),
-			CTAText:     randomOptionalElement(ctaTexts, 60),
-			CTAButton:   randomElement(ctaButtons, "Learn More", 90),
 			HTMLContent: generateHTMLContent(idea.Title, idea.Description, randomElement(ctaButtons, "Sign Up", 100)),
 		}
 

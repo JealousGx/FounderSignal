@@ -35,17 +35,19 @@ type IdeaService interface {
 type ideaService struct {
 	u            repository.UserRepository
 	repo         repository.IdeaRepository
+	mvpRepo      repository.MVPRepository
 	signalRepo   repository.SignalRepository
 	audienceRepo repository.AudienceRepository
 
 	aiService AIService
 }
 
-func NewIdeasService(repo repository.IdeaRepository, u repository.UserRepository, signalRepo repository.SignalRepository,
+func NewIdeasService(repo repository.IdeaRepository, mvpRepo repository.MVPRepository, u repository.UserRepository, signalRepo repository.SignalRepository,
 	audienceRepo repository.AudienceRepository, aiService AIService) *ideaService {
 	return &ideaService{
 		u:            u,
 		repo:         repo,
+		mvpRepo:      mvpRepo,
 		signalRepo:   signalRepo,
 		audienceRepo: audienceRepo,
 		aiService:    aiService,
@@ -98,7 +100,6 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 	ideaSlug = fmt.Sprintf("%s-%s", ideaSlug, userIdSuffix)
 
 	idea := &domain.Idea{
-		Base:           domain.Base{ID: uuid.New()},
 		UserID:         userId,
 		Title:          req.Title,
 		Description:    req.Description,
@@ -107,19 +108,23 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		Status:         string(ideaStatus),
 	}
 
+	ideaId, err := s.repo.Create(ctx, idea)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to create idea: %w", err)
+	}
+
 	mvp := &domain.MVPSimulator{
-		IdeaID:      idea.ID,
-		Headline:    idea.Title,
-		Subheadline: idea.Description,
-		CTAButton:   req.CTAButton,
+		IdeaID:   ideaId,
+		Name:     "Initial Version",
+		IsActive: true,
 	}
 
 	promptData := prompts.LandingPagePromptData{
-		IdeaID:         idea.ID.String(),
+		IdeaID:         ideaId.String(),
 		Title:          idea.Title,
 		Description:    idea.Description,
 		TargetAudience: idea.TargetAudience,
-		CTAButtonText:  mvp.CTAButton,
+		CTAButtonText:  req.CTAButton,
 	}
 
 	prompt, err := prompts.BuildLandingPagePrompt(promptData)
@@ -130,15 +135,15 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		htmlContent, err := s.aiService.Generate(ctx, prompt)
 		if err != nil {
 			log.Printf("Error generating AI landing page for idea %s: %v", idea.ID, err)
-			mvp.HTMLContent = generateLandingPageContent(*mvp)
+			mvp.HTMLContent = generateLandingPageContent(ideaId, idea.Title, idea.Description, req.CTAButton)
 		} else {
 			mvp.HTMLContent = htmlContent
 		}
 	}
 
-	ideaId, err := s.repo.CreateWithMVP(ctx, idea, mvp)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("failed to create idea: %w", err)
+	if _, err := s.mvpRepo.Create(ctx, mvp); err != nil {
+		log.Printf("Error creating MVP for idea %s: %v", idea.ID, err)
+		return ideaId, fmt.Errorf("failed to create MVP for idea: %w", err)
 	}
 
 	// If the user is on the starter plan / not paying, set the UsedFreeTrial flag to true
@@ -493,7 +498,7 @@ func (s *ideaService) getUserDashboardStats(ctx context.Context, userId string) 
 	}, nil
 }
 
-func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
+func generateLandingPageContent(ideaId uuid.UUID, headline, subheadline, ctaBtn string) string {
 	const TAILWIND_CSS_URL = "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
 
 	return fmt.Sprintf(
@@ -594,11 +599,11 @@ func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
     </script>
 </body>
 </html>`,
-		mvpDetails.Headline,
-		mvpDetails.Subheadline,
+		headline,
+		subheadline,
 		TAILWIND_CSS_URL,
-		mvpDetails.CTAButton,
-		mvpDetails.IdeaID.String(),
+		ctaBtn,
+		ideaId.String(),
 	)
 }
 

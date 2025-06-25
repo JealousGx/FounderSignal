@@ -13,7 +13,7 @@ import (
 )
 
 type IdeaRepository interface {
-	CreateWithMVP(ctx context.Context, idea *domain.Idea, mvp *domain.MVPSimulator) (uuid.UUID, error)
+	Create(ctx context.Context, idea *domain.Idea) (uuid.UUID, error)
 	Update(ctx context.Context, idea *domain.Idea) error
 	Delete(ctx context.Context, ideaId uuid.UUID) error
 	GetIdeas(ctx context.Context, queryParams domain.QueryParams, spec IdeaQuerySpec) ([]*domain.Idea, int64, error)
@@ -39,23 +39,15 @@ func NewIdeasRepo(db *gorm.DB) *ideaRepository {
 }
 
 // create both the idea and the MVP simulator
-func (r *ideaRepository) CreateWithMVP(ctx context.Context, idea *domain.Idea, mvp *domain.MVPSimulator) (uuid.UUID, error) {
-	var ideaID uuid.UUID
-
+func (r *ideaRepository) Create(ctx context.Context, idea *domain.Idea) (uuid.UUID, error) {
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(idea).Error; err != nil {
 			fmt.Println("Validation error:", err)
 			return err
 		}
 
-		ideaID = idea.ID
 		searchableText := fmt.Sprintf("%s %s %s", idea.Title, idea.Description, idea.TargetAudience)
 		if err := tx.Model(idea).UpdateColumn("search_vector", gorm.Expr("to_tsvector('english', ?)", searchableText)).Error; err != nil {
-			return err
-		}
-
-		mvp.IdeaID = ideaID
-		if err := tx.Create(mvp).Error; err != nil {
 			return err
 		}
 
@@ -88,12 +80,35 @@ func (r *ideaRepository) Update(ctx context.Context, idea *domain.Idea) error {
 }
 
 func (r *ideaRepository) Delete(ctx context.Context, ideaId uuid.UUID) error {
-	if err := r.db.WithContext(ctx).Delete(&domain.Idea{}, ideaId).Error; err != nil {
-		fmt.Println("Error deleting idea:", err)
-		return err
-	}
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Delete all related records first to maintain referential integrity
+		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.MVPSimulator{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.Signal{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.Feedback{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.AudienceMember{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.IdeaReaction{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.Report{}).Error; err != nil {
+			return err
+		}
 
-	return nil
+		// Finally, delete the idea itself
+		if err := tx.Delete(&domain.Idea{}, ideaId).Error; err != nil {
+			fmt.Println("Error deleting idea:", err)
+			return err
+		}
+
+		return nil
+	})
 }
 
 func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryParams, spec IdeaQuerySpec) ([]*domain.Idea, int64, error) {
