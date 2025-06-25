@@ -30,6 +30,13 @@ func (h *signalHandler) RecordSignal(c *gin.Context) {
 		return
 	}
 
+	mvpIDStr := c.Param("mvpId")
+	mvpId, err := uuid.Parse(mvpIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid MVP ID format"})
+		return
+	}
+
 	var req request.RecordSignalRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -44,7 +51,7 @@ func (h *signalHandler) RecordSignal(c *gin.Context) {
 	ipAddress := c.ClientIP()
 	userAgent := c.Request.UserAgent()
 
-	err = h.ideaService.RecordSignal(c.Request.Context(), ideaID, userId, req.EventType, ipAddress, userAgent, req.Metadata)
+	err = h.ideaService.RecordSignal(c.Request.Context(), ideaID, mvpId, userId, req.EventType, ipAddress, userAgent, req.Metadata)
 	if err != nil {
 		log.Printf("Error recording signal for idea %s: %v", ideaIDStr, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to record signal"})

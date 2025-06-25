@@ -8,15 +8,17 @@ import (
 
 // AudienceMember represents a subscriber who has signed up for an idea
 type AudienceMember struct {
-	UserID     string     `gorm:"not null;uniqueIndex:idx_audience_idea_user" json:"userId"`
-	UserEmail  string     `gorm:"type:varchar(255);uniqueIndex:idx_audience_idea_user" json:"userEmail"`
-	SignupTime time.Time  `gorm:"not null;default:now()" json:"signupTime"`
-	IdeaID     uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_audience_idea_user" json:"ideaId"`
-	Engaged    bool       `gorm:"default:false" json:"engaged"`
-	Converted  bool       `gorm:"default:false" json:"converted"`
-	LastActive *time.Time `json:"lastActive,omitempty"`
-	Visits     int        `gorm:"default:0" json:"visits"`
+	UserID         string     `gorm:"not null;uniqueIndex:idx_mvp_user" json:"userId"`
+	UserEmail      string     `gorm:"type:varchar(255)" json:"userEmail"`
+	SignupTime     time.Time  `gorm:"not null;default:now()" json:"signupTime"`
+	MVPSimulatorID uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_mvp_user" json:"mvpSimulatorId"`
+	IdeaID         uuid.UUID  `gorm:"type:uuid;not null" json:"ideaId"`
+	Engaged        bool       `gorm:"default:false" json:"engaged"`
+	Converted      bool       `gorm:"default:false" json:"converted"`
+	LastActive     *time.Time `json:"lastActive,omitempty"`
+	Visits         int        `gorm:"default:0" json:"visits"`
 
 	// Relationships
-	Idea Idea `gorm:"foreignKey:IdeaID" json:"idea,omitempty"`
+	Idea         Idea         `gorm:"foreignKey:IdeaID" json:"idea,omitempty"`
+	MVPSimulator MVPSimulator `gorm:"foreignKey:MVPSimulatorID" json:"-"`
 }

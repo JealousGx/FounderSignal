@@ -13,7 +13,7 @@ import (
 
 type AudienceRepository interface {
 	GetForFounder(ctx context.Context, founderId string, queryParams domain.QueryParams) ([]*domain.AudienceMember, int64, error)
-	Upsert(ctx context.Context, ideaID uuid.UUID, userID string, userEmail string) (*domain.AudienceMember, error)
+	Upsert(ctx context.Context, ideaID, mvpId uuid.UUID, userID string, userEmail string) (*domain.AudienceMember, error)
 	GetByIdeaId(ctx context.Context, ideaId uuid.UUID) ([]*domain.AudienceMember, error)
 	GetSignupsByIdeaIds(ctx context.Context, ideaIds []uuid.UUID, from, to time.Time) (map[uuid.UUID]map[string]int, error)
 	GetRecentByUserIdeas(ctx context.Context, userID string, limit int) ([]domain.AudienceMember, error)
@@ -86,11 +86,12 @@ func (r *audienceRepository) GetForFounder(ctx context.Context, founderId string
 	return audienceMembers, count, nil
 }
 
-func (r *audienceRepository) Upsert(ctx context.Context, ideaID uuid.UUID, userID string, userEmail string) (*domain.AudienceMember, error) {
+func (r *audienceRepository) Upsert(ctx context.Context, ideaID, mvpId uuid.UUID, userID string, userEmail string) (*domain.AudienceMember, error) {
 	member := domain.AudienceMember{
-		IdeaID:    ideaID,
-		UserID:    userID,
-		UserEmail: userEmail,
+		IdeaID:         ideaID,
+		MVPSimulatorID: mvpId,
+		UserID:         userID,
+		UserEmail:      userEmail,
 	}
 
 	now := time.Now()
@@ -103,13 +104,14 @@ func (r *audienceRepository) Upsert(ctx context.Context, ideaID uuid.UUID, userI
 			"engaged":     true,
 		}),
 	}).FirstOrCreate(&member, domain.AudienceMember{
-		IdeaID:     ideaID,
-		UserID:     userID,
-		UserEmail:  userEmail,
-		SignupTime: time.Now(),
-		LastActive: &now,
-		Visits:     1,
-		Engaged:    true,
+		IdeaID:         ideaID,
+		MVPSimulatorID: mvpId,
+		UserID:         userID,
+		UserEmail:      userEmail,
+		SignupTime:     time.Now(),
+		LastActive:     &now,
+		Visits:         1,
+		Engaged:        true,
 	}).Error
 
 	if err != nil {

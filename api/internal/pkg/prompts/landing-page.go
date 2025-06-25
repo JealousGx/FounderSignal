@@ -16,9 +16,10 @@ const LandingPagePromptTemplate = `As an expert web developer, create a complete
 
 <script data-founder-signal-script="true">(function() {
     const ideaId = "{{.IdeaID}}";
+    const mvpId = "{{.MVPID}}";
     const postTrackEvent = (eventType, metadata) => {
         if (window.parent && window.parent.postMessage) {
-            window.parent.postMessage({ type: 'founderSignalTrack', eventType: eventType, ideaId: ideaId, metadata: metadata }, '*');
+            window.parent.postMessage({ type: 'founderSignalTrack', eventType: eventType, ideaId: ideaId, mvpId: mvpId, metadata: metadata }, '*');
         }
     };
 
@@ -106,6 +107,7 @@ const LandingPagePromptTemplate = `As an expert web developer, create a complete
 
 type LandingPagePromptData struct {
 	IdeaID         string
+	MVPID          string
 	Title          string
 	Description    string
 	TargetAudience string
