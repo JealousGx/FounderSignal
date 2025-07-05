@@ -5,12 +5,13 @@ import { cache } from "react";
 
 export async function sendSignal(
   ideaId: string,
+  mvpId: string | null | undefined,
   eventType: string,
   metadata?: { [key: string]: unknown }
 ): Promise<void> {
   try {
     await api.post(
-      `/ideas/${ideaId}/signals`,
+      `/ideas/${ideaId}/mvp/${mvpId}/signals`,
       JSON.stringify({ eventType, metadata })
     );
     console.log(`Signal '${eventType}' sent for idea ${ideaId}`, metadata);
@@ -19,9 +20,15 @@ export async function sendSignal(
   }
 }
 
-export const getMVP = cache(async (ideaId: string) => {
+export const getMVP = cache(async (ideaId: string, mvpId?: string | null) => {
   try {
-    const response = await api.get(`/ideas/${ideaId}/mvp`, {
+    let url = `/ideas/${ideaId}/mvp`;
+
+    if (mvpId) {
+      url = `/dashboard/ideas/${ideaId}/mvp/${mvpId}`;
+    }
+
+    const response = await api.get(url, {
       cache: "force-cache",
       next: {
         revalidate: 3600,

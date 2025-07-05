@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import BasicDetailsForm from "@/components/dashboard/ideas/single/edit/basic-details-form";
 import DangerZone from "@/components/dashboard/ideas/single/edit/danger-zone";
 import EditHeader from "@/components/dashboard/ideas/single/edit/header";
+import LandingPagesManager from "@/components/dashboard/ideas/single/edit/landing-pages-manager";
 import { Link } from "@/components/ui/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,7 +21,7 @@ interface EditIdeaPageProps {
 export default async function EditIdeaPage({ params }: EditIdeaPageProps) {
   const { id } = await params;
 
-  const data = await getIdea(id, { withMVP: true });
+  const data = await getIdea(id, { withMVPs: true });
 
   if (!data) {
     notFound();
@@ -42,19 +43,26 @@ export default async function EditIdeaPage({ params }: EditIdeaPageProps) {
       </Suspense>
 
       <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="w-full md:w-auto grid grid-cols-2 mb-4 bg-gray-200">
+        <TabsList className="w-full md:w-auto grid grid-cols-3 mb-4 bg-gray-200">
           <TabsTrigger value="basic">Basic Details</TabsTrigger>
+          <TabsTrigger value="landing-pages">Landing Pages</TabsTrigger>
           <TabsTrigger value="advanced">Advanced Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic">
-          <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+          <Suspense fallback={<Skeleton className="h-[200px]" />}>
             <BasicDetailsForm idea={idea} />
           </Suspense>
         </TabsContent>
 
+        <TabsContent value="landing-pages">
+          <Suspense fallback={<Skeleton className="h-[200px]" />}>
+            <LandingPagesManager mvps={data.mvps} ideaId={id} />
+          </Suspense>
+        </TabsContent>
+
         <TabsContent value="advanced">
-          <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
+          <Suspense fallback={<Skeleton className="h-[200px]" />}>
             <DangerZone ideaId={id} ideaTitle={idea.title} />
           </Suspense>
         </TabsContent>

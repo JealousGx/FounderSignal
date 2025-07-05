@@ -2,7 +2,7 @@ import { Assets, Editor } from "grapesjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { updateMVP } from "./actions";
+import { createMVP, updateMVP } from "./actions";
 import { optimizeHtmlImages } from "./helpers";
 import { AssetUrlMap } from "./use-assets";
 import { getValidatedHtml } from "./validation";
@@ -14,6 +14,8 @@ export type SaveStatus = "idle" | "saving" | "success" | "error";
 
 export function useAutoSave({
   ideaId,
+  mvpId,
+  isNew,
   grapeEditor,
   isDirty,
   setIsDirty,
@@ -24,6 +26,8 @@ export function useAutoSave({
   isSavingRef,
 }: {
   ideaId: string | undefined;
+  mvpId: string | null;
+  isNew: boolean | null | undefined;
   grapeEditor: Editor | null;
   isDirty: boolean;
   setIsDirty: React.Dispatch<React.SetStateAction<boolean>>;
@@ -36,13 +40,16 @@ export function useAutoSave({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  if (!ideaId) {
-    throw new Error("Idea ID is required for auto-save functionality");
+  if (!ideaId && !mvpId) {
+    throw new Error(
+      "Idea ID and MVP ID are required for auto-save functionality"
+    );
   }
 
   const handleSave = useCallback(
     async (isAutoSave = false) => {
-      if (!ideaId || !grapeEditor || isSavingRef.current) return;
+      if (!ideaId || (!ideaId && !mvpId) || !grapeEditor || isSavingRef.current)
+        return;
 
       isSavingRef.current = true;
       setSaveStatus("saving");
@@ -65,6 +72,7 @@ export function useAutoSave({
 
         const validatedHtmlRes = getValidatedHtml(
           ideaId,
+          mvpId,
           bodyContent,
           styles,
           metaTitle,
@@ -87,15 +95,29 @@ export function useAutoSave({
         // Clean up orphaned assets
         await cleanupOrphanedAssets(html);
 
-        const data = await updateMVP(ideaId, html);
-        if (data.error) throw new Error(data.error || "Save failed");
+        if (isNew) {
+          const name = `Variant ${new Date().toLocaleDateString()}`;
 
-        setSaveStatus("success");
-        setIsDirty(false);
+          const data = await createMVP(ideaId, name, html);
+          if (data.error || !data.mvpId)
+            throw new Error(data.error || "Save failed");
 
-        if (!isAutoSave) {
+          setSaveStatus("success");
+          setIsDirty(false);
+
           toast.dismiss();
-          toast.success("Landing page saved successfully!");
+          toast.success("Landing page created successfully!");
+        } else {
+          const data = await updateMVP(ideaId, mvpId, html);
+          if (data.error) throw new Error(data.error || "Save failed");
+
+          setSaveStatus("success");
+          setIsDirty(false);
+
+          if (!isAutoSave) {
+            toast.dismiss();
+            toast.success("Landing page saved successfully!");
+          }
         }
       } catch (error) {
         const err = error as Error;
@@ -118,6 +140,8 @@ export function useAutoSave({
     },
     [
       ideaId,
+      mvpId,
+      isNew,
       grapeEditor,
       isSavingRef,
       handleImageUploads,
@@ -134,18 +158,21 @@ export function useAutoSave({
       clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    if (isDirty && saveStatus !== "saving") {
-      autoSaveTimeoutRef.current = setTimeout(() => {
-        handleSave(true); // Call save with auto-save flag
-      }, AUTOSAVE_DELAY);
+    if (isNew || !isDirty || saveStatus !== "saving") {
+      // If it's a new page or not dirty, don't auto-save
+      return;
     }
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      handleSave(true); // Call save with auto-save flag
+    }, AUTOSAVE_DELAY);
 
     return () => {
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [isDirty, saveStatus, handleSave]);
+  }, [isNew, isDirty, saveStatus, handleSave]);
 
   return { handleSave: () => handleSave(false), saveStatus }; // Expose a manual save function
 }

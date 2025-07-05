@@ -7,11 +7,11 @@ import { api } from "@/lib/api";
 export const getIdea = cache(
   async (
     id: string,
-    { withAnalytics, withMVP }: { withAnalytics?: boolean; withMVP?: boolean }
+    { withAnalytics, withMVPs }: { withAnalytics?: boolean; withMVPs?: boolean }
   ) => {
     try {
       const response = await api.get(
-        `/dashboard/ideas/user/${id}?withAnalytics=${withAnalytics}&withMVP=${withMVP}`,
+        `/dashboard/ideas/user/${id}?withAnalytics=${withAnalytics}&withMVPs=${withMVPs}`,
         {
           next: {
             revalidate: 3600,

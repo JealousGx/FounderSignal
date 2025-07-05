@@ -22,8 +22,15 @@ export interface Idea {
 }
 
 export interface LandingPage {
+  id: string;
   ideaId: string;
+  name: string;
+  isActive: boolean;
   htmlContent: string;
+  views: number;
+  signups: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type IdeaStatus =

@@ -7,6 +7,7 @@ const TAILWIND_CSS_URL =
 
 export function getValidatedHtml(
   ideaId: string,
+  mvpId: string | null,
   bodyContent: string,
   styles: string | undefined,
   metaTitle: string,
@@ -96,7 +97,7 @@ export function getValidatedHtml(
 </head>
 <body>
     ${cleanBodyContent}
-    ${trackingScriptExists ? "" : getTrackingScript(ideaId, ctaBtnId)}
+    ${trackingScriptExists ? "" : getTrackingScript(ideaId, mvpId, ctaBtnId)}
 </body>
 </html>`;
 

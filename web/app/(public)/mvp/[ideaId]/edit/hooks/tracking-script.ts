@@ -2,12 +2,14 @@ const SCROLL_DEBOUNCE_MS = 150;
 
 export const getTrackingScript = (
   ideaId: string,
+  mvpId: string | null,
   ctaBtnId: string
 ) => `<script data-founder-signal-script="true">(function() {
             const ideaId = "${ideaId}";
+            const mvpId = "${mvpId}";
             const postTrackEvent = (eventType, metadata) => {
                 if (window.parent && window.parent.postMessage) {
-                    window.parent.postMessage({ type: 'founderSignalTrack', eventType: eventType, ideaId: ideaId, metadata: metadata }, '*');
+                    window.parent.postMessage({ type: 'founderSignalTrack', eventType: eventType, ideaId: ideaId, mvpId: mvpId, metadata: metadata }, '${process.env.NEXT_PUBLIC_APP_URL}');
                 }
             };
 
