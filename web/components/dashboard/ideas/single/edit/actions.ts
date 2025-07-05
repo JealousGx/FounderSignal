@@ -239,3 +239,40 @@ export const deleteMvp = async (ideaId: string, mvpId: string) => {
     return { error: "Failed to delete landing page. Please try again." };
   }
 };
+
+export const createMVP = async (ideaId: string) => {
+  const user = await auth();
+  if (!user) {
+    return { error: "You must be signed in to update an idea." };
+  }
+
+  try {
+    const response = await api.post(`/dashboard/ideas/${ideaId}/mvp`);
+    const responseData = await response.json();
+
+    if (!response.ok || responseData.error) {
+      console.error(
+        "API Error:",
+        responseData.error || `Status: ${response.status}`
+      );
+      return {
+        error:
+          responseData.error ||
+          "Failed to create landing page. Please try again.",
+      };
+    }
+
+    revalidateTag(`idea-${ideaId}`);
+
+    return {
+      message: `Landing page created successfully!`,
+      mvpId: responseData.mvpId,
+    };
+  } catch (err) {
+    console.log("Error creating MVP", err);
+
+    return {
+      error: "Error creating MVP",
+    };
+  }
+};

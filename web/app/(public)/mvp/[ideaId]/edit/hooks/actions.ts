@@ -7,54 +7,11 @@ import { getLandingPagePromptTemplate } from "@/constants/prompts/landing-page";
 import { api } from "@/lib/api";
 import { deleteFile } from "@/lib/r2";
 
-export const createMVP = async (
-  ideaId: string,
-  name: string,
-  htmlContent: string
-) => {
-  const user = await auth();
-  if (!user) {
-    return { error: "You must be signed in to update an idea." };
-  }
-
-  try {
-    const response = await api.post(
-      `/dashboard/ideas/${ideaId}/mvp`,
-      JSON.stringify({ htmlContent, name })
-    );
-    const responseData = await response.json();
-
-    if (!response.ok || responseData.error) {
-      console.error(
-        "API Error:",
-        responseData.error || `Status: ${response.status}`
-      );
-      return {
-        error:
-          responseData.error ||
-          "Failed to create landing page. Please try again.",
-      };
-    }
-
-    revalidateTag(`idea-${ideaId}`);
-
-    return {
-      message: `Landing page created successfully!`,
-      mvpId: responseData.mvpId,
-    };
-  } catch (err) {
-    console.log("Error creating MVP", err);
-
-    return {
-      error: "Error creating MVP",
-    };
-  }
-};
-
 export const updateMVP = async (
   ideaId: string,
   mvpId: string | null,
-  htmlContent: string
+  htmlContent: string,
+  mvpName?: string
 ) => {
   const user = await auth();
   if (!user) {
@@ -64,7 +21,7 @@ export const updateMVP = async (
   try {
     const response = await api.put(
       `/dashboard/ideas/${ideaId}/mvp${mvpId ? `/${mvpId}` : ""}`,
-      JSON.stringify({ htmlContent })
+      JSON.stringify({ htmlContent, name: mvpName })
     );
     const responseData = await response.json();
 
@@ -116,6 +73,7 @@ export const deleteAsset = async (fileName: string) => {
 
 export const generateMVPWithAI = async (
   ideaId: string,
+  mvpId: string | null,
   title: string,
   description: string,
   ctaBtnText = "Get Early Access",
@@ -136,8 +94,8 @@ export const generateMVPWithAI = async (
 
   try {
     const response = await api.post(
-      "/dashboard/ai/generate",
-      JSON.stringify({ prompt })
+      "/dashboard/ai/generate/landing-page",
+      JSON.stringify({ prompt, mvpId, ideaId })
     );
 
     const responseData = await response.json();
