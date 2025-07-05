@@ -158,8 +158,8 @@ export function useAutoSave({
       clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    if (isNew || !isDirty || saveStatus !== "saving") {
-      // If it's a new page or not dirty, don't auto-save
+    if (isNew || !isDirty || saveStatus !== "idle") {
+      // If it's a new page, not dirty, or currently saving, don't auto-save
       return;
     }
 
