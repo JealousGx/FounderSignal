@@ -52,7 +52,7 @@ type reactionsResult struct {
 }
 
 type DashboardIdeaSpecs struct {
-	WithMVP       bool
+	WithMVPs      bool
 	WithAnalytics bool
 }
 
@@ -128,7 +128,7 @@ func (s *dashboardService) GetIdea(ctx context.Context, id uuid.UUID, userId str
 	}
 
 	var analyticsData response.AnalyticsData
-	var mvp domain.MVPSimulator
+	var mvps []domain.MVPSimulator
 
 	if specs.WithAnalytics {
 		now := time.Now()
@@ -141,22 +141,21 @@ func (s *dashboardService) GetIdea(ctx context.Context, id uuid.UUID, userId str
 		analyticsData = _analyticsData[0]
 	}
 
-	if specs.WithMVP {
-		_mvp, err := s.mvpRepo.GetByIdea(ctx, id)
+	if specs.WithMVPs {
+		_mvp, err := s.mvpRepo.GetAllByIdea(ctx, id)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get MVP data: %w", err)
 		}
 
-		if _mvp != nil {
-			mvp = *_mvp
-			mvp.HTMLContent = "" // no need to pass html to dashboard
+		if len(_mvp) > 0 {
+			mvps = _mvp
 		}
 	}
 
 	return &response.DashboardIdeaResponse{
 		Idea:          *rawIdea,
 		AnalyticsData: analyticsData,
-		MVP:           mvp,
+		MVPs:          mvps,
 	}, nil
 }
 

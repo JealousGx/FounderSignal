@@ -67,11 +67,11 @@ func (h *dashboardHandler) GetIdea(c *gin.Context) {
 	}
 
 	withAnalytics := c.Query("withAnalytics")
-	withMVP := c.Query("withMVP")
+	withMVPs := c.Query("withMVPs")
 
 	specs := service.DashboardIdeaSpecs{
 		WithAnalytics: withAnalytics == "true",
-		WithMVP:       withMVP == "true",
+		WithMVPs:      withMVPs == "true",
 	}
 
 	data, err := h.service.GetIdea(c.Request.Context(), uuid.MustParse(ideaId), userIDStr, specs)

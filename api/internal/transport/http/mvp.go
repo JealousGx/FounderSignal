@@ -79,7 +79,13 @@ func (h *mvpHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	mvp, err := h.service.GetByID(c.Request.Context(), userId.(string), mvpId)
+	ideaId, err := uuid.Parse(c.Param("ideaId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid idea ID"})
+		return
+	}
+
+	mvp, err := h.service.GetByID(c.Request.Context(), userId.(string), ideaId, mvpId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "MVP not found"})

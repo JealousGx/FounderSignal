@@ -16,7 +16,7 @@ type MVPService interface {
 	GetAllByIdea(ctx context.Context, userId string, ideaId uuid.UUID) ([]domain.MVPSimulator, error)
 	GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string) (*domain.MVPSimulator, error)
 	Update(ctx context.Context, ideaId uuid.UUID, userId string, mvpId uuid.UUID, req request.UpdateMVP) error
-	GetByID(ctx context.Context, userId string, id uuid.UUID) (*domain.MVPSimulator, error)
+	GetByID(ctx context.Context, userId string, ideaId, id uuid.UUID) (*domain.MVPSimulator, error)
 	Delete(ctx context.Context, userId string, ideaId, mvpId uuid.UUID) error
 	SetActive(ctx context.Context, userId string, ideaId, mvpId uuid.UUID) error
 }
@@ -127,8 +127,8 @@ func (s *mvpService) SetActive(ctx context.Context, userId string, ideaId, mvpId
 }
 
 // GetByID retrieves an MVP by its ID, ensuring the user is the owner of the idea.
-func (s *mvpService) GetByID(ctx context.Context, userId string, id uuid.UUID) (*domain.MVPSimulator, error) {
-	idea, err := s.checkOwner(ctx, userId, id)
+func (s *mvpService) GetByID(ctx context.Context, userId string, ideaId, id uuid.UUID) (*domain.MVPSimulator, error) {
+	idea, err := s.checkOwner(ctx, userId, ideaId)
 	if err != nil {
 		return nil, err
 	}
