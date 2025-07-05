@@ -31,7 +31,7 @@ type Idea struct {
 	DislikedByUser bool    `json:"dislikedByUser,omitempty"`
 
 	// Relationships
-	MVPSimulator    *MVPSimulator    `gorm:"foreignKey:IdeaID" json:"mvpSimulator,omitempty"`
+	MVPs            []MVPSimulator   `gorm:"foreignKey:IdeaID" json:"mvps,omitempty"`
 	Signals         []Signal         `gorm:"foreignKey:IdeaID" json:"signals,omitempty"`
 	Feedback        []Feedback       `gorm:"foreignKey:IdeaID" json:"comments,omitempty"`
 	AudienceMembers []AudienceMember `gorm:"foreignKey:IdeaID" json:"audience,omitempty"`
@@ -77,29 +77,47 @@ func (i *Idea) AfterFind(tx *gorm.DB) (err error) {
 
 // MVPSimulator represents the mock landing page for an idea
 type MVPSimulator struct {
+	Base
 	IdeaID      uuid.UUID `gorm:"type:uuid;not null;index" json:"ideaId"`
-	Headline    string    `json:"headline"`
-	Subheadline string    `json:"subheadline"`
-	CTAText     string    `json:"ctaText"`
-	CTAButton   string    `json:"ctaButtonText"`
+	Name        string    `gorm:"not null" json:"name"`
+	IsActive    bool      `gorm:"default:false;not null" json:"isActive"`
 	HTMLContent string    `gorm:"type:text" json:"htmlContent"`
 
+	Views   int `gorm:"-" json:"views"`
+	Signups int `gorm:"-" json:"signups"`
+
 	// Relationships
-	Idea Idea `gorm:"foreignKey:IdeaID" json:"-"`
+	Idea            Idea             `gorm:"foreignKey:IdeaID" json:"-"`
+	Signals         []Signal         `gorm:"foreignKey:MVPSimulatorID" json:"-"`
+	AudienceMembers []AudienceMember `gorm:"foreignKey:MVPSimulatorID" json:"-"`
+}
+
+func (m *MVPSimulator) AfterFind(tx *gorm.DB) (err error) {
+	var viewsCount int
+	for _, signal := range m.Signals {
+		if signal.EventType == string(EventTypePageView) {
+			viewsCount++
+		}
+	}
+	m.Views = viewsCount
+	m.Signups = len(m.AudienceMembers)
+	return nil
 }
 
 // Signal represents user interaction events with an MVP
 type Signal struct {
 	Base
-	IdeaID    uuid.UUID      `gorm:"type:uuid;not null;index" json:"ideaId"`
-	UserID    string         `json:"userId,omitempty"`                // Can be null for anonymous users
-	EventType string         `gorm:"not null;index" json:"eventType"` // click, scroll, pageview, etc.
-	IPAddress string         `json:"-"`
-	UserAgent string         `json:"-"`
-	Metadata  datatypes.JSON `gorm:"type:jsonb" json:"metadata"`
+	IdeaID         uuid.UUID      `gorm:"type:uuid;not null;index" json:"ideaId"`
+	MVPSimulatorID uuid.UUID      `gorm:"type:uuid;not null;index" json:"mvpSimulatorId"`
+	UserID         string         `json:"userId,omitempty"`                // Can be null for anonymous users
+	EventType      string         `gorm:"not null;index" json:"eventType"` // click, scroll, pageview, etc.
+	IPAddress      string         `json:"-"`
+	UserAgent      string         `json:"-"`
+	Metadata       datatypes.JSON `gorm:"type:jsonb" json:"metadata"`
 
 	// Relationships
-	Idea Idea `gorm:"foreignKey:IdeaID" json:"-"`
+	Idea         Idea         `gorm:"foreignKey:IdeaID" json:"-"`
+	MVPSimulator MVPSimulator `gorm:"foreignKey:MVPSimulatorID" json:"-"`
 }
 
 // Feedback represents user feedback on an idea

@@ -17,6 +17,7 @@ export interface AudienceMember {
   name?: string;
   signupTime: string;
   ideaId: string; // Which idea they signed up for
+  mvpId: string; // The MVP they are associated with
   idea?: Partial<Idea>;
   engaged: boolean;
   converted: boolean; // Whether they signed up for the idea

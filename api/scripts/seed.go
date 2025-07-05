@@ -263,11 +263,11 @@ func seedIdeas(ctx context.Context, db *gorm.DB, uniqueIdeaTitles []string, coun
 		}
 
 		mvp := &domain.MVPSimulator{
+			Base: domain.Base{
+				ID: uuid.New(),
+			},
 			IdeaID:      idea.ID,
-			Headline:    idea.Title,
-			Subheadline: generateSubheadline(idea.Description, 10, 25),
-			CTAText:     randomOptionalElement(ctaTexts, 60),
-			CTAButton:   randomElement(ctaButtons, "Learn More", 90),
+			Name:        fmt.Sprintf("%s MVP Simulator", currentTitle),
 			HTMLContent: generateHTMLContent(idea.Title, idea.Description, randomElement(ctaButtons, "Sign Up", 100)),
 		}
 
@@ -296,14 +296,14 @@ func seedIdeas(ctx context.Context, db *gorm.DB, uniqueIdeaTitles []string, coun
 			}
 
 			if views > 0 {
-				signals := generateViewSignals(idea.ID, views, idea.CreatedAt)
+				signals := generateViewSignals(idea.ID, mvp.ID, views, idea.CreatedAt)
 				if err := tx.CreateInBatches(signals, 100).Error; err != nil {
 					return fmt.Errorf("failed to create signals: %w", err)
 				}
 			}
 
 			if signups > 0 {
-				audienceMembers := generateAudienceMembers(idea.ID, signups, idea.CreatedAt)
+				audienceMembers := generateAudienceMembers(idea.ID, mvp.ID, signups, idea.CreatedAt)
 				if err := tx.CreateInBatches(audienceMembers, 100).Error; err != nil {
 					return fmt.Errorf("failed to create audience members: %w", err)
 				}
@@ -471,7 +471,7 @@ func generateSingleFeedbackReactions(feedbackID uuid.UUID, feedbackCreatedAt tim
 	return reactions, likes, dislikes
 }
 
-func generateViewSignals(ideaID uuid.UUID, count int, ideaCreatedAt time.Time) []domain.Signal {
+func generateViewSignals(ideaID, mvpId uuid.UUID, count int, ideaCreatedAt time.Time) []domain.Signal {
 	signals := make([]domain.Signal, count)
 	for i := 0; i < count; i++ {
 		var userID string
@@ -496,24 +496,26 @@ func generateViewSignals(ideaID uuid.UUID, count int, ideaCreatedAt time.Time) [
 				CreatedAt: randomTimeBetween(ideaCreatedAt, time.Now()),
 				UpdatedAt: time.Now(),
 			},
-			IdeaID:    ideaID,
-			UserID:    userID,
-			EventType: "pageview",
-			IPAddress: generateRandomIP(),
-			UserAgent: generateRandomUserAgent(),
-			Metadata:  datatypes.JSON(jsonBytes),
+			MVPSimulatorID: mvpId,
+			IdeaID:         ideaID,
+			UserID:         userID,
+			EventType:      "pageview",
+			IPAddress:      generateRandomIP(),
+			UserAgent:      generateRandomUserAgent(),
+			Metadata:       datatypes.JSON(jsonBytes),
 		}
 	}
 	return signals
 }
 
-func generateAudienceMembers(ideaID uuid.UUID, count int, ideaCreatedAt time.Time) []domain.AudienceMember {
+func generateAudienceMembers(ideaID, mvpId uuid.UUID, count int, ideaCreatedAt time.Time) []domain.AudienceMember {
 	members := make([]domain.AudienceMember, count)
 	for i := 0; i < count; i++ {
 		members[i] = domain.AudienceMember{
-			IdeaID:     ideaID,
-			UserID:     "user_" + uuid.New().String()[:18],
-			SignupTime: randomTimeBetween(ideaCreatedAt, time.Now()),
+			MVPSimulatorID: mvpId,
+			IdeaID:         ideaID,
+			UserID:         "user_" + uuid.New().String()[:18],
+			SignupTime:     randomTimeBetween(ideaCreatedAt, time.Now()),
 		}
 	}
 	return members

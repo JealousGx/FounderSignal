@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -21,9 +21,14 @@ import { useUnsavedChanges } from "./hooks/use-unsaved-changes";
 
 export default function EditLandingPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+
   const ideaId = Array.isArray(params.ideaId)
     ? params.ideaId[0]
     : params.ideaId;
+
+  const mvpId = searchParams.get("mvpId");
+  const isNew = searchParams.get("new") === "true";
 
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
@@ -40,6 +45,8 @@ export default function EditLandingPage() {
 
   const { handleSave, saveStatus } = useAutoSave({
     ideaId,
+    mvpId,
+    isNew,
     grapeEditor,
     isDirty,
     setIsDirty,
@@ -110,10 +117,10 @@ export default function EditLandingPage() {
   );
 
   useEffect(() => {
-    if (!ideaId || !grapeEditor) return;
+    if (!ideaId || !grapeEditor || isNew) return;
 
     const loadEditorContent = async () => {
-      await getMVP(ideaId).then((data) => {
+      await getMVP(ideaId, mvpId).then((data) => {
         if (data?.htmlContent) {
           loadHtmlIntoEditor(data.htmlContent, data.headline, data.subheadline);
         }
@@ -121,7 +128,7 @@ export default function EditLandingPage() {
     };
 
     grapeEditor.onReady(loadEditorContent);
-  }, [ideaId, grapeEditor, loadHtmlIntoEditor]);
+  }, [ideaId, mvpId, isNew, grapeEditor, loadHtmlIntoEditor]);
 
   const handleAIGenerate = async (
     title: string,

@@ -25,6 +25,8 @@ export const api = {
     customFetch(path, { method: "POST", body }),
   put: (path: string, body?: BodyInit | null) =>
     customFetch(path, { method: "PUT", body }),
+  patch: (path: string, body?: BodyInit | null) =>
+    customFetch(path, { method: "PATCH", body }),
   delete: (path: string) => customFetch(path, { method: "DELETE" }),
 };
 

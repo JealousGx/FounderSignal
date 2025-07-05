@@ -27,17 +27,24 @@ export const MVP = ({ htmlContent, ideaId }: MVPProps) => {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       // Basic security: check origin if MVP is hosted on a different domain
-      // if (event.origin !== "http://expected-mvp-origin.com") return;
+      if (event.origin !== process.env.NEXT_PUBLIC_APP_URL) return;
 
-      const { type, eventType, ideaId: msgIdeaId, metadata } = event.data;
+      const {
+        type,
+        eventType,
+        ideaId: msgIdeaId,
+        mvpId,
+        metadata,
+      } = event.data;
 
       if (type === "founderSignalTrack" && msgIdeaId === ideaId && eventType) {
         console.log("Received track event from MVP iframe:", {
           eventType,
           ideaId,
+          mvpId,
           metadata,
         });
-        sendSignal(ideaId, eventType, metadata);
+        sendSignal(ideaId, mvpId, eventType, metadata);
       }
     };
 

@@ -29,23 +29,25 @@ type IdeaService interface {
 	GetIdeas(ctx context.Context, queryParams domain.QueryParams) (*response.IdeaListResponse, error)
 	GetUserIdeas(ctx context.Context, userId string, getStats bool, queryParams domain.QueryParams) (*response.IdeaListResponse, error)
 	GetByID(ctx context.Context, id uuid.UUID, userId string) (*response.PublicIdeaResponse, error)
-	RecordSignal(ctx context.Context, ideaID uuid.UUID, userID string, eventType string, ipAddress string, userAgent string, metadata map[string]interface{}) error
+	RecordSignal(ctx context.Context, ideaID, mvpId uuid.UUID, userID string, eventType string, ipAddress string, userAgent string, metadata map[string]interface{}) error
 }
 
 type ideaService struct {
 	u            repository.UserRepository
 	repo         repository.IdeaRepository
+	mvpRepo      repository.MVPRepository
 	signalRepo   repository.SignalRepository
 	audienceRepo repository.AudienceRepository
 
 	aiService AIService
 }
 
-func NewIdeasService(repo repository.IdeaRepository, u repository.UserRepository, signalRepo repository.SignalRepository,
+func NewIdeasService(repo repository.IdeaRepository, mvpRepo repository.MVPRepository, u repository.UserRepository, signalRepo repository.SignalRepository,
 	audienceRepo repository.AudienceRepository, aiService AIService) *ideaService {
 	return &ideaService{
 		u:            u,
 		repo:         repo,
+		mvpRepo:      mvpRepo,
 		signalRepo:   signalRepo,
 		audienceRepo: audienceRepo,
 		aiService:    aiService,
@@ -98,7 +100,6 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 	ideaSlug = fmt.Sprintf("%s-%s", ideaSlug, userIdSuffix)
 
 	idea := &domain.Idea{
-		Base:           domain.Base{ID: uuid.New()},
 		UserID:         userId,
 		Title:          req.Title,
 		Description:    req.Description,
@@ -107,19 +108,25 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		Status:         string(ideaStatus),
 	}
 
+	ideaId, err := s.repo.Create(ctx, idea)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to create idea: %w", err)
+	}
+
 	mvp := &domain.MVPSimulator{
-		IdeaID:      idea.ID,
-		Headline:    idea.Title,
-		Subheadline: idea.Description,
-		CTAButton:   req.CTAButton,
+		Base:     domain.Base{ID: uuid.New()},
+		IdeaID:   ideaId,
+		Name:     "Initial Version",
+		IsActive: true,
 	}
 
 	promptData := prompts.LandingPagePromptData{
-		IdeaID:         idea.ID.String(),
+		IdeaID:         ideaId.String(),
+		MVPID:          mvp.ID.String(),
 		Title:          idea.Title,
 		Description:    idea.Description,
 		TargetAudience: idea.TargetAudience,
-		CTAButtonText:  mvp.CTAButton,
+		CTAButtonText:  req.CTAButton,
 	}
 
 	prompt, err := prompts.BuildLandingPagePrompt(promptData)
@@ -130,15 +137,15 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		htmlContent, err := s.aiService.Generate(ctx, prompt)
 		if err != nil {
 			log.Printf("Error generating AI landing page for idea %s: %v", idea.ID, err)
-			mvp.HTMLContent = generateLandingPageContent(*mvp)
+			mvp.HTMLContent = generateLandingPageContent(ideaId, mvp.ID, idea.Title, idea.Description, req.CTAButton)
 		} else {
 			mvp.HTMLContent = htmlContent
 		}
 	}
 
-	ideaId, err := s.repo.CreateWithMVP(ctx, idea, mvp)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("failed to create idea: %w", err)
+	if _, err := s.mvpRepo.Create(ctx, mvp); err != nil {
+		log.Printf("Error creating MVP for idea %s: %v", idea.ID, err)
+		return ideaId, fmt.Errorf("failed to create MVP for idea: %w", err)
 	}
 
 	// If the user is on the starter plan / not paying, set the UsedFreeTrial flag to true
@@ -314,7 +321,21 @@ func (s *ideaService) GetUserIdeas(ctx context.Context, userId string, getStats 
 	return ideas, nil
 }
 
-func (s *ideaService) RecordSignal(ctx context.Context, ideaID uuid.UUID, userID string, eventType string, ipAddress string, userAgent string, metadata map[string]interface{}) error {
+func (s *ideaService) RecordSignal(ctx context.Context, ideaID, mvpId uuid.UUID, userID string, eventType string, ipAddress string, userAgent string, metadata map[string]interface{}) error {
+
+	if ideaID == uuid.Nil || mvpId == uuid.Nil {
+		return fmt.Errorf("ideaID and mvpId are required to record a signal")
+	}
+
+	var metadataJson datatypes.JSON
+	if metadata != nil {
+		_metaJSON, err := json.Marshal(metadata)
+		if err != nil {
+			return fmt.Errorf("failed to marshal metadata: %w", err)
+		}
+		metadataJson = datatypes.JSON(_metaJSON)
+	}
+
 	idea, _, err := s.repo.GetByID(ctx, ideaID, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get idea by ID: %w", err)
@@ -329,19 +350,13 @@ func (s *ideaService) RecordSignal(ctx context.Context, ideaID uuid.UUID, userID
 	}
 
 	signal := &domain.Signal{
-		IdeaID:    ideaID,
-		UserID:    userID,
-		EventType: eventType,
-		IPAddress: ipAddress,
-		UserAgent: userAgent,
-	}
-
-	if metadata != nil {
-		metaJSON, err := json.Marshal(metadata)
-		if err != nil {
-			return fmt.Errorf("failed to marshal metadata: %w", err)
-		}
-		signal.Metadata = datatypes.JSON(metaJSON)
+		IdeaID:         ideaID,
+		MVPSimulatorID: mvpId,
+		UserID:         userID,
+		EventType:      eventType,
+		IPAddress:      ipAddress,
+		UserAgent:      userAgent,
+		Metadata:       metadataJson,
 	}
 
 	err = s.signalRepo.Create(ctx, signal)
@@ -363,7 +378,7 @@ func (s *ideaService) RecordSignal(ctx context.Context, ideaID uuid.UUID, userID
 		}
 		userEmail = user.Email
 
-		_, err = s.audienceRepo.Upsert(ctx, ideaID, userID, userEmail)
+		_, err = s.audienceRepo.Upsert(ctx, ideaID, mvpId, userID, userEmail)
 		if err != nil {
 			// Log this error but don't necessarily fail the whole signal recording
 			log.Printf("WARN: Failed to upsert audience member for idea %s, user %s after CTA click: %v", ideaID, userID, err)
@@ -493,7 +508,7 @@ func (s *ideaService) getUserDashboardStats(ctx context.Context, userId string) 
 	}, nil
 }
 
-func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
+func generateLandingPageContent(ideaId, mvpId uuid.UUID, headline, subheadline, ctaBtn string) string {
 	const TAILWIND_CSS_URL = "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
 
 	return fmt.Sprintf(
@@ -525,9 +540,10 @@ func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
         </div>
     <script data-founder-signal-script="true">(function() {
             const ideaId = "%s";
+			const mvpId = "%s";
             const postTrackEvent = (eventType, metadata) => {
                 if (window.parent && window.parent.postMessage) {
-                    window.parent.postMessage({ type: 'founderSignalTrack', eventType: eventType, ideaId: ideaId, metadata: metadata }, '*');
+                    window.parent.postMessage({ type: 'founderSignalTrack', eventType: eventType, ideaId: ideaId, mvpId: mvpId, metadata: metadata }, '*');
                 }
             };
 
@@ -594,11 +610,12 @@ func generateLandingPageContent(mvpDetails domain.MVPSimulator) string {
     </script>
 </body>
 </html>`,
-		mvpDetails.Headline,
-		mvpDetails.Subheadline,
+		headline,
+		subheadline,
 		TAILWIND_CSS_URL,
-		mvpDetails.CTAButton,
-		mvpDetails.IdeaID.String(),
+		ctaBtn,
+		ideaId.String(),
+		mvpId.String(),
 	)
 }
 

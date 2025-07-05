@@ -37,6 +37,18 @@ export const updateIdeaRequest = async (
       return res;
     });
 
+export const updateMvpRequest = async (
+  ideaId: string,
+  mvpId: string,
+  updatedMVP: Record<string, unknown>
+) =>
+  api
+    .put(`/dashboard/ideas/${ideaId}/mvp/${mvpId}`, JSON.stringify(updatedMVP))
+    .then((res) => {
+      revalidateTag(`mvp-${mvpId}`);
+      return res;
+    });
+
 export const updateIdea = async (
   prevState: UpdateIdeaState | null,
   formData: FormData
@@ -97,71 +109,6 @@ export const updateIdea = async (
   }
 };
 
-export const updateMVP = async (
-  prevState: UpdateMVPState | null,
-  formData: FormData
-): Promise<UpdateMVPState> => {
-  const user = await auth();
-  if (!user.userId) {
-    return { error: "You must be signed in to update an idea." };
-  }
-
-  const rawFormData = Object.fromEntries(formData);
-  const ideaId = rawFormData.ideaId as string;
-
-  const validatedFields = updateMVPSchema.safeParse(rawFormData);
-
-  if (!validatedFields.success) {
-    const fieldErrors: MVPFieldError = {};
-    for (const issue of validatedFields.error.issues) {
-      if (issue.path.length > 0) {
-        fieldErrors[issue.path[0] as keyof z.infer<typeof updateMVPSchema>] =
-          issue.message;
-      }
-    }
-    return {
-      error: "Validation failed. Please check the form fields.",
-      fieldErrors: fieldErrors,
-    };
-  }
-
-  const updatedMVP = validatedFields.data;
-
-  try {
-    const response = await api.put(
-      `/dashboard/ideas/${ideaId}/mvp`,
-      JSON.stringify(updatedMVP)
-    );
-    const responseData = await response.json();
-
-    if (!response.ok || responseData.error) {
-      console.error(
-        "API Error:",
-        responseData.error || `Status: ${response.status}`
-      );
-      return {
-        error:
-          responseData.error ||
-          "Failed to update landing page. Please try again.",
-      };
-    }
-
-    revalidateTag(`idea-${ideaId}`);
-
-    return {
-      message: `Landing page updated successfully!`,
-    };
-  } catch (e: unknown) {
-    console.error("Submission failed:", e);
-
-    return {
-      error:
-        (e as Error).message ||
-        "An unexpected error occurred during submission.",
-    };
-  }
-};
-
 export const deleteIdea = async (id: string) => {
   const user = await auth();
   if (!user.userId) {
@@ -201,6 +148,11 @@ export const updateIdeaAttributes = async (
   ideaId: string,
   attributes: Record<string, unknown>
 ) => {
+  const user = await auth();
+  if (!user?.userId) {
+    return { error: "You must be signed in to set a landing page as active." };
+  }
+
   return updateIdeaRequest(ideaId, attributes).then(async (res) => {
     const responseData = await res.json();
     if (!res.ok || responseData.error) {
@@ -215,4 +167,75 @@ export const updateIdeaAttributes = async (
 
     return responseData;
   });
+};
+
+export const setMVPActive = async (ideaId: string, mvpId: string) => {
+  const user = await auth();
+  if (!user?.userId) {
+    return { error: "You must be signed in to set a landing page as active." };
+  }
+
+  try {
+    const response = await api.patch(
+      `/dashboard/ideas/${ideaId}/mvp/${mvpId}/active`
+    );
+
+    const responseData = await response.json();
+    if (!response.ok || responseData.error) {
+      console.error(
+        "API Error:",
+        responseData.error || `Status: ${response.status}`
+      );
+
+      return {
+        error:
+          responseData.error ||
+          "Failed to set landing page as active. Please try again.",
+      };
+    }
+
+    revalidateTag(`mvp-${mvpId}`);
+
+    return {
+      message: `Landing page "${responseData.mvp.name}" is now active!`,
+    };
+  } catch (err) {
+    console.error("Error setting MVP active:", err);
+    return { error: "Failed to set landing page as active. Please try again." };
+  }
+};
+
+export const deleteMvp = async (ideaId: string, mvpId: string) => {
+  const user = await auth();
+  if (!user?.userId) {
+    return { error: "You must be signed in to delete a landing page." };
+  }
+
+  try {
+    const response = await api.delete(
+      `/dashboard/ideas/${ideaId}/mvp/${mvpId}`
+    );
+    const responseData = await response.json();
+
+    if (!response.ok || responseData.error) {
+      console.error(
+        "API Error:",
+        responseData.error || `Status: ${response.status}`
+      );
+      return {
+        error:
+          responseData.error ||
+          "Failed to delete landing page. Please try again.",
+      };
+    }
+
+    revalidateTag(`mvp-${mvpId}`);
+
+    return {
+      message: `Landing page "${responseData.mvp.name}" deleted successfully!`,
+    };
+  } catch (err) {
+    console.error("Error deleting MVP:", err);
+    return { error: "Failed to delete landing page. Please try again." };
+  }
 };
