@@ -267,6 +267,7 @@ func seedIdeas(ctx context.Context, db *gorm.DB, uniqueIdeaTitles []string, coun
 				ID: uuid.New(),
 			},
 			IdeaID:      idea.ID,
+			Name:        fmt.Sprintf("%s MVP Simulator", currentTitle),
 			HTMLContent: generateHTMLContent(idea.Title, idea.Description, randomElement(ctaButtons, "Sign Up", 100)),
 		}
 
