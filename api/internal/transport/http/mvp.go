@@ -4,6 +4,7 @@ import (
 	"errors"
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/service"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +20,7 @@ type MVPHandler interface {
 	GetAllByIdea(c *gin.Context)
 	SetActive(c *gin.Context)
 	Delete(c *gin.Context)
+	GenerateLandingPage(c *gin.Context)
 }
 
 type mvpHandler struct {
@@ -46,7 +48,7 @@ func (h *mvpHandler) Create(c *gin.Context) {
 	}
 
 	var req request.CreateMVP
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil && err != io.EOF {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -264,4 +266,26 @@ func (h *mvpHandler) Delete(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "MVP deleted successfully"})
+}
+
+func (h *mvpHandler) GenerateLandingPage(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	var req request.GenerateLandingPage
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	htmlContent, err := h.service.GenerateLandingPage(c.Request.Context(), req.MVPId, req.IdeaID, userId.(string), req.Prompt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"response": htmlContent})
 }

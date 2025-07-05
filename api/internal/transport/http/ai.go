@@ -23,6 +23,12 @@ func NewAIHandler(s service.AIService) *aiHandler {
 }
 
 func (h *aiHandler) Generate(c *gin.Context) {
+	_, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
 	var req request.AIGenerate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

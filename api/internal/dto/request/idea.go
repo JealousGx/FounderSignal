@@ -19,8 +19,8 @@ type UpdateIdea struct {
 }
 
 type CreateMVP struct {
-	Name        string `json:"name" binding:"required"`
-	HTMLContent string `json:"htmlContent" binding:"required"`
+	Name        string `json:"name"`
+	HTMLContent string `json:"htmlContent"`
 	IsActive    bool   `json:"isActive"`
 }
 

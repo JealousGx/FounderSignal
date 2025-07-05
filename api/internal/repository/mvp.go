@@ -17,6 +17,7 @@ type MVPRepository interface {
 	Update(ctx context.Context, mvp *domain.MVPSimulator) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	SetActive(ctx context.Context, ideaId, mvpId uuid.UUID) error
+	GetCountByIdea(ctx context.Context, ideaId uuid.UUID) (int64, error)
 }
 
 type mvpRepository struct {
@@ -109,4 +110,17 @@ func (r *mvpRepository) SetActive(ctx context.Context, ideaId, mvpId uuid.UUID) 
 
 		return nil
 	})
+}
+
+func (r *mvpRepository) GetCountByIdea(ctx context.Context, ideaId uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&domain.MVPSimulator{}).
+		Where("idea_id = ?", ideaId).
+		Count(&count).Error
+	if err != nil {
+		fmt.Println("Error counting MVPs by idea ID:", err)
+		return 0, err
+	}
+
+	return count, nil
 }

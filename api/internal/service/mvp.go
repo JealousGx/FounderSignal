@@ -19,17 +19,22 @@ type MVPService interface {
 	GetByID(ctx context.Context, userId string, ideaId, id uuid.UUID) (*domain.MVPSimulator, error)
 	Delete(ctx context.Context, userId string, ideaId, mvpId uuid.UUID) error
 	SetActive(ctx context.Context, userId string, ideaId, mvpId uuid.UUID) error
+	GenerateLandingPage(ctx context.Context, mvpId, ideaId uuid.UUID, userId, prompt string) (string, error)
 }
 
 type mvpService struct {
-	repo     repository.MVPRepository
-	ideaRepo repository.IdeaRepository
+	repo      repository.MVPRepository
+	ideaRepo  repository.IdeaRepository
+	userRepo  repository.UserRepository
+	aiService AIService
 }
 
-func NewMVPService(repo repository.MVPRepository, ideaRepo repository.IdeaRepository) *mvpService {
+func NewMVPService(repo repository.MVPRepository, ideaRepo repository.IdeaRepository, userRepo repository.UserRepository, aiService AIService) *mvpService {
 	return &mvpService{
-		repo:     repo,
-		ideaRepo: ideaRepo,
+		repo:      repo,
+		ideaRepo:  ideaRepo,
+		userRepo:  userRepo,
+		aiService: aiService,
 	}
 }
 
@@ -37,6 +42,25 @@ func (s *mvpService) Create(ctx context.Context, userId string, ideaId uuid.UUID
 	if _, err := s.checkOwner(ctx, userId, ideaId); err != nil {
 		return uuid.Nil, err
 	}
+
+	user, err := s.userRepo.FindByID(ctx, userId)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to get user: %w", err)
+	}
+	if user == nil {
+		return uuid.Nil, gorm.ErrRecordNotFound
+	}
+
+	mvpLimit := domain.GetMVPLimitForPlan(user.Plan)
+	currentMVPCount, err := s.repo.GetCountByIdea(ctx, ideaId)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to get current MVP count: %w", err)
+	}
+
+	if currentMVPCount >= int64(mvpLimit) {
+		return uuid.Nil, fmt.Errorf("you have reached the MVP limit of %d for the %s plan", mvpLimit, user.Plan)
+	}
+
 	mvp := &domain.MVPSimulator{
 		IdeaID:      ideaId,
 		Name:        req.Name,
@@ -158,6 +182,43 @@ func (s *mvpService) Delete(ctx context.Context, userId string, ideaId, mvpId uu
 	}
 
 	return s.repo.Delete(ctx, mvpId)
+}
+
+// GenerateLandingPage generates a landing page for an MVP using AI, ensuring the user has not exceeded their AI generation limit.
+func (s *mvpService) GenerateLandingPage(ctx context.Context, mvpId, ideaId uuid.UUID, userId, prompt string) (string, error) {
+	user, err := s.userRepo.FindByID(ctx, userId)
+	if err != nil {
+		return "", fmt.Errorf("failed to find user: %w", err)
+	}
+
+	mvp, err := s.repo.GetByID(ctx, mvpId)
+	if err != nil {
+		fmt.Printf("WARNING: failed to get MVP by ID %s: %v", mvpId, err)
+	}
+
+	if mvp == nil && ideaId != uuid.Nil {
+		mvp, err = s.repo.GetByIdea(ctx, ideaId)
+		if err != nil {
+			return "", fmt.Errorf("failed to get MVP by idea ID: %w", err)
+		}
+	}
+
+	aiGenLimit := domain.GetAIGenLimitForPlan(user.Plan)
+	if mvp.AIGenerations >= aiGenLimit {
+		return "", fmt.Errorf("you have reached the AI generation limit of %d for the %s plan", aiGenLimit, user.Plan)
+	}
+
+	htmlContent, err := s.aiService.Generate(ctx, prompt)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate AI content: %w", err)
+	}
+
+	mvp.AIGenerations++
+	if err := s.repo.Update(ctx, mvp); err != nil {
+		fmt.Printf("WARNING: failed to update AI generation count for MVP %s: %v", mvp.ID, err)
+	}
+
+	return htmlContent, nil
 }
 
 func (s *mvpService) checkOwner(ctx context.Context, userId string, ideaId uuid.UUID) (*domain.Idea, error) {
