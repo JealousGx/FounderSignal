@@ -24,15 +24,23 @@ type PaddleService interface {
 	handleSubscriptionResumed(ctx context.Context, data paddle.SubscriptionResumedEvent) error
 }
 
+type PaddleServiceConfig struct {
+	StarterPlanID  string
+	ProPlanID      string
+	BusinessPlanID string
+}
+
 type paddleService struct {
 	userRepo           repository.UserRepository
 	processedEventRepo repository.PaddleRepository
+	cfg                PaddleServiceConfig
 }
 
-func NewPaddleService(userRepo repository.UserRepository, processedEventRepo repository.PaddleRepository) *paddleService {
+func NewPaddleService(userRepo repository.UserRepository, processedEventRepo repository.PaddleRepository, cfg PaddleServiceConfig) *paddleService {
 	return &paddleService{
 		userRepo:           userRepo,
 		processedEventRepo: processedEventRepo,
+		cfg:                cfg,
 	}
 }
 
@@ -275,6 +283,7 @@ func (s *paddleService) handleSubscriptionCanceled(ctx context.Context, evt padd
 	updates := domain.User{
 		SubscriptionStatus: string(paddle.SubscriptionStatusCanceled),
 		IsPaying:           false,
+		Plan:               domain.StarterPlan, // Default to Starter plan on cancellation
 	}
 	if data.CanceledAt != nil {
 		cancelledAt, err := time.Parse(time.RFC3339, *data.CanceledAt)
@@ -308,6 +317,7 @@ func (s *paddleService) handleSubscriptionActivated(ctx context.Context, evt pad
 	updates := domain.User{
 		SubscriptionStatus: string(paddle.SubscriptionStatusActive),
 		IsPaying:           true,
+		Plan:               s.mapPaddlePlanToInternalPlan(&data.Items[0].Price.ProductID),
 	}
 	var nullTime *time.Time
 	updates.SubscriptionPausedAt = nullTime
@@ -347,6 +357,7 @@ func (s *paddleService) handleSubscriptionPaused(ctx context.Context, evt paddle
 	updates := domain.User{
 		SubscriptionStatus: string(paddle.SubscriptionStatusPaused),
 		IsPaying:           false,
+		Plan:               domain.StarterPlan, // Default to Starter plan on pause
 	}
 
 	if data.PausedAt != nil {
@@ -394,4 +405,19 @@ func (s *paddleService) handleSubscriptionResumed(ctx context.Context, evt paddl
 	}
 
 	return s.userRepo.Update(ctx, user.ID, &updates)
+}
+
+func (s *paddleService) mapPaddlePlanToInternalPlan(paddlePlanID *string) domain.UserPlan {
+	if paddlePlanID == nil {
+		return domain.StarterPlan // Default plan if none specified
+	}
+
+	switch *paddlePlanID {
+	case s.cfg.ProPlanID:
+		return domain.ProPlan
+	case s.cfg.BusinessPlanID:
+		return domain.BusinessPlan
+	default:
+		return domain.StarterPlan
+	}
 }

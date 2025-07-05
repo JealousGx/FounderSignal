@@ -136,7 +136,7 @@ export function LandingPageCard({ mvp }: LandingPageCardProps) {
         <div className="relative h-48 w-full overflow-hidden rounded-md border bg-muted">
           <iframe
             srcDoc={mvp.htmlContent}
-            className="absolute top-0 left-0 h-[768px] w-[1366px] origin-top-left scale-[0.23] transform pointer-events-none"
+            className="absolute top-0 left-0 h-[768px] w-[2045px] origin-top-left scale-[0.25] transform pointer-events-none"
             title={`Preview of ${mvp.name}`}
             sandbox="allow-scripts"
           />

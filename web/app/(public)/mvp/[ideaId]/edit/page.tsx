@@ -28,8 +28,8 @@ export default function EditLandingPage() {
     : params.ideaId;
 
   const mvpId = searchParams.get("mvpId");
-  const isNew = searchParams.get("new") === "true";
 
+  const [mvpName, setMvpName] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,16 +46,34 @@ export default function EditLandingPage() {
   const { handleSave, saveStatus } = useAutoSave({
     ideaId,
     mvpId,
-    isNew,
     grapeEditor,
     isDirty,
     setIsDirty,
+    mvpName,
     metaTitle,
     metaDescription,
     handleImageUploads,
     cleanupOrphanedAssets,
     isSavingRef,
   });
+
+  const handleMetaTitleChange = (newTitle: string) => {
+    setMetaTitle(newTitle);
+    setIsDirty(true);
+  };
+
+  const handleMetaDescriptionChange = (newDescription: string) => {
+    setMetaDescription(newDescription);
+    setIsDirty(true);
+  };
+
+  const handleMVPNameChange = useCallback(
+    (newName: string) => {
+      setMvpName(newName);
+      setIsDirty(true);
+    },
+    [setIsDirty]
+  );
 
   const loadHtmlIntoEditor = useCallback(
     (htmlContent: string, headline = "", subheadline = "", isNew = false) => {
@@ -117,18 +135,22 @@ export default function EditLandingPage() {
   );
 
   useEffect(() => {
-    if (!ideaId || !grapeEditor || isNew) return;
+    if (!ideaId || !mvpId || !grapeEditor) return;
 
     const loadEditorContent = async () => {
       await getMVP(ideaId, mvpId).then((data) => {
         if (data?.htmlContent) {
           loadHtmlIntoEditor(data.htmlContent, data.headline, data.subheadline);
         }
+
+        if (data?.name) {
+          handleMVPNameChange(data.name);
+        }
       });
     };
 
     grapeEditor.onReady(loadEditorContent);
-  }, [ideaId, mvpId, isNew, grapeEditor, loadHtmlIntoEditor]);
+  }, [ideaId, mvpId, grapeEditor, loadHtmlIntoEditor, handleMVPNameChange]);
 
   const handleAIGenerate = async (
     title: string,
@@ -136,8 +158,8 @@ export default function EditLandingPage() {
     ctaBtnText?: string,
     instructions?: string
   ) => {
-    if (!ideaId) {
-      console.error("Idea ID is not available");
+    if (!ideaId || !mvpId) {
+      console.error("Idea ID or MVP ID is not available");
       return;
     }
 
@@ -149,6 +171,7 @@ export default function EditLandingPage() {
     toast.info("Generating landing page with AI...");
     const result = await generateMVPWithAI(
       ideaId,
+      mvpId,
       title,
       description,
       ctaBtnText,
@@ -168,16 +191,6 @@ export default function EditLandingPage() {
 
     loadHtmlIntoEditor(result.htmlContent, title, description, true);
     toast.success("New landing page generated and loaded!");
-  };
-
-  const handleMetaTitleChange = (newTitle: string) => {
-    setMetaTitle(newTitle);
-    setIsDirty(true);
-  };
-
-  const handleMetaDescriptionChange = (newDescription: string) => {
-    setMetaDescription(newDescription);
-    setIsDirty(true);
   };
 
   return (
@@ -250,6 +263,8 @@ export default function EditLandingPage() {
         setMetaTitle={handleMetaTitleChange}
         metaDescription={metaDescription}
         setMetaDescription={handleMetaDescriptionChange}
+        mvpName={mvpName}
+        setMvpName={handleMVPNameChange}
       />
 
       <AIGenerateModal

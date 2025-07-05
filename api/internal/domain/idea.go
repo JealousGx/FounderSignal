@@ -78,10 +78,11 @@ func (i *Idea) AfterFind(tx *gorm.DB) (err error) {
 // MVPSimulator represents the mock landing page for an idea
 type MVPSimulator struct {
 	Base
-	IdeaID      uuid.UUID `gorm:"type:uuid;not null;index" json:"ideaId"`
-	Name        string    `gorm:"not null" json:"name"`
-	IsActive    bool      `gorm:"default:false;not null" json:"isActive"`
-	HTMLContent string    `gorm:"type:text" json:"htmlContent"`
+	IdeaID        uuid.UUID `gorm:"type:uuid;not null;index" json:"ideaId"`
+	Name          string    `gorm:"not null" json:"name"`
+	IsActive      bool      `gorm:"default:false;not null" json:"isActive"`
+	HTMLContent   string    `gorm:"type:text" json:"htmlContent"`
+	AIGenerations int       `gorm:"default:0" json:"aiGenerations"` // Number of AI-generated content pieces
 
 	Views   int `gorm:"-" json:"views"`
 	Signups int `gorm:"-" json:"signups"`

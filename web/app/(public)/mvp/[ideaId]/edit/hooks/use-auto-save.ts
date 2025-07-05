@@ -2,7 +2,7 @@ import { Assets, Editor } from "grapesjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { createMVP, updateMVP } from "./actions";
+import { updateMVP } from "./actions";
 import { optimizeHtmlImages } from "./helpers";
 import { AssetUrlMap } from "./use-assets";
 import { getValidatedHtml } from "./validation";
@@ -15,10 +15,10 @@ export type SaveStatus = "idle" | "saving" | "success" | "error";
 export function useAutoSave({
   ideaId,
   mvpId,
-  isNew,
   grapeEditor,
   isDirty,
   setIsDirty,
+  mvpName,
   metaTitle,
   metaDescription,
   handleImageUploads,
@@ -27,10 +27,10 @@ export function useAutoSave({
 }: {
   ideaId: string | undefined;
   mvpId: string | null;
-  isNew: boolean | null | undefined;
   grapeEditor: Editor | null;
   isDirty: boolean;
   setIsDirty: React.Dispatch<React.SetStateAction<boolean>>;
+  mvpName: string;
   metaTitle: string;
   metaDescription: string;
   handleImageUploads: (assets: Assets) => Promise<AssetUrlMap>;
@@ -95,29 +95,15 @@ export function useAutoSave({
         // Clean up orphaned assets
         await cleanupOrphanedAssets(html);
 
-        if (isNew) {
-          const name = `Variant ${new Date().toLocaleDateString()}`;
+        const data = await updateMVP(ideaId, mvpId, html, mvpName);
+        if (data.error) throw new Error(data.error || "Save failed");
 
-          const data = await createMVP(ideaId, name, html);
-          if (data.error || !data.mvpId)
-            throw new Error(data.error || "Save failed");
+        setSaveStatus("success");
+        setIsDirty(false);
 
-          setSaveStatus("success");
-          setIsDirty(false);
-
+        if (!isAutoSave) {
           toast.dismiss();
-          toast.success("Landing page created successfully!");
-        } else {
-          const data = await updateMVP(ideaId, mvpId, html);
-          if (data.error) throw new Error(data.error || "Save failed");
-
-          setSaveStatus("success");
-          setIsDirty(false);
-
-          if (!isAutoSave) {
-            toast.dismiss();
-            toast.success("Landing page saved successfully!");
-          }
+          toast.success("Landing page saved successfully!");
         }
       } catch (error) {
         const err = error as Error;
@@ -141,7 +127,7 @@ export function useAutoSave({
     [
       ideaId,
       mvpId,
-      isNew,
+      mvpName,
       grapeEditor,
       isSavingRef,
       handleImageUploads,
@@ -158,8 +144,8 @@ export function useAutoSave({
       clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    if (isNew || !isDirty || saveStatus !== "idle") {
-      // If it's a new page, not dirty, or currently saving, don't auto-save
+    if (!isDirty || saveStatus !== "idle") {
+      // If it's not dirty, or currently saving, don't auto-save
       return;
     }
 
@@ -172,7 +158,7 @@ export function useAutoSave({
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [isNew, isDirty, saveStatus, handleSave]);
+  }, [isDirty, saveStatus, handleSave]);
 
   return { handleSave: () => handleSave(false), saveStatus }; // Expose a manual save function
 }

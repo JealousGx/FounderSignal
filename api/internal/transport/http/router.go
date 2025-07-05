@@ -54,7 +54,8 @@ func registerProtectedRoutes(router *gin.RouterGroup, h *Handlers) {
 	router.PUT("/feedback/:feedbackId", h.Feedback.Update)
 	router.DELETE("/feedback/:feedbackId", h.Feedback.Delete)
 
-	router.POST("/ai/generate", h.AI.Generate)
+	// router.POST("/ai/generate", h.AI.Generate)
+	router.POST("/ai/generate/landing-page", h.MVP.GenerateLandingPage)
 }
 
 func registerPublicRoutes(router *gin.RouterGroup, h *Handlers) {

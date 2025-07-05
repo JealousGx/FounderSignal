@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { getIdea } from "../get-idea";
+import { getUser } from "@/lib/auth";
 
 interface EditIdeaPageProps {
   params: Promise<{
@@ -22,6 +23,7 @@ export default async function EditIdeaPage({ params }: EditIdeaPageProps) {
   const { id } = await params;
 
   const data = await getIdea(id, { withMVPs: true });
+  const user = await getUser();
 
   if (!data) {
     notFound();
@@ -57,7 +59,7 @@ export default async function EditIdeaPage({ params }: EditIdeaPageProps) {
 
         <TabsContent value="landing-pages">
           <Suspense fallback={<Skeleton className="h-[200px]" />}>
-            <LandingPagesManager mvps={data.mvps} ideaId={id} />
+            <LandingPagesManager mvps={data.mvps} ideaId={id} user={user} />
           </Suspense>
         </TabsContent>
 

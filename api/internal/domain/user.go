@@ -14,6 +14,25 @@ const (
 	BusinessPlan UserPlan = "business"
 )
 
+const (
+	StarterIdeaLimit  = 1
+	ProIdeaLimit      = 10
+	BusinessIdeaLimit = 1000
+
+	StarterMVPLimit  = 1
+	ProMVPLimit      = 5
+	BusinessMVPLimit = 20
+
+	// per MVP
+	StarterAIGenLimit  = 3
+	ProAIGenLimit      = 5
+	BusinessAIGenLimit = 10
+
+	DefaultMVPLimit   = 1
+	DefaultAIGenLimit = 3
+	DefaultIdeaLimit  = 1
+)
+
 // User represents an application user, linked to a Clerk user.
 // It stores application-specific data like subscription plan and limits.
 type User struct {
@@ -56,12 +75,38 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 func GetIdeaLimitForPlan(plan UserPlan) int {
 	switch plan {
 	case ProPlan:
-		return 10
+		return ProIdeaLimit
 	case BusinessPlan:
-		return 1000
+		return BusinessIdeaLimit
 	case StarterPlan:
 		fallthrough
 	default:
-		return 1
+		return StarterIdeaLimit
+	}
+}
+
+func GetMVPLimitForPlan(plan UserPlan) int {
+	switch plan {
+	case ProPlan:
+		return ProMVPLimit
+	case BusinessPlan:
+		return BusinessMVPLimit
+	case StarterPlan:
+		fallthrough
+	default:
+		return StarterMVPLimit
+	}
+}
+
+func GetAIGenLimitForPlan(plan UserPlan) int {
+	switch plan {
+	case ProPlan:
+		return ProAIGenLimit
+	case BusinessPlan:
+		return BusinessAIGenLimit
+	case StarterPlan:
+		fallthrough
+	default:
+		return StarterAIGenLimit
 	}
 }

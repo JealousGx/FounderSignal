@@ -49,6 +49,14 @@ func main() {
 		ws.ServeWs(websocketHub, tokenAuthForWS, c.Writer, c.Request)
 	})
 
+	servicesCfg := service.ServicesConfig{
+		Paddle: service.PaddleServiceConfig{
+			StarterPlanID:  cfg.Envs.PADDLE_STARTER_PLAN_ID,
+			ProPlanID:      cfg.Envs.PADDLE_PRO_PLAN_ID,
+			BusinessPlanID: cfg.Envs.PADDLE_BUSINESS_PLAN_ID,
+		},
+	}
+
 	db := database.GetDB()
 
 	aiGenerator, err := ai.NewAIGenerator(context.Background(), ai.AIConfig{GeminiAPIKey: cfg.Envs.GeminiAPIKey, GeminiModelCode: cfg.Envs.GeminiModelCode})
@@ -58,7 +66,7 @@ func main() {
 	aiService := service.NewAIService(aiGenerator)
 
 	repos := repository.NewRepositories(db)
-	services := service.NewServices(repos, activityBroadcaster, aiService)
+	services := service.NewServices(repos, activityBroadcaster, aiService, servicesCfg)
 	handlers := http.NewHandlers(services)
 	webhooks := wh.NewWebhooks(services, wh.Secrets{
 		ClerkWebhookSecret:  cfg.Envs.CLERK_WEBHOOK_SECRET,

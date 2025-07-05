@@ -17,6 +17,10 @@ type Config struct {
 
 	PADDLE_WEBHOOK_SECRET string
 
+	PADDLE_STARTER_PLAN_ID  string
+	PADDLE_PRO_PLAN_ID      string
+	PADDLE_BUSINESS_PLAN_ID string
+
 	GeminiAPIKey    string
 	GeminiModelCode string
 
@@ -46,6 +50,10 @@ func initConfig() Config {
 		CLERK_WEBHOOK_SECRET: getEnv("CLERK_WEBHOOK_SECRET", "whsec_abcdefghijklmnopqrstuvwxyz"),
 
 		PADDLE_WEBHOOK_SECRET: getEnv("PADDLE_WEBHOOK_SECRET", "abcd_abcd_abcd"),
+
+		PADDLE_STARTER_PLAN_ID:  getEnv("PADDLE_STARTER_PLAN_ID", "pro_01jxsajk7xj3q08agx72evgfey"),
+		PADDLE_PRO_PLAN_ID:      getEnv("PADDLE_PRO_PLAN_ID", "pro_01jxs1w0n3tax383gmf3ahb118"),
+		PADDLE_BUSINESS_PLAN_ID: getEnv("PADDLE_BUSINESS_PLAN_ID", "pro_01jxs20dwtgtc0ywy6erm4gjxj"),
 
 		GeminiAPIKey:    getEnv("GEMINI_API_KEY", "your-gemini-api-key"),
 		GeminiModelCode: getEnv("GEMINI_MODEL_CODE", "gemini-1.5-flash"),

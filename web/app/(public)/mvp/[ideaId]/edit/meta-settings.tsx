@@ -17,6 +17,8 @@ interface MetaSettingsModalProps {
   setMetaTitle: (title: string) => void;
   metaDescription: string;
   setMetaDescription: (description: string) => void;
+  mvpName: string;
+  setMvpName: (name: string) => void;
 }
 
 const MAX_TITLE_LENGTH = 60;
@@ -29,6 +31,8 @@ export const MetaSettingsModal = ({
   setMetaTitle,
   metaDescription,
   setMetaDescription,
+  mvpName,
+  setMvpName,
 }: MetaSettingsModalProps) => {
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -38,6 +42,24 @@ export const MetaSettingsModal = ({
         </DialogHeader>
         <div className="space-y-7 mt-4">
           <div className="flex flex-col gap-4">
+            <div>
+              <Label
+                className="flex gap-2 items-center text-sm font-medium mb-1"
+                htmlFor="mvp-name"
+              >
+                Landing Page Name
+                <CustomTooltip text="This is the name of your landing page, which will be displayed in the dashboard and used for organization." />
+              </Label>
+              <Input
+                id="mvp-name"
+                type="text"
+                value={mvpName}
+                onChange={(e) => setMvpName(e.target.value)}
+                placeholder="Enter landing page name"
+                maxLength={MAX_TITLE_LENGTH}
+              />
+            </div>
+
             <div>
               <Label
                 className="flex gap-2 items-center text-sm font-medium mb-1"
