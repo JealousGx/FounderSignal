@@ -119,8 +119,18 @@ func (s *fbService) Delete(ctx context.Context, feedbackId uuid.UUID, userId str
 		return err
 	}
 
-	if feedback.UserID != userId {
-		return fmt.Errorf("user %s is not the author of feedback %s", userId, feedbackId)
+	idea, _, err := s.ideaRepo.GetByID(ctx, feedback.IdeaID, nil)
+	if err != nil {
+		// Log the error but don't fail, as the primary goal is deletion authorization.
+		// The idea might be deleted, but comments should still be manageable if they exist.
+		log.Printf("Error fetching idea %s for broadcasting feedback deletion: %v", feedback.IdeaID, err)
+	}
+
+	isCommentAuthor := feedback.UserID == userId
+	isIdeaOwner := idea != nil && idea.UserID == userId
+
+	if !isCommentAuthor && !isIdeaOwner {
+		return fmt.Errorf("user %s is not authorized to delete feedback %s", userId, feedbackId)
 	}
 
 	err = s.repo.Delete(ctx, feedbackId)
