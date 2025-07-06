@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Refund Policy | FounderSignal",
@@ -61,9 +60,9 @@ export default function RefundPolicyPage() {
         <p className="mb-4">
           If you have any questions about our Refund Policy, please contact us
           at{" "}
-          <Link className="underline" href="mailto:support@foundersignal.com">
+          <a className="underline" href="mailto:support@foundersignal.com">
             support@foundersignal.com
-          </Link>
+          </a>
           .
         </p>
       </div>

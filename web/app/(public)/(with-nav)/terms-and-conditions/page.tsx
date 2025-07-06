@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Terms and Conditions | FounderSignal",
@@ -176,9 +175,9 @@ export default function TermsAndConditionsPage() {
         <h2 className="text-xl font-semibold">14. Contact Us</h2>
         <p className="mb-4">
           If you have any questions about these Terms, please contact us at{" "}
-          <Link className="underline" href="mailto:support@foundersignal.com">
+          <a className="underline" href="mailto:support@foundersignal.com">
             support@foundersignal.com
-          </Link>
+          </a>
           .
         </p>
       </div>
