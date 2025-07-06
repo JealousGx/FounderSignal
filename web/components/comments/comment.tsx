@@ -309,9 +309,7 @@ const CommentActions = ({
 
   const canDelete = isAuthor || isIdeaOwner;
 
-  if (!isAuthor && !canDelete) {
-    return null; // No actions available for non-authors
-  }
+  if (!canDelete) return;
 
   return (
     <>
