@@ -11,6 +11,7 @@ import ValidationProgress from "@/components/dashboard/ideas/single/validation-p
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+import { RedditValidationCard } from "@/components/dashboard/reddit-validations/card";
 import { getIdea } from "./get-idea";
 
 interface IdeaPageProps {
@@ -60,6 +61,15 @@ export default async function IdeaPage({ params }: IdeaPageProps) {
               <Suspense fallback={<Skeleton className="h-80 w-full" />}>
                 <ValidationProgress idea={data.idea} />
               </Suspense>
+
+              {data.idea.redditValidationId && (
+                <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+                  <RedditValidationCard
+                    validationId={data.idea.redditValidationId}
+                    ideaTitle={data.idea.title}
+                  />
+                </Suspense>
+              )}
             </div>
           </TabsContent>
 
