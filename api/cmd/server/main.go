@@ -55,6 +55,9 @@ func main() {
 			ProPlanID:      cfg.Envs.PADDLE_PRO_PLAN_ID,
 			BusinessPlanID: cfg.Envs.PADDLE_BUSINESS_PLAN_ID,
 		},
+		Report: service.ReportServiceConfig{
+			DiscordWebhookURL: cfg.Envs.DISCORD_WEBHOOK_URL,
+		},
 	}
 
 	db := database.GetDB()

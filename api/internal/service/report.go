@@ -1,7 +1,9 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"foundersignal/internal/domain"
@@ -9,6 +11,8 @@ import (
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/dto/response"
 	"foundersignal/internal/repository"
+	"log"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,6 +23,9 @@ type ReportService interface {
 	GetReportsList(ctx context.Context, userID string, queryParams domain.QueryParams, specs ReportSpecs) (*response.ReportListResponse, error)
 	GetByID(ctx context.Context, reportId uuid.UUID) (*response.ReportPageResponse, error)
 	// GetReportsForIdea(ctx context.Context, ideaID uuid.UUID) ([]domain.Report, error) // to be implemented later
+
+	// SubmitContentReport sends a report, either for an idea or a comment, to the system for review.
+	SubmitContentReport(ctx context.Context, reporterId string, req request.CreateContentReport) error
 }
 
 type ReportSpecs struct {
@@ -26,16 +33,45 @@ type ReportSpecs struct {
 }
 
 type reportService struct {
-	repo      repository.ReportRepository
-	ideaRepo  repository.IdeaRepository
-	analytics AnalyticsService
+	repo         repository.ReportRepository
+	ideaRepo     repository.IdeaRepository
+	analytics    AnalyticsService
+	ReportConfig ReportServiceConfig
 }
 
-func NewReportService(reportRepo repository.ReportRepository, ideaRepository repository.IdeaRepository, analyticsService AnalyticsService) *reportService {
+type DiscordWebhookPayload struct {
+	Embeds []DiscordEmbed `json:"embeds"`
+}
+
+type DiscordEmbed struct {
+	Title       string         `json:"title"`
+	Description string         `json:"description"`
+	URL         string         `json:"url"`
+	Color       int            `json:"color"` // e.g., 15158332 for red
+	Fields      []DiscordField `json:"fields"`
+	Footer      DiscordFooter  `json:"footer"`
+}
+
+type DiscordField struct {
+	Name   string `json:"name"`
+	Value  string `json:"value"`
+	Inline bool   `json:"inline,omitempty"`
+}
+
+type DiscordFooter struct {
+	Text string `json:"text"`
+}
+
+type ReportServiceConfig struct {
+	DiscordWebhookURL string // URL for Discord webhook to send notifications
+}
+
+func NewReportService(reportRepo repository.ReportRepository, ideaRepository repository.IdeaRepository, analyticsService AnalyticsService, cfg ReportServiceConfig) *reportService {
 	return &reportService{
-		repo:      reportRepo,
-		ideaRepo:  ideaRepository,
-		analytics: analyticsService,
+		repo:         reportRepo,
+		ideaRepo:     ideaRepository,
+		analytics:    analyticsService,
+		ReportConfig: cfg,
 	}
 }
 
@@ -233,6 +269,54 @@ func (s *reportService) GenerateReport(ctx context.Context, userId string, idea 
 	reportId := report.ID
 
 	return &reportId, nil
+}
+
+func (s *reportService) SubmitContentReport(ctx context.Context, reporterId string, req request.CreateContentReport) error {
+	if s.ReportConfig.DiscordWebhookURL == "" {
+		log.Println("WARN: DISCORD_WEBHOOK_URL is not set. Report notification will not be sent.")
+		// Return nil because failing the user's request just because notifications are down isn't ideal.
+		return nil
+	}
+
+	// Create a rich embed for Discord
+	payload := DiscordWebhookPayload{
+		Embeds: []DiscordEmbed{
+			{
+				Title:       fmt.Sprintf("New Content Report: %s", req.ContentType),
+				Description: req.Reason,
+				URL:         req.ContentURL,
+				Color:       15158332, // Red
+				Fields: []DiscordField{
+					{Name: "Content Type", Value: req.ContentType, Inline: true},
+					{Name: "Content ID", Value: req.ContentID, Inline: true},
+					{Name: "Reporter User ID", Value: reporterId, Inline: false},
+				},
+				Footer: DiscordFooter{
+					Text: fmt.Sprintf("Reported on %s", time.Now().Format(time.RFC1123)),
+				},
+			},
+		},
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("ERROR: Failed to marshal Discord payload: %v", err)
+		return fmt.Errorf("internal server error when preparing report")
+	}
+
+	resp, err := http.Post(s.ReportConfig.DiscordWebhookURL, "application/json", bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		log.Printf("ERROR: Failed to send Discord webhook: %v", err)
+		return fmt.Errorf("failed to submit report")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		log.Printf("ERROR: Discord webhook returned status %d", resp.StatusCode)
+		return fmt.Errorf("failed to submit report due to a webhook error")
+	}
+
+	return nil
 }
 
 func (s *reportService) isReportValidated(report *domain.Report, conversionRate float64, targetSignups int) bool {

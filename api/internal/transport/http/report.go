@@ -15,6 +15,7 @@ type ReportHandler interface {
 	GenerateReport(c *gin.Context)
 	GetReportsList(c *gin.Context)
 	GetByID(c *gin.Context)
+	SubmitContentReport(c *gin.Context)
 }
 
 type reportHandler struct {
@@ -147,4 +148,26 @@ func (h *reportHandler) GetByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+func (h *reportHandler) SubmitContentReport(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	var req request.CreateContentReport
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.service.SubmitContentReport(c.Request.Context(), userId.(string), req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Report submitted successfully"})
 }
