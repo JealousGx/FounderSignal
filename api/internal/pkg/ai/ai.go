@@ -7,6 +7,7 @@ import (
 // Generator defines the common interface that every AI model client must implement.
 type generator interface {
 	GenerateContent(ctx context.Context, prompt string) (string, error)
+	CreateEmbeddings(ctx context.Context, texts []string) ([][]float32, error)
 }
 
 // AIGenerator defines the interface for a generic AI content generator.

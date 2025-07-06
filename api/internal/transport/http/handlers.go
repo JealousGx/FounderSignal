@@ -21,6 +21,7 @@ type Handlers struct {
 	Report    ReportHandler
 	Dashboard DashboardHandler
 	AI        AIHandler
+	Reddit    RedditValidationHandler
 }
 
 func NewHandlers(services *service.Services) *Handlers {
@@ -34,6 +35,7 @@ func NewHandlers(services *service.Services) *Handlers {
 		Report:    NewReportHandler(services.Report),
 		Dashboard: NewDashboardHandler(services.Dashboard),
 		AI:        NewAIHandler(services.AI),
+		Reddit:    NewRedditValidationHandler(services.Reddit),
 	}
 }
 

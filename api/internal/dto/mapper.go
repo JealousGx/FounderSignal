@@ -26,20 +26,21 @@ func ToIdeasListResponse(ideas []*domain.Idea, count int64, stats *response.User
 		}
 
 		res.Ideas = append(res.Ideas, response.IdeaList{
-			ID:             idea.ID,
-			Title:          idea.Title,
-			Description:    idea.Description,
-			TargetAudience: idea.TargetAudience,
-			IsPrivate:      isPrivate,
-			Status:         idea.Status,
-			Stage:          idea.Stage,
-			TargetSignups:  idea.TargetSignups,
-			ImageURL:       idea.ImageURL,
-			Views:          idea.Views,
-			Signups:        idea.Signups,
-			EngagementRate: CalculateConversionRate(int(idea.Views), int(idea.Signups)),
-			CreatedAt:      idea.CreatedAt.Format("2006-01-02"),
-			UpdatedAt:      idea.UpdatedAt.Format("2006-01-02"),
+			ID:                 idea.ID,
+			Title:              idea.Title,
+			Description:        idea.Description,
+			TargetAudience:     idea.TargetAudience,
+			IsPrivate:          isPrivate,
+			Status:             idea.Status,
+			Stage:              idea.Stage,
+			TargetSignups:      idea.TargetSignups,
+			ImageURL:           idea.ImageURL,
+			Views:              idea.Views,
+			Signups:            idea.Signups,
+			EngagementRate:     CalculateConversionRate(int(idea.Views), int(idea.Signups)),
+			CreatedAt:          idea.CreatedAt.Format("2006-01-02"),
+			UpdatedAt:          idea.UpdatedAt.Format("2006-01-02"),
+			RedditValidationID: idea.RedditValidationID,
 		})
 	}
 
