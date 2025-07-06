@@ -15,12 +15,14 @@ export const CommentsSection = ({
   comments: initialComments,
   maxComments = 5,
   totalComments = 0,
+  ideaCreatorId,
 }: {
   comments: CommentExtended[];
   userId: string;
   ideaId: string;
   maxComments?: number;
   totalComments?: number;
+  ideaCreatorId?: string;
 }) => {
   const [comments, setComments] = useState(initialComments);
   const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +72,7 @@ export const CommentsSection = ({
           userId={userId}
           ideaId={ideaId}
           ReplyForm={ReplyForm}
+          ideaCreatorId={ideaCreatorId}
         />
       ))}
 

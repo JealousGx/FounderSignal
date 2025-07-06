@@ -295,7 +295,7 @@ export default async function IdeaPage({
               </div>
             }
           >
-            <CommentsSection ideaId={idea.id} />
+            <CommentsSection ideaId={idea.id} ideaCreatorId={idea.userId} />
           </Suspense>
 
           {/* CTA for visitors */}

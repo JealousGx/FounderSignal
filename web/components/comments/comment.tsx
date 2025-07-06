@@ -37,6 +37,9 @@ type ReplyFormType = React.ComponentType<{
 type CommentActionsType = {
   ideaId: string;
   commentId: string;
+  ideaCreatorId?: string;
+  commentUserId: string;
+  currentUserId: string;
   onEditClick: () => void;
 };
 
@@ -45,11 +48,13 @@ export const CommentItem = ({
   comment,
   userId,
   ReplyForm,
+  ideaCreatorId,
 }: {
   comment: CommentExtended;
   userId: string | null;
   ideaId: string;
   ReplyForm: ReplyFormType;
+  ideaCreatorId?: string;
 }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -141,11 +146,14 @@ export const CommentItem = ({
                       Reply
                     </Button>
 
-                    {userId && comment.author.id === userId && (
+                    {userId && (
                       <CommentActions
                         ideaId={ideaId}
                         commentId={comment.id}
                         onEditClick={() => setIsEditing(true)}
+                        ideaCreatorId={ideaCreatorId}
+                        commentUserId={comment.author.id}
+                        currentUserId={userId}
                       />
                     )}
                   </div>
@@ -258,7 +266,17 @@ const CommentActions = ({
   commentId,
   ideaId,
   onEditClick,
+  ideaCreatorId,
+  commentUserId,
+  currentUserId,
 }: CommentActionsType) => {
+  const isAuthor = commentUserId === currentUserId;
+  const isIdeaOwner = ideaCreatorId === currentUserId;
+
+  if (!isAuthor && !isIdeaOwner) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -268,12 +286,14 @@ const CommentActions = ({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Button variant="ghost" size="sm" onClick={onEditClick}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
-        </DropdownMenuItem>
+        {isAuthor && (
+          <DropdownMenuItem asChild>
+            <Button variant="ghost" size="sm" onClick={onEditClick}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuItem asChild>
           <DeleteComment ideaId={ideaId} commentId={commentId} />
