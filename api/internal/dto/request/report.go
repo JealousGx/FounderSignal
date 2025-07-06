@@ -18,3 +18,9 @@ type CreateContentReport struct {
 	Reason      string `json:"reason" validate:"required,min=10,max=500"`
 	ContentURL  string `json:"contentUrl" validate:"required,url"`
 }
+
+type CreateBugReport struct {
+	Description      string `json:"description" validate:"required,min=10,max=1000"`
+	StepsToReproduce string `json:"stepsToReproduce" validate:"required,min=10,max=2000"`
+	PageURL          string `json:"pageUrl" validate:"required,url"`
+}

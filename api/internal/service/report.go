@@ -26,6 +26,7 @@ type ReportService interface {
 
 	// SubmitContentReport sends a report, either for an idea or a comment, to the system for review.
 	SubmitContentReport(ctx context.Context, reporterId string, req request.CreateContentReport) error
+	SubmitBugReport(ctx context.Context, reporterId string, req request.CreateBugReport) error
 }
 
 type ReportSpecs struct {
@@ -278,7 +279,6 @@ func (s *reportService) SubmitContentReport(ctx context.Context, reporterId stri
 		return nil
 	}
 
-	// Create a rich embed for Discord
 	payload := DiscordWebhookPayload{
 		Embeds: []DiscordEmbed{
 			{
@@ -314,6 +314,53 @@ func (s *reportService) SubmitContentReport(ctx context.Context, reporterId stri
 	if resp.StatusCode >= 300 {
 		log.Printf("ERROR: Discord webhook returned status %d", resp.StatusCode)
 		return fmt.Errorf("failed to submit report due to a webhook error")
+	}
+
+	return nil
+}
+
+func (s *reportService) SubmitBugReport(ctx context.Context, reporterId string, req request.CreateBugReport) error {
+	webhookURL := s.ReportConfig.DiscordWebhookURL
+	if webhookURL == "" {
+		log.Println("WARN: DISCORD_WEBHOOK_URL is not set. Bug report notification will not be sent.")
+		return nil
+	}
+
+	payload := DiscordWebhookPayload{
+		Embeds: []DiscordEmbed{
+			{
+				Title:       "🐞 New Bug Report",
+				Description: "**Description:**\n" + req.Description,
+				URL:         req.PageURL,
+				Color:       16711680, // Bright Red
+				Fields: []DiscordField{
+					{Name: "Steps to Reproduce", Value: req.StepsToReproduce, Inline: false},
+					{Name: "Reported from URL", Value: req.PageURL, Inline: false},
+					{Name: "Reporter User ID", Value: reporterId, Inline: false},
+				},
+				Footer: DiscordFooter{
+					Text: fmt.Sprintf("Reported on %s", time.Now().Format(time.RFC1123)),
+				},
+			},
+		},
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("ERROR: Failed to marshal Discord payload for bug report: %v", err)
+		return fmt.Errorf("internal server error when preparing bug report")
+	}
+
+	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		log.Printf("ERROR: Failed to send Discord webhook for bug report: %v", err)
+		return fmt.Errorf("failed to submit bug report")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		log.Printf("ERROR: Discord webhook for bug report returned status %d", resp.StatusCode)
+		return fmt.Errorf("failed to submit bug report due to a webhook error")
 	}
 
 	return nil
