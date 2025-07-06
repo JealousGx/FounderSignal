@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Footer } from "@/components/footer";
 import Navbar from "@/components/navbar";
 
 export default function Layout({
@@ -13,14 +14,7 @@ export default function Layout({
 
       {children}
 
-      <footer className="w-full bg-secondary-foreground py-2 text-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-12">
-          <div className="text-sm">
-            &copy; {new Date().getFullYear()} FounderSignal. All rights
-            reserved.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </React.Fragment>
   );
 }
