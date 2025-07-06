@@ -8,7 +8,8 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ReactionButtons } from "@/components/reactions-btns";
@@ -19,11 +20,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ReportButton } from "../report-btn";
 import { OptimizedImage } from "../ui/image";
 import { Textarea } from "../ui/textarea";
+import { deleteComment, updateComment } from "./actions";
 
 import { CommentExtended } from "@/types/comment";
-import { deleteComment, updateComment } from "./actions";
 
 type ReplyFormType = React.ComponentType<{
   ideaId: string;
@@ -39,7 +41,7 @@ type CommentActionsType = {
   commentId: string;
   ideaCreatorId?: string;
   commentUserId: string;
-  currentUserId: string;
+  currentUserId: string | null;
   onEditClick: () => void;
 };
 
@@ -56,9 +58,34 @@ export const CommentItem = ({
   ReplyForm: ReplyFormType;
   ideaCreatorId?: string;
 }) => {
+  const searchParams = useSearchParams();
+
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [updatedContent, setUpdatedContent] = useState(comment.content);
+
+  const commentRef = useRef<HTMLDivElement>(null);
+
+  const commentIdFromUrl = searchParams.get("comment");
+  const isHighlighted = commentIdFromUrl === comment.id;
+  const [isPulsing, setIsPulsing] = useState(isHighlighted);
+
+  useEffect(() => {
+    if (isHighlighted && commentRef.current) {
+      commentRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      setIsPulsing(true);
+
+      const timer = setTimeout(() => {
+        setIsPulsing(false);
+      }, 3500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isHighlighted]);
 
   const handleReplyClick = () => {
     setShowReplyForm(true);
@@ -94,7 +121,12 @@ export const CommentItem = ({
   };
 
   return (
-    <div className="p-4 md:p-6">
+    <div
+      ref={commentRef}
+      className={`p-4 md:p-6 rounded-lg transition-colors duration-500 ${
+        isHighlighted ? "bg-yellow-100 dark:bg-yellow-900/20" : ""
+      } ${isPulsing ? "animate-pulse" : ""}`}
+    >
       <div className="flex gap-4">
         <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
           <OptimizedImage
@@ -125,51 +157,53 @@ export const CommentItem = ({
                 {comment.content}
               </p>
 
-              {userId && (
-                <div className="w-full flex items-center gap-1 flex-col">
-                  <div className="flex items-center gap-1 flex-start w-full">
-                    <ReactionButtons
-                      ideaId={ideaId}
-                      commentId={comment.id}
-                      likedByUser={comment.likedByUser}
-                      dislikedByUser={comment.dislikedByUser}
-                      likes={comment.likes}
-                      dislikes={comment.dislikes}
-                    />
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-500 hover:text-gray-700"
-                      onClick={handleReplyClick}
-                    >
-                      Reply
-                    </Button>
-
-                    {userId && (
-                      <CommentActions
+              <div className="w-full flex items-center gap-1 flex-col">
+                <div className="flex items-center gap-1 flex-start w-full">
+                  {userId && (
+                    <>
+                      <ReactionButtons
                         ideaId={ideaId}
                         commentId={comment.id}
-                        onEditClick={() => setIsEditing(true)}
-                        ideaCreatorId={ideaCreatorId}
-                        commentUserId={comment.author.id}
-                        currentUserId={userId}
+                        likedByUser={comment.likedByUser}
+                        dislikedByUser={comment.dislikedByUser}
+                        likes={comment.likes}
+                        dislikes={comment.dislikes}
                       />
-                    )}
-                  </div>
 
-                  {showReplyForm && userId && (
-                    <ReplyForm
-                      ideaId={ideaId}
-                      userId={userId}
-                      commentId={comment.id}
-                      onCancel={handleReplyCancel}
-                      onReplyAdded={handleReplyAdded}
-                      initialMention={`@${comment.author.name} `}
-                    />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-500 hover:text-gray-700"
+                        onClick={handleReplyClick}
+                      >
+                        Reply
+                      </Button>
+                    </>
                   )}
+
+                  <CommentActions
+                    ideaId={ideaId}
+                    commentId={comment.id}
+                    onEditClick={() => setIsEditing(true)}
+                    ideaCreatorId={ideaCreatorId}
+                    commentUserId={comment.author.id}
+                    currentUserId={userId}
+                  />
+
+                  <ReportButton ideaId={ideaId} commentId={comment.id} />
                 </div>
-              )}
+
+                {showReplyForm && userId && (
+                  <ReplyForm
+                    ideaId={ideaId}
+                    userId={userId}
+                    commentId={comment.id}
+                    onCancel={handleReplyCancel}
+                    onReplyAdded={handleReplyAdded}
+                    initialMention={`@${comment.author.name} `}
+                  />
+                )}
+              </div>
             </>
           ) : (
             <div className="flex flex-col gap-2">
@@ -273,33 +307,39 @@ const CommentActions = ({
   const isAuthor = commentUserId === currentUserId;
   const isIdeaOwner = ideaCreatorId === currentUserId;
 
-  if (!isAuthor && !isIdeaOwner) {
-    return null;
+  const canDelete = isAuthor || isIdeaOwner;
+
+  if (!isAuthor && !canDelete) {
+    return null; // No actions available for non-authors
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size="icon" variant="ghost">
-          <MoreVertical className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="icon" variant="ghost">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end">
-        {isAuthor && (
-          <DropdownMenuItem asChild>
-            <Button variant="ghost" size="sm" onClick={onEditClick}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuContent align="end">
+          {isAuthor && (
+            <DropdownMenuItem asChild>
+              <Button variant="ghost" size="sm" onClick={onEditClick}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            </DropdownMenuItem>
+          )}
 
-        <DropdownMenuItem asChild>
-          <DeleteComment ideaId={ideaId} commentId={commentId} />
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {canDelete && (
+            <DropdownMenuItem asChild>
+              <DeleteComment ideaId={ideaId} commentId={commentId} />
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 };
 
