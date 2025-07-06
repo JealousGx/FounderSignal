@@ -15,6 +15,11 @@ export const ReportButton = ({
 }) => {
   const [isReportDialogOpen, setReportDialogOpen] = useState(false);
 
+  let contentUrl = `${window.location.origin}/explore/${ideaId}`;
+  if (commentId) {
+    contentUrl += `?comment=${commentId}`;
+  }
+
   return (
     <>
       <Button
@@ -30,7 +35,7 @@ export const ReportButton = ({
         onOpenChange={setReportDialogOpen}
         contentId={commentId || ideaId}
         contentType={commentId ? "comment" : "idea"}
-        contentUrl={`${window.location.origin}/explore/${ideaId}?comment=${commentId}`}
+        contentUrl={contentUrl}
       />
     </>
   );
