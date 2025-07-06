@@ -19,6 +19,7 @@ import { Link as CustomLink } from "@/components/ui/link";
 import { CommentsSection } from "./comments-section";
 
 import { ShareIdeaUrl } from "@/components/dashboard/ideas/single/share";
+import { ReportButton } from "@/components/report-btn";
 import { api } from "@/lib/api";
 import { getClerkUser } from "@/lib/auth";
 import { formatDate, getName } from "@/lib/utils";
@@ -278,8 +279,10 @@ export default async function IdeaPage({
                     />
 
                     <ShareIdeaUrl ideaId={ideaId} variant="ghost" size="icon">
-                      <Share2 className="h-4 w-4 mr-2" />
+                      <Share2 className="h-4 w-4" />
                     </ShareIdeaUrl>
+
+                    <ReportButton ideaId={ideaId} />
                   </div>
                 </div>
               </div>
@@ -295,7 +298,7 @@ export default async function IdeaPage({
               </div>
             }
           >
-            <CommentsSection ideaId={idea.id} />
+            <CommentsSection ideaId={idea.id} ideaCreatorId={idea.userId} />
           </Suspense>
 
           {/* CTA for visitors */}

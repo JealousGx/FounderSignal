@@ -65,7 +65,7 @@ export default async function IdeaPage({ params }: IdeaPageProps) {
 
           <TabsContent value="feedback" className="space-y-6">
             <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-              <FeedbackSection ideaId={id} />
+              <FeedbackSection ideaId={id} ideaCreatorId={data.idea.userId} />
             </Suspense>
           </TabsContent>
 

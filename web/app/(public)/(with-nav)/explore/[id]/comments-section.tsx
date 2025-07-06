@@ -6,7 +6,13 @@ import { AddCommentForm, ReplyForm } from "./add-comment-form";
 import { CommentItem } from "@/components/comments/comment";
 import { getComments } from "@/components/comments/get-comments";
 
-export const CommentsSection = async ({ ideaId }: { ideaId: string }) => {
+export const CommentsSection = async ({
+  ideaId,
+  ideaCreatorId,
+}: {
+  ideaId: string;
+  ideaCreatorId: string;
+}) => {
   const data = await getComments(ideaId);
   const comments = data?.comments || [];
   const { userId } = await auth();
@@ -32,6 +38,7 @@ export const CommentsSection = async ({ ideaId }: { ideaId: string }) => {
               comment={comment}
               userId={userId}
               ReplyForm={ReplyForm}
+              ideaCreatorId={ideaCreatorId}
             />
           ))}
         </div>

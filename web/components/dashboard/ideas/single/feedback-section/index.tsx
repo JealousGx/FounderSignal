@@ -13,12 +13,14 @@ import { CommentsSection } from "./comments";
 
 interface FeedbackSectionProps {
   ideaId: string;
+  ideaCreatorId?: string;
 }
 
 const MAX_COMMENTS = 3;
 
 export default async function FeedbackSection({
   ideaId,
+  ideaCreatorId,
 }: FeedbackSectionProps) {
   const { userId } = await auth();
 
@@ -45,6 +47,7 @@ export default async function FeedbackSection({
             comments={comments}
             maxComments={MAX_COMMENTS}
             totalComments={data?.total}
+            ideaCreatorId={ideaCreatorId}
           />
         ) : (
           <div className="text-center text-sm text-muted-foreground p-4 md:p-6">

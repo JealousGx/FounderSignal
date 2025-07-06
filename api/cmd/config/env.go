@@ -24,6 +24,8 @@ type Config struct {
 	GeminiAPIKey    string
 	GeminiModelCode string
 
+	DISCORD_WEBHOOK_URL string
+
 	APP_ENV string
 }
 
@@ -57,6 +59,8 @@ func initConfig() Config {
 
 		GeminiAPIKey:    getEnv("GEMINI_API_KEY", "your-gemini-api-key"),
 		GeminiModelCode: getEnv("GEMINI_MODEL_CODE", "gemini-1.5-flash"),
+
+		DISCORD_WEBHOOK_URL: getEnv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"),
 
 		APP_ENV: getEnv("APP_ENV", "development"),
 	}

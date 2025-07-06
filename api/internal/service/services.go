@@ -22,6 +22,7 @@ type Services struct {
 
 type ServicesConfig struct {
 	Paddle PaddleServiceConfig
+	Report ReportServiceConfig
 }
 
 func NewServices(repos *repository.Repositories, broadcaster websocket.ActivityBroadcaster, aiService AIService, cfg ServicesConfig) *Services {
@@ -34,7 +35,7 @@ func NewServices(repos *repository.Repositories, broadcaster websocket.ActivityB
 		Feedback:    NewFeedbackService(repos.Feedback, repos.Idea, broadcaster),
 		Reaction:    NewReactionService(repos.Reaction),
 		MVP:         NewMVPService(repos.MVP, repos.Idea, repos.User, aiService),
-		Report:      NewReportService(repos.Report, repos.Idea, analyticsService),
+		Report:      NewReportService(repos.Report, repos.Idea, analyticsService, cfg.Report),
 		Dashboard:   NewDashboardService(repos.Idea, repos.MVP, repos.Feedback, repos.Signal, repos.Audience, repos.Reaction),
 		Broadcaster: broadcaster,
 		AI:          aiService,
