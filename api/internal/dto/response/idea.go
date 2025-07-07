@@ -16,20 +16,21 @@ type PublicIdeaResponse struct {
 }
 
 type IdeaList struct {
-	ID             uuid.UUID `json:"id"`
-	Title          string    `json:"title"`
-	Description    string    `json:"description"`
-	TargetAudience string    `json:"targetAudience"`
-	IsPrivate      bool      `json:"isPrivate"`
-	CreatedAt      string    `json:"createdAt"`
-	UpdatedAt      string    `json:"updatedAt"`
-	Views          int       `json:"views"`
-	Signups        int       `json:"signups"`
-	EngagementRate float64   `json:"engagementRate"`
-	Status         string    `json:"status"`
-	Stage          string    `json:"stage"`
-	TargetSignups  int       `json:"targetSignups"`
-	ImageURL       string    `json:"imageUrl"`
+	ID                 uuid.UUID `json:"id"`
+	Title              string    `json:"title"`
+	Description        string    `json:"description"`
+	TargetAudience     string    `json:"targetAudience"`
+	IsPrivate          bool      `json:"isPrivate"`
+	CreatedAt          string    `json:"createdAt"`
+	UpdatedAt          string    `json:"updatedAt"`
+	Views              int       `json:"views"`
+	Signups            int       `json:"signups"`
+	EngagementRate     float64   `json:"engagementRate"`
+	Status             string    `json:"status"`
+	Stage              string    `json:"stage"`
+	TargetSignups      int       `json:"targetSignups"`
+	ImageURL           string    `json:"imageUrl"`
+	RedditValidationID uuid.UUID `json:"redditValidationId,omitempty"` // Optional validation analysis from Reddit
 }
 
 type PublicIdea struct {

@@ -316,7 +316,7 @@ func (s *paddleService) handleSubscriptionActivated(ctx context.Context, evt pad
 
 	updates := domain.User{
 		SubscriptionStatus: string(paddle.SubscriptionStatusActive),
-		IsPaying:           true,
+		IsPaying:           data.Status == "active",
 		Plan:               s.mapPaddlePlanToInternalPlan(&data.Items[0].Price.ProductID),
 	}
 	var nullTime *time.Time
@@ -387,7 +387,7 @@ func (s *paddleService) handleSubscriptionResumed(ctx context.Context, evt paddl
 
 	updates := domain.User{
 		SubscriptionStatus: string(paddle.SubscriptionStatusActive),
-		IsPaying:           true,
+		IsPaying:           data.Status == "active",
 	}
 	var nullTime *time.Time
 	updates.SubscriptionPausedAt = nullTime

@@ -8,18 +8,19 @@ import (
 
 type Idea struct {
 	Base
-	UserID         string `gorm:"not null;index;uniqueIndex:idx_user_idea_title" json:"userId"`
-	Title          string `gorm:"not null;uniqueIndex:idx_user_idea_title" json:"title"`
-	Slug           string `gorm:"not null;uniqueIndex;index" json:"slug"`
-	Description    string `gorm:"type:text;not null" json:"description"`
-	TargetAudience string `gorm:"not null" json:"targetAudience"`
-	IsPrivate      *bool  `gorm:"default:false" json:"isPrivate"`
-	Status         string `gorm:"not null;default:'active';index" json:"status"` // status defined in ./types.go file
-	Stage          string `gorm:"not null;default:'ideation';index" json:"stage"`
-	TargetSignups  int    `gorm:"default:100" json:"targetSignups"`
-	ImageURL       string `json:"imageUrl"`
-	Likes          int    `gorm:"default:0" json:"likes"`
-	Dislikes       int    `gorm:"default:0" json:"dislikes"`
+	UserID             string    `gorm:"not null;index;uniqueIndex:idx_user_idea_title" json:"userId"`
+	Title              string    `gorm:"not null;uniqueIndex:idx_user_idea_title" json:"title"`
+	Slug               string    `gorm:"not null;uniqueIndex;index" json:"slug"`
+	Description        string    `gorm:"type:text;not null" json:"description"`
+	TargetAudience     string    `gorm:"not null" json:"targetAudience"`
+	IsPrivate          *bool     `gorm:"default:false" json:"isPrivate"`
+	Status             string    `gorm:"not null;default:'active';index" json:"status"` // status defined in ./types.go file
+	Stage              string    `gorm:"not null;default:'ideation';index" json:"stage"`
+	TargetSignups      int       `gorm:"default:100" json:"targetSignups"`
+	ImageURL           string    `json:"imageUrl"`
+	Likes              int       `gorm:"default:0" json:"likes"`
+	Dislikes           int       `gorm:"default:0" json:"dislikes"`
+	RedditValidationID uuid.UUID `gorm:"type:uuid;index" json:"redditValidationId,omitempty"` // Optional validation analysis from Reddit
 
 	// Search-specific fields for better performance
 	SearchVector string `gorm:"type:tsvector;index:idx_search_vector,type:gin" json:"-"`

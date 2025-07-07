@@ -1,6 +1,7 @@
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import { Link } from "@/components/ui/link";
+import { GenerateRedditValidationButton } from "../../reddit-validations/generate";
 import GenerateReports from "../../reports/generate";
 interface IdeaHeaderProps {
   ideaId: string;
@@ -26,6 +27,13 @@ export default function IdeaHeader({ ideaId }: IdeaHeaderProps) {
         >
           Edit Idea
         </Link>
+
+        <GenerateRedditValidationButton
+          ideaId={ideaId}
+          variant="outline"
+          size="sm"
+          className="bg-white"
+        />
 
         <GenerateReports ideaId={ideaId} triggerSize="sm" />
 

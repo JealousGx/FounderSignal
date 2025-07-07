@@ -36,6 +36,7 @@ func Connect(dbConfig domain.DBConfig) error {
 		&domain.IdeaReaction{},
 		&domain.AudienceMember{},
 		&domain.Report{},
+		&domain.RedditValidation{},
 	)
 
 	return err

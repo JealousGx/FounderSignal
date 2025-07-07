@@ -5,6 +5,7 @@ import (
 	cfg "foundersignal/cmd/config"
 	"foundersignal/internal/pkg/ai"
 	"foundersignal/internal/pkg/auth"
+	"foundersignal/internal/pkg/reddit"
 	"foundersignal/internal/repository"
 	"foundersignal/internal/service"
 	"foundersignal/internal/transport/http"
@@ -62,14 +63,16 @@ func main() {
 
 	db := database.GetDB()
 
-	aiGenerator, err := ai.NewAIGenerator(context.Background(), ai.AIConfig{GeminiAPIKey: cfg.Envs.GeminiAPIKey, GeminiModelCode: cfg.Envs.GeminiModelCode})
+	aiGenerator, err := ai.NewAIGenerator(context.Background(), ai.AIConfig{GeminiAPIKey: cfg.Envs.GeminiAPIKey, GeminiModelCode: cfg.Envs.GeminiModelCode, GeminiEmbeddingModelCode: cfg.Envs.GeminiEmbeddingModelCode})
 	if err != nil {
 		log.Fatalf("Failed to initialize AI generator: %v", err)
 	}
 	aiService := service.NewAIService(aiGenerator)
 
+	redditClient := reddit.NewClient()
+
 	repos := repository.NewRepositories(db)
-	services := service.NewServices(repos, activityBroadcaster, aiService, servicesCfg)
+	services := service.NewServices(repos, activityBroadcaster, aiService, redditClient, servicesCfg)
 	handlers := http.NewHandlers(services)
 	webhooks := wh.NewWebhooks(services, wh.Secrets{
 		ClerkWebhookSecret:  cfg.Envs.CLERK_WEBHOOK_SECRET,
