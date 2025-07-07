@@ -14,7 +14,7 @@ type geminiGenerator struct {
 	embeddingModelCode string
 }
 
-func NewGeminiGenerator(ctx context.Context, apiKey string, modelCode string) (*geminiGenerator, error) {
+func NewGeminiGenerator(ctx context.Context, apiKey string, modelCode string, embeddingModelCode string) (*geminiGenerator, error) {
 	if apiKey == "" {
 		return nil, fmt.Errorf("gemini API key is required")
 	}
@@ -28,8 +28,9 @@ func NewGeminiGenerator(ctx context.Context, apiKey string, modelCode string) (*
 	}
 
 	return &geminiGenerator{
-		client:    client,
-		modelCode: modelCode,
+		client:             client,
+		modelCode:          modelCode,
+		embeddingModelCode: embeddingModelCode,
 	}, nil
 }
 

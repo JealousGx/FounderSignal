@@ -23,7 +23,7 @@ type AIConfig struct {
 }
 
 func NewAIGenerator(ctx context.Context, cfg AIConfig) (*AIGenerator, error) {
-	geminiGen, err := NewGeminiGenerator(ctx, cfg.GeminiAPIKey, cfg.GeminiModelCode)
+	geminiGen, err := NewGeminiGenerator(ctx, cfg.GeminiAPIKey, cfg.GeminiModelCode, cfg.GeminiEmbeddingModelCode)
 	if err != nil {
 		return nil, err
 	}
