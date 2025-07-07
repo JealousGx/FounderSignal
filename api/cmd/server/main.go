@@ -63,7 +63,7 @@ func main() {
 
 	db := database.GetDB()
 
-	aiGenerator, err := ai.NewAIGenerator(context.Background(), ai.AIConfig{GeminiAPIKey: cfg.Envs.GeminiAPIKey, GeminiModelCode: cfg.Envs.GeminiModelCode})
+	aiGenerator, err := ai.NewAIGenerator(context.Background(), ai.AIConfig{GeminiAPIKey: cfg.Envs.GeminiAPIKey, GeminiModelCode: cfg.Envs.GeminiModelCode, GeminiEmbeddingModelCode: cfg.Envs.GeminiEmbeddingModelCode})
 	if err != nil {
 		log.Fatalf("Failed to initialize AI generator: %v", err)
 	}

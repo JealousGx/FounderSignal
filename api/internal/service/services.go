@@ -39,7 +39,7 @@ func NewServices(repos *repository.Repositories, broadcaster websocket.ActivityB
 		MVP:         NewMVPService(repos.MVP, repos.Idea, repos.User, aiService),
 		Report:      NewReportService(repos.Report, repos.Idea, analyticsService, cfg.Report),
 		Dashboard:   NewDashboardService(repos.Idea, repos.MVP, repos.Feedback, repos.Signal, repos.Audience, repos.Reaction),
-		Reddit:      NewRedditValidationService(repos.Reddit, repos.Idea, redditClient, NewValidationAnalyzer(aiService)),
+		Reddit:      NewRedditValidationService(repos.Reddit, repos.Idea, repos.User, redditClient, NewValidationAnalyzer(aiService)),
 		Broadcaster: broadcaster,
 		AI:          aiService,
 	}

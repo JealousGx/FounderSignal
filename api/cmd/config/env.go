@@ -21,8 +21,9 @@ type Config struct {
 	PADDLE_PRO_PLAN_ID      string
 	PADDLE_BUSINESS_PLAN_ID string
 
-	GeminiAPIKey    string
-	GeminiModelCode string
+	GeminiAPIKey             string
+	GeminiModelCode          string
+	GeminiEmbeddingModelCode string
 
 	DISCORD_WEBHOOK_URL string
 
@@ -57,8 +58,9 @@ func initConfig() Config {
 		PADDLE_PRO_PLAN_ID:      getEnv("PADDLE_PRO_PLAN_ID", "pro_01jxs1w0n3tax383gmf3ahb118"),
 		PADDLE_BUSINESS_PLAN_ID: getEnv("PADDLE_BUSINESS_PLAN_ID", "pro_01jxs20dwtgtc0ywy6erm4gjxj"),
 
-		GeminiAPIKey:    getEnv("GEMINI_API_KEY", "your-gemini-api-key"),
-		GeminiModelCode: getEnv("GEMINI_MODEL_CODE", "gemini-1.5-flash"),
+		GeminiAPIKey:             getEnv("GEMINI_API_KEY", "your-gemini-api-key"),
+		GeminiModelCode:          getEnv("GEMINI_MODEL_CODE", "gemini-1.5-flash"),
+		GeminiEmbeddingModelCode: getEnv("GEMINI_EMBEDDING_MODEL_CODE", "text-embedding-004"),
 
 		DISCORD_WEBHOOK_URL: getEnv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"),
 

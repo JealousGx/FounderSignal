@@ -9,8 +9,9 @@ import (
 )
 
 type geminiGenerator struct {
-	client    *genai.Client
-	modelCode string
+	client             *genai.Client
+	modelCode          string
+	embeddingModelCode string
 }
 
 func NewGeminiGenerator(ctx context.Context, apiKey string, modelCode string) (*geminiGenerator, error) {
@@ -64,7 +65,7 @@ func (g *geminiGenerator) CreateEmbeddings(ctx context.Context, texts []string) 
 
 		// Use the older EmbedContent method with batching.
 		res, err := g.client.Models.EmbedContent(ctx,
-			"text-embedding-004", // Or another suitable embedding model
+			g.embeddingModelCode,
 			contents,
 			nil,
 		)

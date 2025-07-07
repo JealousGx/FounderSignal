@@ -24,6 +24,7 @@ type RedditValidationService interface {
 type redditValidationService struct {
 	validationRepo repository.RedditValidationRepository
 	ideaRepo       repository.IdeaRepository
+	userRepo       repository.UserRepository
 	redditClient   *reddit.RedditClient
 	analyzer       *ValidationAnalyzer
 }
@@ -31,18 +32,36 @@ type redditValidationService struct {
 func NewRedditValidationService(
 	validationRepo repository.RedditValidationRepository,
 	ideaRepo repository.IdeaRepository,
+	userRepo repository.UserRepository,
 	redditClient *reddit.RedditClient,
 	analyzer *ValidationAnalyzer,
 ) RedditValidationService {
 	return &redditValidationService{
 		validationRepo: validationRepo,
 		ideaRepo:       ideaRepo,
+		userRepo:       userRepo,
 		redditClient:   redditClient,
 		analyzer:       analyzer,
 	}
 }
 
 func (s *redditValidationService) GenerateValidation(ctx context.Context, userID string, ideaId uuid.UUID) (uuid.UUID, error) {
+	user, err := s.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to find user: %w", err)
+	}
+	if user == nil {
+		return uuid.Nil, fmt.Errorf("user not found")
+	}
+
+	if user.Plan == domain.StarterPlan {
+		return uuid.Nil, fmt.Errorf("reddit validation generation is not available on the Starter plan")
+	}
+
+	if !user.IsPaying {
+		return uuid.Nil, fmt.Errorf("reddit validation generation is only available for paying users")
+	}
+
 	// Verify idea ownership
 	idea, _, err := s.ideaRepo.GetByID(ctx, ideaId, nil)
 	if err != nil {
@@ -106,6 +125,7 @@ func (s *redditValidationService) ProcessValidationAsync(ctx context.Context, va
 	subreddits := []string{
 		"startups", "entrepreneur", "smallbusiness", "business", "marketing",
 		"productivity", "technology", "saas", "webdev", "programming",
+		"SideProject", "indiehackers", "Business_Ideas", "SomebodyMakeThis",
 	}
 
 	// Search Reddit for relevant posts

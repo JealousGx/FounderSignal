@@ -17,8 +17,9 @@ type AIGenerator struct {
 }
 
 type AIConfig struct {
-	GeminiAPIKey    string
-	GeminiModelCode string
+	GeminiAPIKey             string
+	GeminiModelCode          string
+	GeminiEmbeddingModelCode string
 }
 
 func NewAIGenerator(ctx context.Context, cfg AIConfig) (*AIGenerator, error) {
