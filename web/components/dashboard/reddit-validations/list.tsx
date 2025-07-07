@@ -3,7 +3,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { CheckCircle, Clock, TrendingUp, XCircle } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,32 +15,92 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
+import { PaginationWithPageSize } from "@/components/ui/pagination";
 import { RedditValidation } from "@/types/reddit-validation";
 import { getRedditValidations } from "./actions";
 
-export function RedditValidationList() {
-  const [validations, setValidations] = useState<RedditValidation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const ITEMS_PER_PAGE = 10;
 
-  useEffect(() => {
-    const fetchValidations = async () => {
-      try {
-        const response = await getRedditValidations();
-        setValidations(response.validations);
-      } catch (error) {
-        console.error("Failed to fetch validations:", error);
-      } finally {
-        setIsLoading(false);
+export function RedditValidationList({
+  validations: initialValidations,
+  total: initialTotal,
+}: {
+  validations: RedditValidation[];
+  total: number;
+}) {
+  const [validations, setValidations] =
+    useState<RedditValidation[]>(initialValidations);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
+  const [totalIdeas, setTotalIdeas] = useState(initialTotal);
+
+  const totalPages = Math.ceil(totalIdeas / itemsPerPage);
+
+  const fetchValidations = async ({
+    page,
+    pageSize,
+  }: {
+    page: number;
+    pageSize: number;
+  }) => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const offset = (page - 1) * pageSize;
+
+      const result = await getRedditValidations({ limit: pageSize, offset });
+
+      if (!result) {
+        setValidations([]);
+        setTotalIdeas(0);
+        return;
       }
-    };
 
-    fetchValidations();
-  }, []);
+      if (
+        result &&
+        "validations" in result &&
+        Array.isArray(result.validations)
+      ) {
+        setValidations(result.validations);
+      }
+      if ("total" in result) {
+        setTotalIdeas(result.total);
+      }
+    } catch (err) {
+      console.error("Failed to fetch validations:", err);
+      setValidations([]);
+      setTotalIdeas(0);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePageChange = async (page: number) => {
+    setCurrentPage(page);
+
+    await fetchValidations({
+      page,
+      pageSize: itemsPerPage,
+    });
+  };
+
+  const handlePageSizeChange = async (value: string) => {
+    const newPageSize = parseInt(value, 10);
+
+    setItemsPerPage(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+    await fetchValidations({
+      page: 1,
+      pageSize: newPageSize,
+    });
+  };
 
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {Array.from({ length: 3 }).map((_, i) => (
+        {Array.from({ length: 10 }).map((_, i) => (
           <Card key={i} className="bg-white border-gray-200">
             <CardContent className="p-6">
               <div className="animate-pulse space-y-3">
@@ -180,6 +240,14 @@ export function RedditValidationList() {
           </CardContent>
         </Card>
       ))}
+      <PaginationWithPageSize
+        currentPage={currentPage}
+        totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
+        handlePageChange={handlePageChange}
+        handlePageSizeChange={handlePageSizeChange}
+        pageSizeOptions={[5, 10, 20, 50]}
+      />
     </div>
   );
 }

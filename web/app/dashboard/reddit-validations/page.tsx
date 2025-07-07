@@ -1,11 +1,14 @@
 import { Suspense } from "react";
 
+import { getRedditValidations } from "@/components/dashboard/reddit-validations/actions";
 import { RedditValidationList } from "@/components/dashboard/reddit-validations/list";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const dynamic = "force-dynamic";
 
 export default async function RedditValidationPage() {
+  const data = await getRedditValidations({ limit: 10 });
+
   return (
     <div className="space-y-6">
       <div>
@@ -16,7 +19,10 @@ export default async function RedditValidationPage() {
       </div>
 
       <Suspense fallback={<ValidationListSkeleton />}>
-        <RedditValidationList />
+        <RedditValidationList
+          validations={data.validations}
+          total={data.total}
+        />
       </Suspense>
     </div>
   );
@@ -25,7 +31,7 @@ export default async function RedditValidationPage() {
 function ValidationListSkeleton() {
   return (
     <div className="space-y-4">
-      {Array.from({ length: 3 }).map((_, i) => (
+      {Array.from({ length: 10 }).map((_, i) => (
         <Skeleton key={i} className="h-32 w-full" />
       ))}
     </div>
