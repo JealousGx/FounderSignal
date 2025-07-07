@@ -45,14 +45,14 @@ func (va *ValidationAnalyzer) AnalyzeRedditData(ctx context.Context, ideaTitle, 
 	postEmbeddings := embeddings[1:]
 
 	// 2. Find the most relevant posts using cosine similarity.
-	relevantPosts := make([]relevantPost, len(redditPosts))
+	var relevantPosts []relevantPost
 	for i, post := range redditPosts {
 		similarity, err := cosineSimilarity(ideaEmbedding, postEmbeddings[i])
 		if err != nil {
 			// Skip posts that can't be compared
 			continue
 		}
-		relevantPosts[i] = relevantPost{Post: post, Similarity: similarity}
+		relevantPosts = append(relevantPosts, relevantPost{Post: post, Similarity: similarity})
 	}
 
 	// Sort posts by similarity score in descending order.
