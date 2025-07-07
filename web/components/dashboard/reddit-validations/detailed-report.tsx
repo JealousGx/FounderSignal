@@ -33,6 +33,18 @@ interface DetailedReportProps {
 export function DetailedReport({ validation }: DetailedReportProps) {
   const [activeTab, setActiveTab] = useState("overview");
 
+  if (!validation || !validation.id) {
+    return (
+      <Card className="bg-white border-gray-200">
+        <CardContent className="p-6">
+          <div className="text-center text-gray-500">
+            No validation data available
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (validation.status !== "completed") {
     return (
       <Card className="bg-white border-gray-200">

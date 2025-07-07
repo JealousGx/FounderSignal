@@ -55,7 +55,7 @@ export function RedditValidationList() {
     );
   }
 
-  if (validations.length === 0) {
+  if (!validations || validations.length === 0) {
     return (
       <Card className="bg-white border-gray-200">
         <CardContent className="p-8 text-center">
