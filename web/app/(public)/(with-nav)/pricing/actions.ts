@@ -31,7 +31,9 @@ export const openCheckout = async (
             quantity: 1,
           },
         ],
-        discountId: applyDiscount ? "dsc_01jxs29phfhxzjph1her6x6q12" : null,
+        discountId: applyDiscount
+          ? process.env.NEXT_PUBLIC_PADDLE_DISCOUNT_ID
+          : null,
         customData: {
           userId: user.id,
           userEmail: user.email,
