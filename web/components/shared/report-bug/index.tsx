@@ -57,7 +57,11 @@ export function BugReportDialog({
         </DialogHeader>
 
         <form ref={formRef} action={formAction}>
-          <input type="hidden" name="pageUrl" value={window?.location.href} />
+          <input
+            type="hidden"
+            name="pageUrl"
+            value={typeof window !== "undefined" ? window.location.href : ""}
+          />
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
