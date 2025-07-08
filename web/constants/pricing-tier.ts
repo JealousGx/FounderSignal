@@ -23,8 +23,8 @@ export const PricingTier: Tier[] = [
     ],
     featured: false,
     priceId: {
-      month: "pri_01jxsak6mag9h4zck3qtbfggdb",
-      year: "pri_01jxsakjxktpp3pcma1es34ekt",
+      month: process.env.NEXT_PUBLIC_PADDLE_STARTER_MONTHLY_PRICE_ID!,
+      year: process.env.NEXT_PUBLIC_PADDLE_STARTER_YEARLY_PRICE_ID!,
     },
   },
   {
@@ -42,8 +42,8 @@ export const PricingTier: Tier[] = [
     ],
     featured: true,
     priceId: {
-      month: "pri_01jxs1zskp3ak022rvzffz2w9v",
-      year: "pri_01jxs25f8xpw1de606r19kh30v",
+      month: process.env.NEXT_PUBLIC_PADDLE_PRO_MONTHLY_PRICE_ID!,
+      year: process.env.NEXT_PUBLIC_PADDLE_PRO_YEARLY_PRICE_ID!,
     },
   },
   {
@@ -62,8 +62,8 @@ export const PricingTier: Tier[] = [
     ],
     featured: false,
     priceId: {
-      month: "pri_01jxs21datfz4zvxg5bnww2xna",
-      year: "pri_01jxs247senyyv1yc68cvqfmnc",
+      month: process.env.NEXT_PUBLIC_PADDLE_BUSINESS_MONTHLY_PRICE_ID!,
+      year: process.env.NEXT_PUBLIC_PADDLE_BUSINESS_YEARLY_PRICE_ID!,
     },
   },
 ];
