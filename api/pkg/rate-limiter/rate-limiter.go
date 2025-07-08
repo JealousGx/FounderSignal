@@ -1,6 +1,7 @@
 package rate_limiter
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -16,6 +17,7 @@ type IPRateLimiter struct {
 	mu       sync.Mutex
 	r        rate.Limit
 	b        int
+	cancel   context.CancelFunc
 }
 
 // visitor holds the limiter and cooldown information for a given IP.
@@ -25,16 +27,22 @@ type visitor struct {
 	cooldownUntil time.Time
 }
 
+const cooldownDuration = 1 * time.Minute
+const cleanupInterval = 5 * time.Minute
+
 // NewIPRateLimiter initializes a new rate limiter.
 func NewIPRateLimiter(r rate.Limit, b int) *IPRateLimiter {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	limiter := &IPRateLimiter{
 		visitors: make(map[string]*visitor),
 		r:        r,
 		b:        b,
+		cancel:   cancel,
 	}
 
 	// Periodically clean up old entries from the visitors map.
-	go limiter.cleanupVisitors()
+	go limiter.cleanupVisitors(ctx)
 
 	return limiter
 }
@@ -65,11 +73,10 @@ func (limiter *IPRateLimiter) Middleware() gin.HandlerFunc {
 		v.cooldownUntil = time.Time{}
 
 		if !v.limiter.Allow() {
-			// Start a 1-minute cooldown period.
-			v.cooldownUntil = time.Now().Add(1 * time.Minute)
+			v.cooldownUntil = time.Now().Add(cooldownDuration)
 			limiter.mu.Unlock()
-			c.Header("Retry-After", "60")
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Rate limit exceeded. You are temporarily blocked for 1 minute."})
+			c.Header("Retry-After", fmt.Sprintf("%.0f", cooldownDuration.Seconds()))
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Rate limit exceeded. You are temporarily blocked."})
 			return
 		}
 
@@ -79,16 +86,24 @@ func (limiter *IPRateLimiter) Middleware() gin.HandlerFunc {
 }
 
 // cleanupVisitors removes entries that haven't been seen for a while.
-func (limiter *IPRateLimiter) cleanupVisitors() {
+func (limiter *IPRateLimiter) cleanupVisitors(ctx context.Context) {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+
 	for {
-		time.Sleep(time.Minute)
-		limiter.mu.Lock()
-		for ip, v := range limiter.visitors {
-			// Clean up visitors who haven't been seen in over 5 minutes.
-			if time.Since(v.lastSeen) > 5*time.Minute {
-				delete(limiter.visitors, ip)
+		select {
+		case <-ctx.Done():
+			// Context was cancelled, stop the goroutine.
+			return
+		case <-ticker.C:
+			// Timer ticked, perform cleanup.
+			limiter.mu.Lock()
+			for ip, v := range limiter.visitors {
+				if time.Since(v.lastSeen) > cleanupInterval {
+					delete(limiter.visitors, ip)
+				}
 			}
+			limiter.mu.Unlock()
 		}
-		limiter.mu.Unlock()
 	}
 }

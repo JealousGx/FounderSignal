@@ -29,6 +29,7 @@ func main() {
 	defer http.GetLogger().Sync()
 
 	router := gin.Default()
+	router.SetTrustedProxies(nil)
 	router.Use(http.CORS(), http.ErrorHandler(), http.Logger(), gzip.Gzip(gzip.BestCompression))
 
 	// Initialize WebSocket Hub and run it in a goroutine
