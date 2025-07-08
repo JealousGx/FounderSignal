@@ -12,10 +12,12 @@ import (
 	wh "foundersignal/internal/transport/webhooks"
 	ws "foundersignal/internal/websocket"
 	"foundersignal/pkg/database"
+	rate_limiter "foundersignal/pkg/rate-limiter"
 	"log"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 )
 
 func main() {
@@ -43,11 +45,6 @@ func main() {
 		c.JSON(200, gin.H{
 			"status": "ok",
 		})
-	})
-
-	// Setup WebSocket Route
-	router.GET("/ws", func(c *gin.Context) {
-		ws.ServeWs(websocketHub, tokenAuthForWS, c.Writer, c.Request)
 	})
 
 	servicesCfg := service.ServicesConfig{
@@ -79,8 +76,20 @@ func main() {
 		PaddleWebhookSecret: cfg.Envs.PADDLE_WEBHOOK_SECRET,
 	})
 
-	http.RegisterRoutes(router, handlers, cfg.Envs)
 	wh.RegisterRoutes(router, webhooks)
+
+	apiGroup := router.Group("/")
+
+	limiter := rate_limiter.NewIPRateLimiter(rate.Limit(cfg.Envs.RATE_LIMITER_RATE), cfg.Envs.RATE_LIMITER_BURST)
+	apiGroup.Use(limiter.Middleware())
+	{
+		// Setup WebSocket Route
+		apiGroup.GET("/ws", func(c *gin.Context) {
+			ws.ServeWs(websocketHub, tokenAuthForWS, c.Writer, c.Request)
+		})
+
+		http.RegisterRoutes(apiGroup, handlers, cfg.Envs)
+	}
 
 	router.Run(":" + cfg.Envs.Server.Port)
 }

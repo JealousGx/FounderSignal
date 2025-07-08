@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, h *Handlers, envs config.Config) {
+func RegisterRoutes(router *gin.RouterGroup, h *Handlers, envs config.Config) {
 	api := router.Group("/api/v1")
 
 	authMiddleware := NewClerkAuth(envs.CLERK_JWKS_URL)
