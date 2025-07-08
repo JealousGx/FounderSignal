@@ -3,6 +3,7 @@ package config
 import (
 	"foundersignal/internal/domain"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -28,6 +29,9 @@ type Config struct {
 	DISCORD_WEBHOOK_URL string
 
 	APP_ENV string
+
+	RATE_LIMITER_RATE  float64
+	RATE_LIMITER_BURST int
 }
 
 var Envs = initConfig()
@@ -65,11 +69,32 @@ func initConfig() Config {
 		DISCORD_WEBHOOK_URL: getEnv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"),
 
 		APP_ENV: getEnv("APP_ENV", "development"),
+
+		RATE_LIMITER_RATE:  getEnvAsFloat("RATE_LIMITER_RATE", 20),
+		RATE_LIMITER_BURST: getEnvAsInt("RATE_LIMITER_BURST", 40),
 	}
 }
 
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+
+	return fallback
+}
+
+func getEnvAsInt(key string, fallback int) int {
+	valueStr := getEnv(key, "")
+	if value, err := strconv.Atoi(valueStr); err == nil {
+		return value
+	}
+
+	return fallback
+}
+
+func getEnvAsFloat(key string, fallback float64) float64 {
+	valueStr := getEnv(key, "")
+	if value, err := strconv.ParseFloat(valueStr, 64); err == nil {
 		return value
 	}
 
