@@ -13,7 +13,7 @@ import (
 // IPRateLimiter holds the rate limiters for each IP address.
 type IPRateLimiter struct {
 	visitors map[string]*visitor
-	mu       *sync.Mutex
+	mu       sync.Mutex
 	r        rate.Limit
 	b        int
 }
@@ -29,7 +29,6 @@ type visitor struct {
 func NewIPRateLimiter(r rate.Limit, b int) *IPRateLimiter {
 	limiter := &IPRateLimiter{
 		visitors: make(map[string]*visitor),
-		mu:       &sync.Mutex{},
 		r:        r,
 		b:        b,
 	}
