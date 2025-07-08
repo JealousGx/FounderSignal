@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ export function BugReportDialog({
     FormData
   >(submitBugReport, null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [pageUrl, setPageUrl] = useState("");
 
   useEffect(() => {
     if (state?.message) {
@@ -43,6 +44,12 @@ export function BugReportDialog({
       toast.error(state.error);
     }
   }, [state, onOpenChange]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setPageUrl(window.location.href);
+    }
+  }, []);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -57,11 +64,7 @@ export function BugReportDialog({
         </DialogHeader>
 
         <form ref={formRef} action={formAction}>
-          <input
-            type="hidden"
-            name="pageUrl"
-            value={typeof window !== "undefined" ? window.location.href : ""}
-          />
+          <input type="hidden" name="pageUrl" value={pageUrl} />
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
