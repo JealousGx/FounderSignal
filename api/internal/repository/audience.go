@@ -97,7 +97,7 @@ func (r *audienceRepository) Upsert(ctx context.Context, ideaID, mvpId uuid.UUID
 	now := time.Now()
 
 	err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns: []clause.Column{{Name: "idea_id"}, {Name: "user_id"}},
+		Columns: []clause.Column{{Name: "mvp_simulator_id"}, {Name: "user_id"}},
 		DoUpdates: clause.Assignments(map[string]interface{}{
 			"last_active": gorm.Expr("NOW()"),
 			"visits":      gorm.Expr("audience_members.visits + 1"),
