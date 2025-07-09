@@ -42,6 +42,11 @@ type ideaService struct {
 	aiService AIService
 }
 
+const (
+	RegisteredUserPlaceholderEmail = "registered_user"
+	AnonymousUserPlaceholderEmail  = "anonymous_user"
+)
+
 func NewIdeasService(repo repository.IdeaRepository, mvpRepo repository.MVPRepository, u repository.UserRepository, signalRepo repository.SignalRepository,
 	audienceRepo repository.AudienceRepository, aiService AIService) *ideaService {
 	return &ideaService{
@@ -374,27 +379,27 @@ func (s *ideaService) RecordSignal(ctx context.Context, ideaID, mvpId uuid.UUID,
 			user, err := s.u.FindByID(ctx, userID)
 
 			if err != nil {
-				fmt.Printf("Failed to find user by ID: %v\n", err)
+				log.Printf("Failed to find user by ID: %v\n", err)
 
 				// Do not return error, proceed with placeholder email
-				userEmail = "registered_user"
+				userEmail = RegisteredUserPlaceholderEmail
 			} else if user == nil {
-				fmt.Printf("User not found for ID: %s\n", userID)
+				log.Printf("User not found for ID: %s\n", userID)
 
 				// Do not return error, proceed with placeholder email
-				userEmail = "registered_user"
+				userEmail = RegisteredUserPlaceholderEmail
 			} else {
 				userEmail = user.Email
 			}
 		} else {
-			finalUserID = uuid.New().String() // Generate a new UUID if userID is not provided
-			userEmail = "anonymous_user"      // Placeholder for anonymous users
+			finalUserID = uuid.New().String()         // Generate a new UUID if userID is not provided
+			userEmail = AnonymousUserPlaceholderEmail // Placeholder for anonymous users
 		}
 
 		_, err = s.audienceRepo.Upsert(ctx, ideaID, mvpId, finalUserID, userEmail)
 		if err != nil {
 			// Log this error but don't necessarily fail the whole signal recording
-			log.Printf("WARN: Failed to upsert audience member for idea %s, user %s after CTA click: %v", ideaID, userID, err)
+			log.Printf("WARN: Failed to upsert audience member for idea %s, user %s after CTA click: %v", ideaID, finalUserID, err)
 		}
 	}
 
