@@ -1,10 +1,11 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
 import "./globals.css";
 
+import { TopLoader } from "@/components/shared/top-loader";
 import { Toaster } from "@/components/ui/sonner";
-
-import { ClerkProvider } from "@clerk/nextjs";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,7 +51,9 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           {children}
-          <Toaster />
+          <TopLoader />
+
+          <Toaster richColors />
         </body>
       </html>
     </ClerkProvider>
