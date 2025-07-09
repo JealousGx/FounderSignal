@@ -1,5 +1,12 @@
-import { Link } from "@/components/ui/link";
 import { CheckCircle } from "lucide-react";
+import { Metadata } from "next";
+
+import { Link } from "@/components/ui/link";
+
+export const metadata: Metadata = {
+  title: "Payment Successful",
+  robots: { index: false, follow: false },
+};
 
 export default function CheckoutSuccessPage() {
   return (

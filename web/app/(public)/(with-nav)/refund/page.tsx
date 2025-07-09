@@ -1,10 +1,13 @@
 import { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Refund Policy | FounderSignal",
+import { createMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = createMetadata({
+  title: "Refund Policy",
   description:
     "Understand the refund policy for FounderSignal's subscription services.",
-};
+  urlPath: "refund",
+});
 
 export default function RefundPolicyPage() {
   return (

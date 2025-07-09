@@ -1,10 +1,13 @@
 import { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy | FounderSignal",
+import { createMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = createMetadata({
+  title: "Privacy Policy",
   description:
     "Understand how FounderSignal collects, uses, and protects your personal data and the content you provide.",
-};
+  urlPath: "privacy-policy",
+});
 
 export default function PrivacyPolicyPage() {
   return (

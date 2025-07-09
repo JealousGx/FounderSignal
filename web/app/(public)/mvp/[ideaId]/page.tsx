@@ -28,10 +28,7 @@ export default async function MVPPage({
           The requested Minimum Viable Product page could not be loaded. It
           might have been moved or deleted.
         </p>
-        <Link
-          href="/explore"
-          style={{ color: "#007bff", textDecoration: "none" }}
-        >
+        <Link href="/explore" style={{ textDecoration: "none" }}>
           Explore other ideas
         </Link>
       </div>

@@ -1,5 +1,16 @@
+import { Metadata } from "next";
+
 import { FAQs } from "./faqs";
 import { PricingSection } from "./pricing-section";
+
+import { createMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = createMetadata({
+  title: "Pricing Plans",
+  description:
+    "Choose the right plan for your startup validation needs. From free starter plans to comprehensive business packages, find the perfect fit on FounderSignal.",
+  urlPath: "pricing",
+});
 
 export default async function Pricing() {
   return (

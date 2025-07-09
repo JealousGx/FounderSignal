@@ -1,10 +1,13 @@
 import { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Terms and Conditions | FounderSignal",
+import { createMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = createMetadata({
+  title: "Terms and Conditions",
   description:
     "Read the terms and conditions for using the FounderSignal platform.",
-};
+  urlPath: "terms-and-conditions",
+});
 
 export default function TermsAndConditionsPage() {
   return (

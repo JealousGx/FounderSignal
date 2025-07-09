@@ -1,7 +1,18 @@
+import { Metadata } from "next";
+
 import { getIdeas } from "./get-ideas";
 import Ideas from "./ideas";
 
+import { createMetadata } from "@/lib/metadata";
+
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = createMetadata({
+  title: "Explore Startup Ideas",
+  description:
+    "Discover and analyze hundreds of startup ideas. See real-world validation metrics, user feedback, and market interest on FounderSignal.",
+  urlPath: "explore",
+});
 
 const DEFAULT_PAGE_SIZE = 6;
 

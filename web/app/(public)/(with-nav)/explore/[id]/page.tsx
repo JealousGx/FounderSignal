@@ -9,6 +9,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
@@ -22,6 +23,7 @@ import { ShareIdeaUrl } from "@/components/dashboard/ideas/single/share";
 import { ReportButton } from "@/components/report-btn";
 import { api } from "@/lib/api";
 import { getClerkUser } from "@/lib/auth";
+import { createMetadata } from "@/lib/metadata";
 import { formatDate, getName } from "@/lib/utils";
 import { Idea } from "@/types/idea";
 
@@ -38,6 +40,36 @@ type IdeaExtended = Idea & {
   };
   feedbackHighlights: string[];
 };
+
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id: ideaId } = await params;
+  const data = await getIdea(ideaId);
+
+  if (!data?.idea) {
+    return {
+      title: "Idea Not Found",
+    };
+  }
+
+  const idea = data.idea;
+  const title = `${idea.title}`;
+  const description =
+    `Validation data for the startup idea: ${idea.title}. See signups, conversion rates, and user feedback. ` +
+    (idea.description
+      ? idea.description.substring(0, 100) + "..."
+      : "Discover if this idea has potential.");
+
+  return createMetadata({
+    title,
+    description,
+    image: idea.imageUrl,
+    urlPath: `explore/${idea.id}`,
+  });
+}
 
 const getIdea = cache(async (id: string) => {
   try {

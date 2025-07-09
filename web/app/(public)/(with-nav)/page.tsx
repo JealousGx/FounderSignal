@@ -1,7 +1,16 @@
+import { Metadata } from "next";
 import React from "react";
 
 import { OptimizedImage } from "@/components/ui/image";
 import { Link } from "@/components/ui/link";
+
+import { createMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = createMetadata({
+  title: "FounderSignal - Validate Your Startup Idea in 72 Hours",
+  description:
+    "Stop guessing. Start validating. FounderSignal helps you test your startup ideas with real users and data-driven insights in under 72 hours. Build your MVP, get feedback, and find your market.",
+});
 
 export default function Home() {
   return (
