@@ -88,6 +88,7 @@ func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUser
 		Title:              idea.Title,
 		Description:        idea.Description,
 		TargetAudience:     idea.TargetAudience,
+		ImageURL:           idea.ImageURL,
 		CreatedAt:          idea.CreatedAt.Format(time.RFC3339),
 		Stage:              idea.Stage,
 		Status:             idea.Status,
