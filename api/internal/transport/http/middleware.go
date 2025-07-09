@@ -31,7 +31,7 @@ type ClerkAuth struct {
 
 func CORS() gin.HandlerFunc {
 	return cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "https://www.foundersignal.com", "https://foundersignal.com"},
+		AllowOrigins:     []string{"http://localhost:3000", "https://www.foundersignal.app", "https://foundersignal.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
