@@ -364,21 +364,34 @@ func (s *ideaService) RecordSignal(ctx context.Context, ideaID, mvpId uuid.UUID,
 		return fmt.Errorf("failed to create signal: %w", err)
 	}
 
-	// If the event is a CTA click and we have a UserID, create/update AudienceMember
-	if eventType == "cta_click" && userID != "" {
+	// If the event is a CTA click, create/update AudienceMember
+	if eventType == "cta_click" {
+		var finalUserID string
 		var userEmail string
-		user, err := s.u.FindByID(ctx, userID)
-		if err != nil {
-			fmt.Printf("Failed to find user by ID: %v\n", err)
-			return fmt.Errorf("failed to find user: %w", err)
+
+		if userID != "" {
+			finalUserID = userID
+			user, err := s.u.FindByID(ctx, userID)
+
+			if err != nil {
+				fmt.Printf("Failed to find user by ID: %v\n", err)
+
+				// Do not return error, proceed with placeholder email
+				userEmail = "registered_user"
+			} else if user == nil {
+				fmt.Printf("User not found for ID: %s\n", userID)
+
+				// Do not return error, proceed with placeholder email
+				userEmail = "registered_user"
+			} else {
+				userEmail = user.Email
+			}
+		} else {
+			finalUserID = uuid.New().String() // Generate a new UUID if userID is not provided
+			userEmail = "anonymous_user"      // Placeholder for anonymous users
 		}
 
-		if user == nil {
-			return fmt.Errorf("user not found: %w", err)
-		}
-		userEmail = user.Email
-
-		_, err = s.audienceRepo.Upsert(ctx, ideaID, mvpId, userID, userEmail)
+		_, err = s.audienceRepo.Upsert(ctx, ideaID, mvpId, finalUserID, userEmail)
 		if err != nil {
 			// Log this error but don't necessarily fail the whole signal recording
 			log.Printf("WARN: Failed to upsert audience member for idea %s, user %s after CTA click: %v", ideaID, userID, err)
