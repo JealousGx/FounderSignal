@@ -178,8 +178,8 @@ export default function TermsAndConditionsPage() {
         <h2 className="text-xl font-semibold">14. Contact Us</h2>
         <p className="mb-4">
           If you have any questions about these Terms, please contact us at{" "}
-          <a className="underline" href="mailto:support@foundersignal.com">
-            support@foundersignal.com
+          <a className="underline" href="mailto:support@foundersignal.app">
+            support@foundersignal.app
           </a>
           .
         </p>

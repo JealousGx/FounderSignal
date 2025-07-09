@@ -178,8 +178,8 @@ export default function PrivacyPolicyPage() {
         <p className="mb-4">
           If you have any questions about this Privacy Policy, please contact us
           at{" "}
-          <a className="underline" href="mailto:support@foundersignal.com">
-            support@foundersignal.com
+          <a className="underline" href="mailto:support@foundersignal.app">
+            support@foundersignal.app
           </a>
           .
         </p>

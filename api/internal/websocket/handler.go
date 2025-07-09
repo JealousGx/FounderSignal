@@ -16,7 +16,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
-		return strings.Contains(origin, "foundersignal.com") ||
+		return strings.Contains(origin, "foundersignal.app") ||
 			strings.Contains(origin, "localhost:3000")
 	},
 }
