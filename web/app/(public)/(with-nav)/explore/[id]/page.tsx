@@ -9,6 +9,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
@@ -38,6 +39,59 @@ type IdeaExtended = Idea & {
   };
   feedbackHighlights: string[];
 };
+
+type Props = {
+  params: { id: string };
+};
+
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const data = await getIdea(params.id);
+
+  if (!data?.idea) {
+    return {
+      title: "Idea Not Found",
+    };
+  }
+
+  const idea = data.idea;
+  const title = `${idea.title} | FounderSignal`;
+  const description =
+    `Validation data for the startup idea: ${idea.title}. See signups, conversion rates, and user feedback. ` +
+    (idea.description
+      ? idea.description.substring(0, 100) + "..."
+      : "Discover if this idea has potential.");
+
+  const previousImages = (await parent).openGraph?.images || [];
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: idea.imageUrl
+        ? [
+            {
+              url: idea.imageUrl,
+              width: 1200,
+              height: 630,
+              alt: idea.title,
+            },
+            ...previousImages,
+          ]
+        : previousImages,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: idea.imageUrl ? [idea.imageUrl] : [],
+    },
+  };
+}
 
 const getIdea = cache(async (id: string) => {
   try {

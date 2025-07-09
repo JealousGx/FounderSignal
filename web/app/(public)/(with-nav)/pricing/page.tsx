@@ -1,5 +1,32 @@
+import { Metadata, ResolvingMetadata } from "next";
+
 import { FAQs } from "./faqs";
 import { PricingSection } from "./pricing-section";
+
+export async function generateMetadata(
+  {},
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const previousImages = (await parent).openGraph?.images || [];
+
+  return {
+    title: "Pricing Plans",
+    description:
+      "Choose the right plan for your startup validation needs. From free starter plans to comprehensive business packages, find the perfect fit on FounderSignal.",
+    openGraph: {
+      title: "FounderSignal Pricing Plans",
+      description:
+        "Affordable and scalable pricing to help you validate your next big idea. Explore our plans and features.",
+      images: previousImages,
+    },
+    twitter: {
+      title: "FounderSignal Pricing Plans",
+      description:
+        "Affordable and scalable pricing to help you validate your next big idea. Explore our plans and features.",
+      images: previousImages,
+    },
+  };
+}
 
 export default async function Pricing() {
   return (

@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import DashboardHeader from "@/components/dashboard/header";
@@ -6,6 +7,11 @@ import DashboardSidebar from "@/components/dashboard/sidebar";
 import MobileDashboardNav from "@/components/dashboard/sidebar/mobile-nav";
 
 import { ActivityProvider } from "@/contexts/activity-context";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  robots: { index: false, follow: false },
+};
 
 export default async function DashboardLayout({
   children,

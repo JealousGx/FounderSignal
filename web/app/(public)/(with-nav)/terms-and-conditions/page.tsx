@@ -1,10 +1,29 @@
-import { Metadata } from "next";
+import { Metadata, ResolvingMetadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Terms and Conditions | FounderSignal",
-  description:
-    "Read the terms and conditions for using the FounderSignal platform.",
-};
+export async function generateMetadata(
+  {},
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const previousImages = (await parent).openGraph?.images || [];
+  const title = "Terms and Conditions | FounderSignal";
+  const description =
+    "Read the terms and conditions for using the FounderSignal platform.";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: previousImages,
+    },
+    twitter: {
+      title,
+      description,
+      images: previousImages,
+    },
+  };
+}
 
 export default function TermsAndConditionsPage() {
   return (

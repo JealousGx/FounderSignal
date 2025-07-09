@@ -17,18 +17,50 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "FounderSignal",
-    template: `%s | FounderSignal`,
-  },
+const siteConfig = {
+  name: "FounderSignal",
+  title: "FounderSignal - Validate Your Startup Idea in 72 Hours",
   description:
     "A real-time micro-validation platform for startup founders to test startup ideas within 72 hours — powered by dynamic MVPs, user feedback, and AI summaries.",
+  url: process.env.NEXT_PUBLIC_APP_URL || "https://foundersignal.app",
+  ogImage: `${process.env.NEXT_PUBLIC_APP_URL}/assets/og-image.png`,
+};
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: siteConfig.title,
+    template: `%s | ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
   robots: { index: true, follow: true },
   icons: {
     icon: "/assets/favicon/favicon.ico",
     shortcut: "/assets/favicon/favicon-16x16.png",
     apple: "/assets/favicon/apple-touch-icon.png",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteConfig.url,
+    title: siteConfig.name,
+    description: siteConfig.description,
+    siteName: siteConfig.name,
+    images: [
+      {
+        url: siteConfig.ogImage,
+        width: 1200,
+        height: 630,
+        alt: siteConfig.title,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.name,
+    description: siteConfig.description,
+    images: [siteConfig.ogImage],
+    creator: "@khiljimateenn",
   },
   manifest: `/assets/favicon/site.webmanifest`,
   authors: [
