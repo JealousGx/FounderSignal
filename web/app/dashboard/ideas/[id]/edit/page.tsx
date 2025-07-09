@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { getIdea } from "../get-idea";
 import { getUser } from "@/lib/auth";
+import { LandingPage } from "@/types/idea";
 
 interface EditIdeaPageProps {
   params: Promise<{
@@ -31,6 +32,8 @@ export default async function EditIdeaPage({ params }: EditIdeaPageProps) {
 
   const idea = data?.idea;
 
+  const activeMVPId = data?.mvps?.find((mvp: LandingPage) => mvp.isActive)?.id;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -41,7 +44,7 @@ export default async function EditIdeaPage({ params }: EditIdeaPageProps) {
       </div>
 
       <Suspense fallback={<Skeleton className="h-16 w-full" />}>
-        <EditHeader idea={idea} />
+        <EditHeader idea={idea} activeMVPId={activeMVPId} />
       </Suspense>
 
       <Tabs defaultValue="basic" className="w-full">

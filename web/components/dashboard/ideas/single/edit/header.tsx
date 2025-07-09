@@ -10,9 +10,10 @@ import { getStatusBadgeColor } from "../../utils";
 
 interface EditHeaderProps {
   idea: Idea;
+  activeMVPId: string;
 }
 
-export default function EditHeader({ idea }: EditHeaderProps) {
+export default function EditHeader({ idea, activeMVPId }: EditHeaderProps) {
   return (
     <Card className="bg-white border-gray-200">
       <CardHeader>
@@ -54,7 +55,7 @@ export default function EditHeader({ idea }: EditHeaderProps) {
               size="sm"
               className="h-9"
               variant="default"
-              href={`/mvp/${idea.id}/edit`}
+              href={`/mvp/${idea.id}/edit?mvpId=${activeMVPId}`}
               target="_blank"
             >
               <ExternalLink className="h-4 w-4 mr-1" />
