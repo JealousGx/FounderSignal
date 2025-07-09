@@ -38,6 +38,7 @@ type PublicIdea struct {
 	UserID             string          `json:"userId"`
 	Title              string          `json:"title"`
 	Description        string          `json:"description"`
+	ImageURL           string          `json:"imageUrl"`
 	TargetAudience     string          `json:"targetAudience"`
 	CreatedAt          string          `json:"createdAt"`
 	Stage              string          `json:"stage"`
