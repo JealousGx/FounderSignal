@@ -10,7 +10,7 @@ import { getStatusBadgeColor } from "../../utils";
 
 interface EditHeaderProps {
   idea: Idea;
-  activeMVPId: string;
+  activeMVPId?: string;
 }
 
 export default function EditHeader({ idea, activeMVPId }: EditHeaderProps) {
@@ -51,16 +51,18 @@ export default function EditHeader({ idea, activeMVPId }: EditHeaderProps) {
               Preview Landing Page
             </Link>
 
-            <Link
-              size="sm"
-              className="h-9"
-              variant="default"
-              href={`/mvp/${idea.id}/edit?mvpId=${activeMVPId}`}
-              target="_blank"
-            >
-              <ExternalLink className="h-4 w-4 mr-1" />
-              Edit Landing Page
-            </Link>
+            {activeMVPId && (
+              <Link
+                size="sm"
+                className="h-9"
+                variant="default"
+                href={`/mvp/${idea.id}/edit?mvpId=${activeMVPId}`}
+                target="_blank"
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Edit Landing Page
+              </Link>
+            )}
           </div>
         </div>
       </CardHeader>
