@@ -23,7 +23,7 @@ import (
 // Test data for generating ideas
 var (
 	// This will be the UserID for the creator of the ideas
-	ideaOwnerUserID = "user_2yj7pmealNgGD2w9ZcczTuxnuAg"
+	ideaOwnerUserID = "user_2zci8KdyzCjxf8d5GkWHf5QkGIW"
 
 	titles = []string{
 		"AI-Powered Personal Finance Manager", "Smart Home Energy Optimizer", "Language Learning App with AR",
