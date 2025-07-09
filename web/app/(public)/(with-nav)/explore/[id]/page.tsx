@@ -41,14 +41,15 @@ type IdeaExtended = Idea & {
 };
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const data = await getIdea(params.id);
+  const { id: ideaId } = await params;
+  const data = await getIdea(ideaId);
 
   if (!data?.idea) {
     return {
