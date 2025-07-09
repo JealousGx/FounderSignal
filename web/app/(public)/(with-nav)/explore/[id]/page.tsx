@@ -9,7 +9,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { Metadata, ResolvingMetadata } from "next";
+import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
@@ -23,6 +23,7 @@ import { ShareIdeaUrl } from "@/components/dashboard/ideas/single/share";
 import { ReportButton } from "@/components/report-btn";
 import { api } from "@/lib/api";
 import { getClerkUser } from "@/lib/auth";
+import { createMetadata } from "@/lib/metadata";
 import { formatDate, getName } from "@/lib/utils";
 import { Idea } from "@/types/idea";
 
@@ -44,10 +45,7 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id: ideaId } = await params;
   const data = await getIdea(ideaId);
 
@@ -58,40 +56,19 @@ export async function generateMetadata(
   }
 
   const idea = data.idea;
-  const title = `${idea.title} | FounderSignal`;
+  const title = `${idea.title}`;
   const description =
     `Validation data for the startup idea: ${idea.title}. See signups, conversion rates, and user feedback. ` +
     (idea.description
       ? idea.description.substring(0, 100) + "..."
       : "Discover if this idea has potential.");
 
-  const previousImages = (await parent).openGraph?.images || [];
-
-  return {
+  return createMetadata({
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      images: idea.imageUrl
-        ? [
-            {
-              url: idea.imageUrl,
-              width: 1200,
-              height: 630,
-              alt: idea.title,
-            },
-            ...previousImages,
-          ]
-        : previousImages,
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: idea.imageUrl ? [idea.imageUrl] : [],
-    },
-  };
+    image: idea.imageUrl,
+    urlPath: `explore/${idea.id}`,
+  });
 }
 
 const getIdea = cache(async (id: string) => {

@@ -1,29 +1,13 @@
-import { Metadata, ResolvingMetadata } from "next";
+import { Metadata } from "next";
 
-export async function generateMetadata(
-  {},
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  const previousImages = (await parent).openGraph?.images || [];
-  const title = "Refund Policy | FounderSignal";
-  const description =
-    "Understand the refund policy for FounderSignal's subscription services.";
+import { createMetadata } from "@/lib/metadata";
 
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      images: previousImages,
-    },
-    twitter: {
-      title,
-      description,
-      images: previousImages,
-    },
-  };
-}
+export const metadata: Metadata = createMetadata({
+  title: "Refund Policy",
+  description:
+    "Understand the refund policy for FounderSignal's subscription services.",
+  urlPath: "refund",
+});
 
 export default function RefundPolicyPage() {
   return (

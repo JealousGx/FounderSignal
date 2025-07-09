@@ -7,6 +7,8 @@ import "./globals.css";
 import { TopLoader } from "@/components/shared/top-loader";
 import { Toaster } from "@/components/ui/sonner";
 
+import { siteConfig } from "@/lib/metadata";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -16,15 +18,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
-const siteConfig = {
-  name: "FounderSignal",
-  title: "FounderSignal - Validate Your Startup Idea in 72 Hours",
-  description:
-    "A real-time micro-validation platform for startup founders to test startup ideas within 72 hours — powered by dynamic MVPs, user feedback, and AI summaries.",
-  url: process.env.NEXT_PUBLIC_APP_URL || "https://foundersignal.app",
-  ogImage: `${process.env.NEXT_PUBLIC_APP_URL}/assets/og-image.png`,
-};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),

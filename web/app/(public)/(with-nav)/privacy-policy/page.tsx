@@ -1,29 +1,13 @@
-import { Metadata, ResolvingMetadata } from "next";
+import { Metadata } from "next";
 
-export async function generateMetadata(
-  {},
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  const previousImages = (await parent).openGraph?.images || [];
-  const title = "Privacy Policy | FounderSignal";
-  const description =
-    "Understand how FounderSignal collects, uses, and protects your personal data and the content you provide.";
+import { createMetadata } from "@/lib/metadata";
 
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      images: previousImages,
-    },
-    twitter: {
-      title,
-      description,
-      images: previousImages,
-    },
-  };
-}
+export const metadata: Metadata = createMetadata({
+  title: "Privacy Policy",
+  description:
+    "Understand how FounderSignal collects, uses, and protects your personal data and the content you provide.",
+  urlPath: "privacy-policy",
+});
 
 export default function PrivacyPolicyPage() {
   return (

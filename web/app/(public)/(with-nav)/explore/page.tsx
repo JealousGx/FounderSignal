@@ -1,34 +1,18 @@
-import { Metadata, ResolvingMetadata } from "next";
+import { Metadata } from "next";
 
 import { getIdeas } from "./get-ideas";
 import Ideas from "./ideas";
 
+import { createMetadata } from "@/lib/metadata";
+
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata(
-  {},
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  const previousImages = (await parent).openGraph?.images || [];
-
-  return {
-    title: "Explore Startup Ideas",
-    description:
-      "Discover and analyze hundreds of startup ideas. See real-world validation metrics, user feedback, and market interest on FounderSignal.",
-    openGraph: {
-      title: "Explore Startup Ideas on FounderSignal",
-      description:
-        "Browse and get inspired by new startup ideas with real validation data.",
-      images: previousImages,
-    },
-    twitter: {
-      title: "Explore Startup Ideas on FounderSignal",
-      description:
-        "Browse and get inspired by new startup ideas with real validation data.",
-      images: previousImages,
-    },
-  };
-}
+export const metadata: Metadata = createMetadata({
+  title: "Explore Startup Ideas",
+  description:
+    "Discover and analyze hundreds of startup ideas. See real-world validation metrics, user feedback, and market interest on FounderSignal.",
+  urlPath: "explore",
+});
 
 const DEFAULT_PAGE_SIZE = 6;
 
