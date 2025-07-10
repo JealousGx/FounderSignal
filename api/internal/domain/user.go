@@ -37,6 +37,7 @@ const (
 // It stores application-specific data like subscription plan and limits.
 type User struct {
 	ID        string `gorm:"type:varchar(255);not null;uniqueIndex:idx_user_clerk_id;primaryKey" json:"id"`
+	Username  string `gorm:"type:varchar(255);uniqueIndex:idx_user_username" json:"username,omitempty"` // Unique username for the user, can be used for login
 	Email     string `gorm:"type:varchar(255);uniqueIndex" json:"email"`
 	FirstName string `gorm:"type:varchar(255)" json:"firstName,omitempty"`
 	LastName  string `gorm:"type:varchar(255)" json:"lastName,omitempty"`
@@ -63,6 +64,8 @@ type User struct {
 	CreatedAt time.Time      `gorm:"not null;default:now()" json:"createdAt"`
 	UpdatedAt time.Time      `gorm:"not null;default:now()" json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+
+	Ideas []Idea `gorm:"foreignKey:UserID" json:"ideas,omitempty"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {

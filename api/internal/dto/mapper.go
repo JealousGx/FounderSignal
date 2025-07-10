@@ -102,6 +102,13 @@ func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUser
 		FeedbackHighlights: feedbackHighlights,
 	}
 
+	if idea.User.ID != "" {
+		resIdea.Founder = &response.IdeaFounder{
+			Name:  idea.User.FirstName + " " + idea.User.LastName,
+			Image: idea.User.ImageURL,
+		}
+	}
+
 	// Map related ideas
 	relatedIdeasResponse := []response.RelatedIdea{}
 	for _, relatedIdea := range relatedIdeas {

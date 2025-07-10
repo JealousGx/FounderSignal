@@ -17,7 +17,7 @@ type IdeaRepository interface {
 	Update(ctx context.Context, idea *domain.Idea) error
 	Delete(ctx context.Context, ideaId uuid.UUID) error
 	GetIdeas(ctx context.Context, queryParams domain.QueryParams, spec IdeaQuerySpec) ([]*domain.Idea, int64, error)
-	GetByID(ctx context.Context, id uuid.UUID, getRelatedIdeas *bool) (*domain.Idea, []*domain.Idea, error)
+	GetByID(ctx context.Context, id uuid.UUID, getRelatedIdeas, withUser *bool) (*domain.Idea, []*domain.Idea, error)
 	GetByIds(ctx context.Context, ids []uuid.UUID) ([]*domain.Idea, error)
 	GetIdeasWithActivity(ctx context.Context, userID string, from, to time.Time, options ...QueryOption) ([]*response.IdeaWithActivity, error)
 	GetCountForUser(ctx context.Context, userId string, start, end *time.Time, status *domain.IdeaStatus) (int64, error)
@@ -179,7 +179,7 @@ func (r *ideaRepository) GetIdeas(ctx context.Context, queryParams domain.QueryP
 	return ideas, totalCount, nil
 }
 
-func (r *ideaRepository) GetByID(ctx context.Context, id uuid.UUID, getRelatedIdeas *bool) (*domain.Idea, []*domain.Idea, error) {
+func (r *ideaRepository) GetByID(ctx context.Context, id uuid.UUID, getRelatedIdeas, withUser *bool) (*domain.Idea, []*domain.Idea, error) {
 	query := r.db.WithContext(ctx).Model(&domain.Idea{}).Where("id = ?", id).
 		Preload("Feedback", func(db *gorm.DB) *gorm.DB {
 			return db.Preload("Reactions")
@@ -187,6 +187,12 @@ func (r *ideaRepository) GetByID(ctx context.Context, id uuid.UUID, getRelatedId
 		Preload("Reactions").
 		Preload("Signals").
 		Preload("AudienceMembers")
+
+	if withUser != nil && *withUser {
+		query = query.Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, first_name, last_name, image_url, username")
+		})
+	}
 
 	idea := &domain.Idea{}
 	if err := query.Find(idea).Error; err != nil {

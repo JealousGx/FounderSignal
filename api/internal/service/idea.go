@@ -177,7 +177,7 @@ func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUI
 	}
 
 	// Check if the idea exists
-	existingIdea, _, err := s.repo.GetByID(ctx, ideaId, nil)
+	existingIdea, _, err := s.repo.GetByID(ctx, ideaId, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -247,7 +247,7 @@ func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUI
 
 func (s *ideaService) Delete(ctx context.Context, userId string, ideaId uuid.UUID) error {
 	// Check if the idea exists
-	existingIdea, _, err := s.repo.GetByID(ctx, ideaId, nil)
+	existingIdea, _, err := s.repo.GetByID(ctx, ideaId, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -270,7 +270,8 @@ func (s *ideaService) Delete(ctx context.Context, userId string, ideaId uuid.UUI
 
 func (s *ideaService) GetByID(ctx context.Context, id uuid.UUID, userId string) (*response.PublicIdeaResponse, error) {
 	includeRelated := true
-	idea, relatedIdeas, err := s.repo.GetByID(ctx, id, &includeRelated)
+	withUser := true
+	idea, relatedIdeas, err := s.repo.GetByID(ctx, id, &includeRelated, &withUser)
 	if err != nil {
 		return nil, err
 	}
@@ -341,7 +342,7 @@ func (s *ideaService) RecordSignal(ctx context.Context, ideaID, mvpId uuid.UUID,
 		metadataJson = datatypes.JSON(_metaJSON)
 	}
 
-	idea, _, err := s.repo.GetByID(ctx, ideaID, nil)
+	idea, _, err := s.repo.GetByID(ctx, ideaID, nil, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get idea by ID: %w", err)
 	}

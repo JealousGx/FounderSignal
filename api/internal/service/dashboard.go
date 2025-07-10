@@ -128,8 +128,7 @@ func (s *dashboardService) GetDashboardData(ctx context.Context, userID string) 
 }
 
 func (s *dashboardService) GetIdea(ctx context.Context, id uuid.UUID, userId string, specs DashboardIdeaSpecs) (*response.DashboardIdeaResponse, error) {
-	getRelatedIdeas := false
-	rawIdea, _, err := s.repo.GetByID(ctx, id, &getRelatedIdeas)
+	rawIdea, _, err := s.repo.GetByID(ctx, id, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get idea by ID: %w", err)
 	}

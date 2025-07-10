@@ -21,12 +21,11 @@ import { CommentsSection } from "./comments-section";
 import { IdeaActions } from "./idea-actions";
 
 import { api } from "@/lib/api";
-import { getClerkUser } from "@/lib/auth";
 import { createMetadata } from "@/lib/metadata";
-import { formatDate, getName } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { Idea } from "@/types/idea";
 
-export const revalidate = 3600;
+export const revalidate = 2 * 60 * 60; // 2 hours
 
 type IdeaExtended = Idea & {
   founder: {
@@ -117,13 +116,6 @@ export default async function IdeaPage({
 
   const idea = res.idea;
   const relatedIdeas = res.relatedIdeas;
-
-  const founder = await getClerkUser(idea.userId);
-
-  idea.founder = {
-    name: getName(founder),
-    image: founder.imageUrl,
-  };
 
   const stages = {
     validation: "Validated Idea",

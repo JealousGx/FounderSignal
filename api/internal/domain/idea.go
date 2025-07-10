@@ -32,6 +32,7 @@ type Idea struct {
 	DislikedByUser bool    `json:"dislikedByUser,omitempty"`
 
 	// Relationships
+	User            User             `gorm:"foreignKey:UserID" json:"-"`
 	MVPs            []MVPSimulator   `gorm:"foreignKey:IdeaID" json:"mvps,omitempty"`
 	Signals         []Signal         `gorm:"foreignKey:IdeaID" json:"signals,omitempty"`
 	Feedback        []Feedback       `gorm:"foreignKey:IdeaID" json:"comments,omitempty"`
