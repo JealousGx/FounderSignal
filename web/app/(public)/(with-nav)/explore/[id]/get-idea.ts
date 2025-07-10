@@ -30,7 +30,7 @@ export const getIdea = cache(async (id: string) => {
 
     if (!response.ok) {
       console.error(
-        "API error fetching more idea:",
+        "API error fetching idea:",
         response.status,
         response.statusText
       );
