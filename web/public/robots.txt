@@ -1,4 +1,5 @@
 User-agent: *
+Disallow: /dashboard
 Allow: /
 
 Sitemap: https://foundersignal.app/sitemap.xml
