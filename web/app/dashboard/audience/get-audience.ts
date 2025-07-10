@@ -12,7 +12,6 @@ export const getAudience = cache(
     try {
       const url = constructNewPath("/dashboard/audience", { ...qs, getStats });
       const response = await api.get(url, {
-        cache: "force-cache",
         next: {
           revalidate: 3600,
           tags: [`audience`],

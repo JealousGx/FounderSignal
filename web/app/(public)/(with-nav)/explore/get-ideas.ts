@@ -10,7 +10,6 @@ export const getIdeas = cache(async (qs: QueryParams) => {
   try {
     const url = constructNewPath("/ideas", qs);
     const response = await api.get(url, {
-      cache: "force-cache",
       next: {
         revalidate: 3600,
         tags: [`ideas`],
