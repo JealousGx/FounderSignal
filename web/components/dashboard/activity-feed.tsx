@@ -80,6 +80,7 @@ export default function ActivityFeed() {
                           `/dashboard/ideas/${activity.ideaId}`
                         }
                         target="_blank"
+                        rel="noopener noreferrer"
                         className="text-xs text-gray-600 hover:underline"
                       >
                         Idea:{" "}
