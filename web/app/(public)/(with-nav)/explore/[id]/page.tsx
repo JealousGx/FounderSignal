@@ -177,7 +177,19 @@ export default async function IdeaPage({
                   </h1>
                 </div>
 
-                <IdeaActions ideaId={idea.id} ideaUserId={idea.userId} />
+                <div className="flex items-center gap-2">
+                  <CustomLink
+                    href={`/mvp/${ideaId}`}
+                    target="_blank"
+                    variant="outline"
+                    className="bg-transparent border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors"
+                  >
+                    <Eye className="w-4 h-4 mr-1.5" />
+                    View Live MVP
+                  </CustomLink>
+
+                  <IdeaActions ideaId={idea.id} ideaUserId={idea.userId} />
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-4 mb-6">
