@@ -279,6 +279,15 @@ func (s *reportService) SubmitContentReport(ctx context.Context, reporterId stri
 		return nil
 	}
 
+	reporterField := DiscordField{
+		Name: "Reporter", Value: "Anonymous", Inline: false,
+	}
+
+	if reporterId != "" {
+		reporterField.Name = "Reporter User ID"
+		reporterField.Value = reporterId
+	}
+
 	payload := DiscordWebhookPayload{
 		Embeds: []DiscordEmbed{
 			{
@@ -289,7 +298,7 @@ func (s *reportService) SubmitContentReport(ctx context.Context, reporterId stri
 				Fields: []DiscordField{
 					{Name: "Content Type", Value: req.ContentType, Inline: true},
 					{Name: "Content ID", Value: req.ContentID, Inline: true},
-					{Name: "Reporter User ID", Value: reporterId, Inline: false},
+					reporterField,
 				},
 				Footer: DiscordFooter{
 					Text: fmt.Sprintf("Reported on %s", time.Now().Format(time.RFC1123)),
@@ -326,6 +335,15 @@ func (s *reportService) SubmitBugReport(ctx context.Context, reporterId string, 
 		return nil
 	}
 
+	reporterField := DiscordField{
+		Name: "Reporter", Value: "Anonymous", Inline: false,
+	}
+
+	if reporterId != "" {
+		reporterField.Name = "Reporter User ID"
+		reporterField.Value = reporterId
+	}
+
 	payload := DiscordWebhookPayload{
 		Embeds: []DiscordEmbed{
 			{
@@ -336,7 +354,7 @@ func (s *reportService) SubmitBugReport(ctx context.Context, reporterId string, 
 				Fields: []DiscordField{
 					{Name: "Steps to Reproduce", Value: req.StepsToReproduce, Inline: false},
 					{Name: "Reported from URL", Value: req.PageURL, Inline: false},
-					{Name: "Reporter User ID", Value: reporterId, Inline: false},
+					reporterField,
 				},
 				Footer: DiscordFooter{
 					Text: fmt.Sprintf("Reported on %s", time.Now().Format(time.RFC1123)),

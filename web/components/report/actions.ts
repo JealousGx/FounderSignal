@@ -1,7 +1,5 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
-
 import { api } from "@/lib/api";
 import { reportSchema } from "./schema";
 
@@ -17,11 +15,6 @@ export const submitReport = async (
   prevState: ReportState | null,
   formData: FormData
 ): Promise<ReportState> => {
-  const user = await auth();
-  if (!user.userId) {
-    return { error: "You must be signed in to report content." };
-  }
-
   const validatedFields = reportSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
