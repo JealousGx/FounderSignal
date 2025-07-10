@@ -15,7 +15,6 @@ import { getName } from "@/lib/utils";
 const getDashboardData = cache(async () => {
   try {
     const response = await api.get("/dashboard", {
-      cache: "force-cache",
       next: {
         revalidate: 3600,
         tags: [`ideas`],

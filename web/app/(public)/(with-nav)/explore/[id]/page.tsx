@@ -1,10 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
 import {
   ArrowLeft,
   Calendar,
   Check,
   Eye,
-  Settings,
   Share2,
   TrendingUp,
   Users,
@@ -14,18 +12,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
 
+import { ShareIdeaUrl } from "@/components/dashboard/ideas/single/share";
 import { ReactionButtons } from "@/components/reactions-btns";
+import { ReportButton } from "@/components/report-btn";
 import { OptimizedImage } from "@/components/ui/image";
 import { Link as CustomLink } from "@/components/ui/link";
 import { CommentsSection } from "./comments-section";
+import { IdeaActions } from "./idea-actions";
 
-import { ShareIdeaUrl } from "@/components/dashboard/ideas/single/share";
-import { ReportButton } from "@/components/report-btn";
 import { api } from "@/lib/api";
 import { getClerkUser } from "@/lib/auth";
 import { createMetadata } from "@/lib/metadata";
 import { formatDate, getName } from "@/lib/utils";
 import { Idea } from "@/types/idea";
+
+export const revalidate = 3600;
 
 type IdeaExtended = Idea & {
   founder: {
@@ -117,15 +118,12 @@ export default async function IdeaPage({
   const idea = res.idea;
   const relatedIdeas = res.relatedIdeas;
 
-  const currUser = await auth();
   const founder = await getClerkUser(idea.userId);
 
   idea.founder = {
     name: getName(founder),
     image: founder.imageUrl,
   };
-
-  const isCreator = currUser.userId === idea.userId;
 
   const stages = {
     validation: "Validated Idea",
@@ -179,28 +177,7 @@ export default async function IdeaPage({
                   </h1>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <CustomLink
-                    href={`/mvp/${idea.id}`}
-                    target="_blank"
-                    variant="outline"
-                    className="bg-transparent border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors"
-                  >
-                    <Eye className="w-4 h-4 mr-1.5" />
-                    View Live MVP
-                  </CustomLink>
-
-                  {isCreator && (
-                    <CustomLink
-                      href={`/dashboard/ideas/${idea.id}/edit`}
-                      size="icon"
-                      variant="outline"
-                      className="bg-transparent border-gray-400 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <Settings className="w-4 h-4" />
-                    </CustomLink>
-                  )}
-                </div>
+                <IdeaActions ideaId={idea.id} ideaUserId={idea.userId} />
               </div>
 
               <div className="flex flex-wrap gap-4 mb-6">

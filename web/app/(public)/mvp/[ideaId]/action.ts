@@ -29,7 +29,6 @@ export const getMVP = cache(async (ideaId: string, mvpId?: string | null) => {
     }
 
     const response = await api.get(url, {
-      cache: "force-cache",
       next: {
         revalidate: 3600,
         tags: [`mvp-${ideaId}`],

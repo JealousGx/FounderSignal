@@ -4,6 +4,8 @@ import { Link } from "@/components/ui/link";
 import { getMVP } from "./action";
 import { MVP } from "./mvp";
 
+export const revalidate = 3600;
+
 export default async function MVPPage({
   params,
 }: {
