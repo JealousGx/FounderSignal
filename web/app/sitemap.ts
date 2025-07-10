@@ -1,11 +1,19 @@
 import { MetadataRoute } from "next";
 
 import { siteConfig } from "@/lib/metadata";
-import { getIdeas } from "./(public)/(with-nav)/explore/get-ideas";
+import { Idea } from "@/types/idea";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const ideasResponse = await getIdeas({ limit: 1000, offset: 0 });
-  const ideas = ideasResponse?.ideas ?? [];
+  const ideasResponse = await fetch(
+    process.env.NEXT_PUBLIC_API_URL + "/ideas?limit=1000&offset=0",
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  ).then((res) => res.json());
+
+  const ideas: Idea[] = ideasResponse?.ideas ?? [];
 
   const ideaUrls = ideas.map((idea) => ({
     url: `${siteConfig.url}/explore/${idea.id}`,

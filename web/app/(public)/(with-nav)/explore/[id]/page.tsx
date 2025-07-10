@@ -25,7 +25,7 @@ import { createMetadata } from "@/lib/metadata";
 import { formatDate } from "@/lib/utils";
 import { Idea } from "@/types/idea";
 
-export const revalidate = 2 * 60 * 60; // 2 hours
+export const revalidate = 7200;
 
 type IdeaExtended = Idea & {
   founder: {

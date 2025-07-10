@@ -5,7 +5,7 @@ import Ideas from "./ideas";
 
 import { createMetadata } from "@/lib/metadata";
 
-export const revalidate = 2 * 60 * 60; // 2 hours
+export const revalidate = 7200;
 
 export const metadata: Metadata = createMetadata({
   title: "Explore Startup Ideas",
