@@ -64,7 +64,7 @@ func (s *fbService) Add(ctx context.Context, ideaId uuid.UUID, parsedParentId *u
 		return uuid.Nil, err
 	}
 
-	idea, _, err := s.ideaRepo.GetByID(ctx, ideaId, nil)
+	idea, _, err := s.ideaRepo.GetByID(ctx, ideaId, nil, nil)
 	if err != nil {
 		log.Printf("Error fetching idea %s for broadcasting feedback: %v", ideaId, err)
 		// Continue without broadcasting
@@ -119,7 +119,7 @@ func (s *fbService) Delete(ctx context.Context, feedbackId uuid.UUID, userId str
 		return err
 	}
 
-	idea, _, err := s.ideaRepo.GetByID(ctx, feedback.IdeaID, nil)
+	idea, _, err := s.ideaRepo.GetByID(ctx, feedback.IdeaID, nil, nil)
 	if err != nil {
 		// Log the error but don't fail, as the primary goal is deletion authorization.
 		// The idea might be deleted, but comments should still be manageable if they exist.

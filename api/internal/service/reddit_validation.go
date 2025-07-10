@@ -63,7 +63,7 @@ func (s *redditValidationService) GenerateValidation(ctx context.Context, userID
 	}
 
 	// Verify idea ownership
-	idea, _, err := s.ideaRepo.GetByID(ctx, ideaId, nil)
+	idea, _, err := s.ideaRepo.GetByID(ctx, ideaId, nil, nil)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to get idea: %w", err)
 	}
@@ -115,7 +115,7 @@ func (s *redditValidationService) ProcessValidationAsync(ctx context.Context, va
 	}
 
 	// Get idea details
-	idea, _, err := s.ideaRepo.GetByID(ctx, validation.IdeaID, nil)
+	idea, _, err := s.ideaRepo.GetByID(ctx, validation.IdeaID, nil, nil)
 	if err != nil {
 		s.updateValidationError(validation, fmt.Sprintf("Failed to get idea: %v", err))
 		return

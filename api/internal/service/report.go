@@ -92,7 +92,7 @@ func (s *reportService) GenerateReports(ctx context.Context, userId string, req 
 	var ideas []*domain.Idea
 
 	if req.IdeaID != uuid.Nil {
-		idea, _, err := s.ideaRepo.GetByID(ctx, req.IdeaID, nil)
+		idea, _, err := s.ideaRepo.GetByID(ctx, req.IdeaID, nil, nil)
 		if err != nil {
 			return fmt.Errorf("failed to get idea: %w", err)
 		}
@@ -295,7 +295,7 @@ func (s *reportService) SubmitContentReport(ctx context.Context, reporterId stri
 
 	switch req.ContentType {
 	case "idea":
-		idea, _, err = s.ideaRepo.GetByID(ctx, contentId, nil)
+		idea, _, err = s.ideaRepo.GetByID(ctx, contentId, nil, nil)
 		if err != nil {
 			return fmt.Errorf("failed to get idea: %w", err)
 		}
@@ -306,7 +306,7 @@ func (s *reportService) SubmitContentReport(ctx context.Context, reporterId stri
 			return fmt.Errorf("failed to get feedback: %w", err)
 		}
 		if feedback != nil {
-			idea, _, err = s.ideaRepo.GetByID(ctx, feedback.IdeaID, nil)
+			idea, _, err = s.ideaRepo.GetByID(ctx, feedback.IdeaID, nil, nil)
 			if err != nil {
 				return fmt.Errorf("failed to get idea from feedback: %w", err)
 			}

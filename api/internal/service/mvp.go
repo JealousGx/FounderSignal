@@ -94,7 +94,7 @@ func (s *mvpService) GetAllByIdea(ctx context.Context, userId string, ideaId uui
 
 // GetByIdea retrieves the MVP for a specific idea, ensuring the user is the owner or the MVP is active.
 func (s *mvpService) GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string) (*domain.MVPSimulator, error) {
-	idea, _, err := s.ideaRepo.GetByID(ctx, ideaId, nil)
+	idea, _, err := s.ideaRepo.GetByID(ctx, ideaId, nil, nil)
 	if err != nil || idea == nil {
 		return nil, gorm.ErrRecordNotFound
 	}
@@ -222,7 +222,7 @@ func (s *mvpService) GenerateLandingPage(ctx context.Context, mvpId, ideaId uuid
 }
 
 func (s *mvpService) checkOwner(ctx context.Context, userId string, ideaId uuid.UUID) (*domain.Idea, error) {
-	idea, _, err := s.ideaRepo.GetByID(ctx, ideaId, nil)
+	idea, _, err := s.ideaRepo.GetByID(ctx, ideaId, nil, nil)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get idea: %w", err)

@@ -66,8 +66,12 @@ func (s *userService) ClerkUser(ctx context.Context, eventType string, clerkUser
 	}
 
 	newUser := &domain.User{
-		ID:    clerkUser.ID,
-		Email: verifiedEmail,
+		ID:        clerkUser.ID,
+		Username:  clerkUser.Username,
+		FirstName: clerkUser.FirstName,
+		LastName:  clerkUser.LastName,
+		ImageURL:  clerkUser.ImageURL,
+		Email:     verifiedEmail,
 	}
 
 	var parsedUpdatedAt *time.Time

@@ -2,7 +2,11 @@ package request
 
 type ClerkUserCreateRequest struct {
 	ID             string         `json:"id"`
+	Username       string         `json:"username,omitempty"`
 	EmailAddresses []EmailAddress `json:"email_addresses"` // example: [{"email_address": "example@example.org", "id": "idn_29w83yL7CwVlJXylYLxcslromF1", "linked_to": [], "object": "email_address", "verification": {"status": "verified", "strategy": "ticket"}}]
+	FirstName      string         `json:"first_name"`
+	LastName       string         `json:"last_name"`
+	ImageURL       string         `json:"image_url"`
 	CreatedAt      int64          `json:"created_at"`
 	UpdatedAt      int64          `json:"updated_at"`
 	Deleted        bool           `json:"deleted"`

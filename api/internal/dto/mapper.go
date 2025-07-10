@@ -6,6 +6,7 @@ import (
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/dto/response"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -100,6 +101,13 @@ func ToPublicIdea(idea *domain.Idea, relatedIdeas []*domain.Idea, requestingUser
 		DislikedByUser:     dislikedByUser,
 		Stats:              calculateIdeaStats(idea.Signals, idea.Signups),
 		FeedbackHighlights: feedbackHighlights,
+	}
+
+	if idea.User.ID != "" {
+		resIdea.Founder = &response.IdeaFounder{
+			Name:  strings.TrimSpace(fmt.Sprintf("%s %s", idea.User.FirstName, idea.User.LastName)),
+			Image: idea.User.ImageURL,
+		}
 	}
 
 	// Map related ideas
