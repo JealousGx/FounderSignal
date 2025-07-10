@@ -6,7 +6,8 @@ export type ActivityType =
   | "comment"
   | "like"
   | "dislike"
-  | "reaction";
+  | "reaction"
+  | "content_reported";
 
 export type Activity = {
   id: string;
@@ -14,5 +15,6 @@ export type Activity = {
   ideaTitle: string;
   type: ActivityType;
   message: string;
+  referenceUrl?: string;
   timestamp: string;
 };
