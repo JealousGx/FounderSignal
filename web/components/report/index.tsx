@@ -72,7 +72,7 @@ export function ReportDialog({
               <Textarea
                 id="reason"
                 name="reason"
-                placeholder={`e.g., This ${contentType} is spam, or abusive.`}
+                placeholder={`e.g., This ${contentType} is spam or abusive.`}
                 required
               />
 
