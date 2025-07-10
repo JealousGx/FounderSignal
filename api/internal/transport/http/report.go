@@ -152,11 +152,7 @@ func (h *reportHandler) GetByID(c *gin.Context) {
 }
 
 func (h *reportHandler) SubmitContentReport(c *gin.Context) {
-	userId, exists := c.Get("userId")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
-		return
-	}
+	userId, _ := c.Get("userId")
 
 	var req request.CreateContentReport
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -174,11 +170,7 @@ func (h *reportHandler) SubmitContentReport(c *gin.Context) {
 }
 
 func (h *reportHandler) SubmitBugReport(c *gin.Context) {
-	userId, exists := c.Get("userId")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
-		return
-	}
+	userId, _ := c.Get("userId")
 
 	var req request.CreateBugReport
 	if err := c.ShouldBindJSON(&req); err != nil {

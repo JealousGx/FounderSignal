@@ -16,6 +16,7 @@ type ActivityBroadcaster interface {
 	FormatAndBroadcastSignup(userID string, signup domain.AudienceMember, ideaTitle string)
 	FormatAndBroadcastComment(userID string, comment domain.Feedback, ideaTitle string)
 	FormatAndBroadcastReaction(userID string, reaction domain.IdeaReaction, ideaTitle string)
+	FormatAndBroadcastContentReport(userID string, activity domain.Activity, ideaTitle string)
 }
 
 type hubBroadcaster struct {
@@ -69,7 +70,7 @@ func (b *hubBroadcaster) FormatAndBroadcastSignal(userID string, signal domain.S
 func (b *hubBroadcaster) FormatAndBroadcastSignup(userID string, signup domain.AudienceMember, ideaTitle string) {
 	activityItem := &response.ActivityItem{
 		ID:        signup.UserID,
-		Type:      "signup",
+		Type:      "cta_click",
 		IdeaID:    signup.IdeaID.String(),
 		IdeaTitle: ideaTitle,
 		Message:   "Someone signed up for your idea",
@@ -111,6 +112,20 @@ func (b *hubBroadcaster) FormatAndBroadcastReaction(userID string, reaction doma
 		IdeaTitle: ideaTitle,
 		Message:   message,
 		Timestamp: reaction.CreatedAt,
+	}
+	b.BroadcastActivity(userID, activityItem)
+}
+
+func (b *hubBroadcaster) FormatAndBroadcastContentReport(userID string, activity domain.Activity, ideaTitle string) {
+
+	activityItem := &response.ActivityItem{
+		ID:           activity.ID.String(),
+		Type:         string(activity.Type),
+		IdeaID:       activity.IdeaID.String(),
+		IdeaTitle:    ideaTitle,
+		Message:      activity.Message,
+		Timestamp:    activity.CreatedAt,
+		ReferenceURL: activity.ReferenceURL,
 	}
 	b.BroadcastActivity(userID, activityItem)
 }

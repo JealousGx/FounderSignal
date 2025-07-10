@@ -1,7 +1,5 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
-
 import { api } from "@/lib/api";
 import { bugReportSchema } from "./schema";
 
@@ -18,11 +16,6 @@ export const submitBugReport = async (
   prevState: BugReportState | null,
   formData: FormData
 ): Promise<BugReportState> => {
-  const user = await auth();
-  if (!user.userId) {
-    return { error: "You must be signed in to report a bug." };
-  }
-
   const validatedFields = bugReportSchema.safeParse(
     Object.fromEntries(formData.entries())
   );

@@ -4,8 +4,10 @@ import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 
 import {
+  AlertTriangle,
   ArrowDownUp,
   Eye,
+  Heart,
   HelpCircle,
   MessageSquare,
   MousePointerClick,
@@ -18,6 +20,7 @@ import {
 
 import { useActivity } from "@/contexts/activity-context";
 import { ActivityType } from "@/types/activity";
+import { CollapsibleText } from "../shared/collapsible-text";
 
 export default function ActivityFeed() {
   const { activities, isConnected } = useActivity();
@@ -67,12 +70,17 @@ export default function ActivityFeed() {
                 </div>
                 <div>
                   <p className="text-xs md:text-sm font-medium">
-                    {activity.message}
+                    <CollapsibleText text={activity.message} />
                   </p>
                   {activity.ideaTitle &&
                     activity.ideaTitle !== "Unknown Idea" && (
                       <Link
-                        href={`/dashboard/ideas/${activity.ideaId}`}
+                        href={
+                          activity.referenceUrl ??
+                          `/dashboard/ideas/${activity.ideaId}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="text-xs text-gray-600 hover:underline"
                       >
                         Idea:{" "}
@@ -112,6 +120,10 @@ function getActivityIcon(type: ActivityType) {
       return <ThumbsUp className="h-3.5 w-3.5 md:h-4 md:w-4" />;
     case "dislike":
       return <ThumbsDown className="h-3.5 w-3.5 md:h-4 md:w-4" />;
+    case "content_reported":
+      return <AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4" />;
+    case "reaction":
+      return <Heart className="h-3.5 w-3.5 md:h-4 md:w-4" />;
     default:
       return <HelpCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />;
   }
@@ -133,6 +145,10 @@ function getActivityIconStyles(type: ActivityType) {
       return "bg-pink-50 text-pink-600";
     case "dislike":
       return "bg-red-50 text-red-600";
+    case "content_reported":
+      return "bg-orange-50 text-orange-600";
+    case "reaction":
+      return "bg-pink-50 text-pink-600";
     default:
       return "bg-gray-100 text-gray-500";
   }
