@@ -10,36 +10,22 @@ import {
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { cache, Suspense } from "react";
+import { Suspense } from "react";
 
 import { ShareIdeaUrl } from "@/components/dashboard/ideas/single/share";
 import { ReactionButtons } from "@/components/reactions-btns";
 import { ReportButton } from "@/components/report-btn";
 import { OptimizedImage } from "@/components/ui/image";
 import { Link as CustomLink } from "@/components/ui/link";
+
 import { CommentsSection } from "./comments-section";
+import { getIdea } from "./get-idea";
 import { IdeaActions } from "./idea-actions";
 
-import { api } from "@/lib/api";
 import { createMetadata } from "@/lib/metadata";
 import { formatDate } from "@/lib/utils";
-import { Idea } from "@/types/idea";
 
 export const revalidate = 7200;
-
-type IdeaExtended = Idea & {
-  founder: {
-    name: string;
-    image: string;
-  };
-  stats: {
-    signups: number;
-    conversionRate: number;
-    avgTimeOnPage: string;
-    bounceRate: number;
-  };
-  feedbackHighlights: string[];
-};
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -70,37 +56,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     urlPath: `explore/${idea.id}`,
   });
 }
-
-const getIdea = cache(async (id: string) => {
-  try {
-    const response = await api.get(`/ideas/${id}`, {
-      next: {
-        revalidate: 3600,
-        tags: [`idea-${id}`],
-      },
-    });
-
-    if (!response.ok) {
-      console.error(
-        "API error fetching more idea:",
-        response.status,
-        response.statusText
-      );
-
-      return null;
-    }
-
-    const jsonRes = await response.json();
-
-    return {
-      idea: jsonRes.idea as IdeaExtended,
-      relatedIdeas: jsonRes.relatedIdeas as Partial<Idea>[],
-    };
-  } catch (error) {
-    console.error("Error in getIdea:", error);
-    return null;
-  }
-});
 
 export default async function IdeaPage({
   params,
