@@ -30,6 +30,7 @@ type dashboardService struct {
 	signalRepo   repository.SignalRepository
 	audienceRepo repository.AudienceRepository
 	reactionRepo repository.ReactionRepository
+	activityRepo repository.ActivityRepository
 }
 
 type signalsResult struct {
@@ -51,6 +52,11 @@ type reactionsResult struct {
 	err       error
 }
 
+type activityResult struct {
+	activities []domain.Activity
+	err        error
+}
+
 type DashboardIdeaSpecs struct {
 	WithMVPs      bool
 	WithAnalytics bool
@@ -62,7 +68,7 @@ const (
 )
 
 func NewDashboardService(repo repository.IdeaRepository, mvpRepo repository.MVPRepository, feedbackRepo repository.FeedbackRepository, signalRepo repository.SignalRepository,
-	audienceRepo repository.AudienceRepository, reactionRepo repository.ReactionRepository) *dashboardService {
+	audienceRepo repository.AudienceRepository, reactionRepo repository.ReactionRepository, activityRepo repository.ActivityRepository) *dashboardService {
 	return &dashboardService{
 		repo:         repo,
 		mvpRepo:      mvpRepo,
@@ -70,6 +76,7 @@ func NewDashboardService(repo repository.IdeaRepository, mvpRepo repository.MVPR
 		signalRepo:   signalRepo,
 		audienceRepo: audienceRepo,
 		reactionRepo: reactionRepo,
+		activityRepo: activityRepo,
 	}
 }
 
@@ -538,7 +545,7 @@ func (s *dashboardService) GetRecentActivityForUser(
 ) ([]response.ActivityItem, error) {
 	var activities []response.ActivityItem
 
-	recentComments, recentSignals, recentSignups, recentReactions, err := s.getActivityPrerequisitesForUser(ctx, userId)
+	recentComments, recentSignals, recentSignups, recentReactions, recentActivities, err := s.getActivityPrerequisitesForUser(ctx, userId)
 	if err != nil {
 		log.Printf("Failed to get recent activity prerequisites: %v", err)
 		return nil, fmt.Errorf("failed to get recent activity prerequisites: %w", err)
@@ -614,7 +621,7 @@ func (s *dashboardService) GetRecentActivityForUser(
 		}
 		activities = append(activities, response.ActivityItem{
 			ID:        signup.UserID,
-			Type:      "signup",
+			Type:      "cta_click",
 			IdeaID:    signup.IdeaID.String(),
 			IdeaTitle: ideaTitle,
 			Message:   "Someone signed up for your idea",
@@ -667,6 +674,23 @@ func (s *dashboardService) GetRecentActivityForUser(
 		})
 	}
 
+	for _, activity := range recentActivities {
+		ideaTitle := "Unknown Idea"
+		if idea, exists := ideas[activity.IdeaID]; exists {
+			ideaTitle = idea.Title
+		}
+
+		activities = append(activities, response.ActivityItem{
+			ID:           activity.ID.String(),
+			Type:         string(activity.Type),
+			IdeaID:       activity.IdeaID.String(),
+			IdeaTitle:    ideaTitle,
+			ReferenceURL: activity.ReferenceURL,
+			Message:      activity.Message,
+			Timestamp:    activity.CreatedAt,
+		})
+	}
+
 	sort.Slice(activities, func(i, j int) bool {
 		return activities[i].Timestamp.After(activities[j].Timestamp)
 	})
@@ -684,6 +708,7 @@ func (s *dashboardService) getActivityPrerequisitesForUser(ctx context.Context, 
 	recentSignals []domain.Signal,
 	recentSignups []domain.AudienceMember,
 	recentReactions []domain.IdeaReaction,
+	recentActivities []domain.Activity,
 	err error,
 ) {
 	var wg sync.WaitGroup
@@ -692,8 +717,9 @@ func (s *dashboardService) getActivityPrerequisitesForUser(ctx context.Context, 
 	signupsCh := make(chan signupsResult, 1)
 	commentsCh := make(chan commentsResult, 1)
 	reactionsCh := make(chan reactionsResult, 1)
+	activityCh := make(chan activityResult, 1)
 
-	wg.Add(4)
+	wg.Add(5)
 
 	go func() {
 		defer wg.Done()
@@ -719,11 +745,18 @@ func (s *dashboardService) getActivityPrerequisitesForUser(ctx context.Context, 
 		reactionsCh <- reactionsResult{reactions: reactions, err: fetchErr}
 	}()
 
+	go func() {
+		defer wg.Done()
+		activity, fetchErr := s.activityRepo.GetForUser(ctx, userID, MAX_RECENT_ACTIVITY)
+		activityCh <- activityResult{activities: activity, err: fetchErr}
+	}()
+
 	wg.Wait()
 	close(signalsCh)
 	close(signupsCh)
 	close(commentsCh)
 	close(reactionsCh)
+	close(activityCh)
 
 	signalsRes := <-signalsCh
 	if signalsRes.err != nil {
@@ -753,5 +786,12 @@ func (s *dashboardService) getActivityPrerequisitesForUser(ctx context.Context, 
 	}
 	recentReactions = reactionsRes.reactions
 
-	return recentComments, recentSignals, recentSignups, recentReactions, nil
+	activityRes := <-activityCh
+	if activityRes.err != nil {
+		log.Printf("WARN: Failed to get recent activities for dashboard: %v", activityRes.err)
+		// Non-critical, can proceed with nil activities
+	}
+	recentActivities = activityRes.activities
+
+	return recentComments, recentSignals, recentSignups, recentReactions, recentActivities, nil
 }

@@ -11,8 +11,10 @@ import (
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/dto/response"
 	"foundersignal/internal/repository"
+	"foundersignal/internal/websocket"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,7 +38,11 @@ type ReportSpecs struct {
 type reportService struct {
 	repo         repository.ReportRepository
 	ideaRepo     repository.IdeaRepository
+	feedbackRepo repository.FeedbackRepository
+	activityRepo repository.ActivityRepository
 	analytics    AnalyticsService
+	broadcaster  websocket.ActivityBroadcaster
+
 	ReportConfig ReportServiceConfig
 }
 
@@ -65,13 +71,19 @@ type DiscordFooter struct {
 
 type ReportServiceConfig struct {
 	DiscordWebhookURL string // URL for Discord webhook to send notifications
+	Environment       string // Environment (e.g., "development", "production") to control logging and behavior
 }
 
-func NewReportService(reportRepo repository.ReportRepository, ideaRepository repository.IdeaRepository, analyticsService AnalyticsService, cfg ReportServiceConfig) *reportService {
+func NewReportService(reportRepo repository.ReportRepository, ideaRepository repository.IdeaRepository, feedbackRepo repository.FeedbackRepository,
+	activityRepo repository.ActivityRepository, analyticsService AnalyticsService, broadcaster websocket.ActivityBroadcaster,
+	cfg ReportServiceConfig) *reportService {
 	return &reportService{
 		repo:         reportRepo,
 		ideaRepo:     ideaRepository,
+		feedbackRepo: feedbackRepo,
+		activityRepo: activityRepo,
 		analytics:    analyticsService,
+		broadcaster:  broadcaster,
 		ReportConfig: cfg,
 	}
 }
@@ -273,6 +285,73 @@ func (s *reportService) GenerateReport(ctx context.Context, userId string, idea 
 }
 
 func (s *reportService) SubmitContentReport(ctx context.Context, reporterId string, req request.CreateContentReport) error {
+	var idea *domain.Idea
+	var err error
+
+	contentId, err := uuid.Parse(req.ContentID)
+	if err != nil {
+		return fmt.Errorf("invalid content ID: %w", err)
+	}
+
+	switch req.ContentType {
+	case "idea":
+		idea, _, err = s.ideaRepo.GetByID(ctx, contentId, nil)
+		if err != nil {
+			return fmt.Errorf("failed to get idea: %w", err)
+		}
+
+	case "comment":
+		feedback, err := s.feedbackRepo.GetById(ctx, contentId)
+		if err != nil {
+			return fmt.Errorf("failed to get feedback: %w", err)
+		}
+		if feedback != nil {
+			idea, _, err = s.ideaRepo.GetByID(ctx, feedback.IdeaID, nil)
+			if err != nil {
+				return fmt.Errorf("failed to get idea from feedback: %w", err)
+			}
+		}
+	default:
+		log.Printf("WARN: Unsupported content type '%s' for report submission", req.ContentType)
+	}
+
+	if idea != nil && idea.UserID != "" {
+
+		var baseMessage string
+		switch req.ContentType {
+		case "idea":
+			baseMessage = fmt.Sprintf("Your idea '%s' has been reported.", idea.Title)
+		case "comment":
+			baseMessage = fmt.Sprintf("A comment on your idea '%s' has been reported.", idea.Title)
+		default:
+			baseMessage = fmt.Sprintf("Content related to your idea '%s' was reported.", idea.Title)
+		}
+
+		message := fmt.Sprintf("%s Reason: %s", baseMessage, req.Reason)
+
+		// Notify the idea creator
+		activity := &domain.Activity{
+			UserID:       idea.UserID,
+			IdeaID:       idea.ID,
+			Message:      message,
+			Type:         domain.ActivityTypeContentReported,
+			ReferenceID:  req.ContentID,
+			ReferenceURL: req.ContentURL,
+		}
+		if reporterId != "" {
+			activity.TriggeredBy = &reporterId
+		}
+
+		if err := s.activityRepo.Create(ctx, activity); err != nil {
+			log.Printf("ERROR: Failed to create activity for content report: %v", err)
+			// Do not fail the whole operation, just log the error
+		}
+
+		s.broadcaster.FormatAndBroadcastContentReport(idea.UserID, *activity, idea.Title)
+	} else {
+		log.Printf("WARN: Could not find associated idea or idea creator for content report on content %s", req.ContentID)
+	}
+
 	if s.ReportConfig.DiscordWebhookURL == "" {
 		log.Println("WARN: DISCORD_WEBHOOK_URL is not set. Report notification will not be sent.")
 		// Return nil because failing the user's request just because notifications are down isn't ideal.
@@ -291,7 +370,7 @@ func (s *reportService) SubmitContentReport(ctx context.Context, reporterId stri
 	payload := DiscordWebhookPayload{
 		Embeds: []DiscordEmbed{
 			{
-				Title:       fmt.Sprintf("New Content Report: %s", req.ContentType),
+				Title:       fmt.Sprintf("[%s] New Content Report: %s", strings.ToUpper(s.ReportConfig.Environment), req.ContentType),
 				Description: req.Reason,
 				URL:         req.ContentURL,
 				Color:       15158332, // Red
@@ -347,7 +426,7 @@ func (s *reportService) SubmitBugReport(ctx context.Context, reporterId string, 
 	payload := DiscordWebhookPayload{
 		Embeds: []DiscordEmbed{
 			{
-				Title:       "🐞 New Bug Report",
+				Title:       fmt.Sprintf("[%s] 🐞 New Bug Report", strings.ToUpper(s.ReportConfig.Environment)),
 				Description: "**Description:**\n" + req.Description,
 				URL:         req.PageURL,
 				Color:       16711680, // Bright Red

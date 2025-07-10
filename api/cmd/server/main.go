@@ -56,6 +56,7 @@ func main() {
 		},
 		Report: service.ReportServiceConfig{
 			DiscordWebhookURL: cfg.Envs.DISCORD_WEBHOOK_URL,
+			Environment:       cfg.Envs.APP_ENV,
 		},
 	}
 

@@ -55,12 +55,13 @@ type Totals struct {
 
 // ActivityItem represents a single activity in the activity feed
 type ActivityItem struct {
-	ID        string    `json:"id"`
-	Type      string    `json:"type"` // e.g., "signup", "view", "feedback"
-	IdeaID    string    `json:"ideaId"`
-	IdeaTitle string    `json:"ideaTitle"`
-	Message   string    `json:"message"`
-	Timestamp time.Time `json:"timestamp"`
+	ID           string    `json:"id"`
+	Type         string    `json:"type"` // e.g., "signup", "view", "feedback"
+	IdeaID       string    `json:"ideaId"`
+	IdeaTitle    string    `json:"ideaTitle"`
+	Message      string    `json:"message"`
+	ReferenceURL string    `json:"referenceUrl,omitempty"` // Optional URL for more details
+	Timestamp    time.Time `json:"timestamp"`
 }
 
 type IdeaWithActivity struct {

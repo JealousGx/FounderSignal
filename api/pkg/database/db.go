@@ -33,6 +33,7 @@ func Connect(dbConfig domain.DBConfig) error {
 		&domain.Signal{},
 		&domain.Feedback{},
 		&domain.FeedbackReaction{},
+		&domain.Activity{},
 		&domain.IdeaReaction{},
 		&domain.AudienceMember{},
 		&domain.Report{},
