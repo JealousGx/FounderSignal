@@ -7,6 +7,18 @@ export const siteConfig = {
     "A real-time micro-validation platform for startup founders to test startup ideas within 72 hours — powered by dynamic MVPs, user feedback, and AI summaries.",
   url: process.env.NEXT_PUBLIC_APP_URL || "https://foundersignal.app",
   ogImage: `${process.env.NEXT_PUBLIC_APP_URL}/assets/og-image.png`,
+  keywords: [
+    "validate startup",
+    "validate your idea",
+    "startup validation",
+    "idea validation",
+    "validate startup idea",
+    "market validation",
+    "founder tools",
+    "MVP builder",
+    "user feedback",
+    "FounderSignal",
+  ],
 };
 
 export const createMetadata = (pageMetadata: {
@@ -14,14 +26,18 @@ export const createMetadata = (pageMetadata: {
   description: string;
   image?: string;
   urlPath?: string;
+  keywords?: string[];
 }): Metadata => {
-  const { title, description, image, urlPath } = pageMetadata;
+  const { title, description, image, urlPath, keywords = [] } = pageMetadata;
   const ogImageUrl = image || siteConfig.ogImage;
   const url = `${siteConfig.url}${urlPath ? `/${urlPath}` : ""}`;
+
+  const combinedKeywords = [...new Set([...siteConfig.keywords, ...keywords])];
 
   return {
     title,
     description,
+    keywords: combinedKeywords,
     openGraph: {
       title,
       description,
