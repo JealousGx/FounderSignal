@@ -1,17 +1,10 @@
-"use client";
-
-import { useRouter } from "next/navigation";
-
+import { Footer } from "@/components/footer";
 import Navbar from "@/components/navbar";
-import { Button } from "@/components/ui/button";
+import { Link } from "@/components/ui/link";
+
+export const revalidate = 31536000; // 1 year in seconds
 
 const NotFound = () => {
-  const router = useRouter();
-
-  const handleGoHome = () => {
-    router.push("/");
-  };
-
   return (
     <>
       <Navbar />
@@ -21,10 +14,12 @@ const NotFound = () => {
         <p className="mt-4 text-lg">
           Sorry, the page you are looking for does not exist.
         </p>
-        <Button onClick={handleGoHome} className="mt-6">
+        <Link href="/" className="mt-6" variant="default">
           Go to Home
-        </Button>
+        </Link>
       </div>
+
+      <Footer />
     </>
   );
 };
