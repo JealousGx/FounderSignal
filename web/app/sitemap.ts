@@ -3,7 +3,7 @@ import { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/metadata";
 import { Idea } from "@/types/idea";
 
-export const revalidate = 3600; // 1 hour
+export const revalidate = 86400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const ideasResponse = await fetch(
@@ -11,6 +11,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       headers: {
         "Content-Type": "application/json",
+      },
+      next: {
+        revalidate: 86400,
+        tags: ["ideas"],
       },
     }
   ).then((res) => res.json());
