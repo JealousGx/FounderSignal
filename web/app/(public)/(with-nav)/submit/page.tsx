@@ -218,7 +218,10 @@ export default function SubmitPage() {
       <div className="mt-8 text-center text-sm text-gray-500">
         <p>
           Need help?{" "}
-          <a href="#" className="text-primary hover:underline">
+          <a
+            href="mailto:support@foundersignal.app"
+            className="text-primary hover:underline"
+          >
             Contact our support team
           </a>
         </p>
