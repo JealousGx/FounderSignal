@@ -62,6 +62,9 @@ export const metadata: Metadata = {
       url: "https://jealous.dev",
     },
   ],
+  other: {
+    "yandex-verification": "bdb83ce4b3dc86b6",
+  },
 };
 
 export default function RootLayout({
