@@ -1,8 +1,19 @@
+import { Metadata } from "next";
+
 import { Footer } from "@/components/footer";
 import Navbar from "@/components/navbar";
 import { Link } from "@/components/ui/link";
 
+import { createMetadata } from "@/lib/metadata";
+
 export const revalidate = 31536000; // 1 year in seconds
+
+export const metadata: Metadata = createMetadata({
+  title: "Page Not Found - FounderSignal",
+  description:
+    "The page you are looking for does not exist. Please check the URL or return to the home page.",
+  robots: { index: false, follow: false },
+});
 
 const NotFound = () => {
   return (

@@ -27,8 +27,16 @@ export const createMetadata = (pageMetadata: {
   image?: string;
   urlPath?: string;
   keywords?: string[];
+  robots?: { index?: boolean; follow?: boolean };
 }): Metadata => {
-  const { title, description, image, urlPath, keywords = [] } = pageMetadata;
+  const {
+    title,
+    description,
+    image,
+    urlPath,
+    keywords = [],
+    robots,
+  } = pageMetadata;
   const ogImageUrl = image || siteConfig.ogImage;
   const url = `${siteConfig.url}${urlPath ? `/${urlPath}` : ""}`;
 
@@ -57,5 +65,6 @@ export const createMetadata = (pageMetadata: {
       description,
       images: [ogImageUrl],
     },
+    robots,
   };
 };
