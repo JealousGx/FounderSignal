@@ -8,7 +8,6 @@ import (
 	"foundersignal/internal/dto"
 	"foundersignal/internal/dto/request"
 	"foundersignal/internal/dto/response"
-	"foundersignal/internal/pkg/prompts"
 	"foundersignal/internal/repository"
 	"foundersignal/pkg/validator"
 	"log"
@@ -124,29 +123,7 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		Name:     "Initial Version",
 		IsActive: true,
 	}
-
-	promptData := prompts.LandingPagePromptData{
-		IdeaID:         ideaId.String(),
-		MVPID:          mvp.ID.String(),
-		Title:          idea.Title,
-		Description:    idea.Description,
-		TargetAudience: idea.TargetAudience,
-		CTAButtonText:  req.CTAButton,
-	}
-
-	prompt, err := prompts.BuildLandingPagePrompt(promptData)
-	if err != nil {
-		log.Printf("Error building landing page prompt for idea %s: %v", idea.ID, err)
-		mvp.HTMLContent = ""
-	} else {
-		htmlContent, err := s.aiService.Generate(ctx, prompt)
-		if err != nil {
-			log.Printf("Error generating AI landing page for idea %s: %v", idea.ID, err)
-			mvp.HTMLContent = generateLandingPageContent(ideaId, mvp.ID, idea.Title, idea.Description, req.CTAButton)
-		} else {
-			mvp.HTMLContent = htmlContent
-		}
-	}
+	mvp.HTMLContent = generateLandingPageContent(ideaId, mvp.ID, idea.Title, idea.Description, req.CTAButton)
 
 	if _, err := s.mvpRepo.Create(ctx, mvp); err != nil {
 		log.Printf("Error creating MVP for idea %s: %v", idea.ID, err)
