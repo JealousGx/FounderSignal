@@ -225,8 +225,10 @@ export default function Home() {
               Ready to Validate Your Startup Idea?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              Join hundreds of founders who have saved time and money by testing
-              their ideas first.
+              Get data-driven insights on your startup concept before you build.
+              Our platform specializes in idea validation and startup
+              validation, helping you test your business hypothesis with real
+              users.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

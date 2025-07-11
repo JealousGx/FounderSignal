@@ -8,9 +8,9 @@ import { createMetadata } from "@/lib/metadata";
 export const revalidate = 7200;
 
 export const metadata: Metadata = createMetadata({
-  title: "Explore Startup Ideas",
+  title: "Startup Idea Validation | Explore Real-World Examples",
   description:
-    "Discover and analyze hundreds of startup ideas. See real-world validation metrics, user feedback, and market interest on FounderSignal.",
+    "Browse hundreds of startup ideas with real-world validation data. Learn from the success and failure of others to validate your own startup idea more effectively on FounderSignal.",
   urlPath: "explore",
 });
 
@@ -39,6 +39,11 @@ export default async function ExplorePage() {
         <p className="text-xl text-gray-600 max-w-3xl">
           Browse through validated startup ideas from our community of founders.
           Get inspired or analyze market validation results.
+        </p>
+        <p className="text-lg text-gray-500 max-w-3xl mt-4">
+          Each entry provides a case study in startup validation, offering
+          insights into what makes an idea resonate with a target audience. Use
+          our platform for your own idea validation journey.
         </p>
       </div>
 

@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const idea = data.idea;
-  const title = `${idea.title}`;
+  const title = `${idea.title} - Startup Idea Validation | FounderSignal`;
   const description =
     `Validation data for the startup idea: ${idea.title}. See signups, conversion rates, and user feedback. ` +
     (idea.description
@@ -185,7 +185,10 @@ export default async function IdeaPage({
             </div>
 
             <div className="p-6 md:p-8">
-              <h2 className="text-xl font-bold mb-6">Validation Results</h2>
+              <h2 className="text-xl font-bold mb-6">Validation Metrics</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Key performance indicators used to validate this startup idea.
+              </p>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div className="bg-gray-50 rounded-xl p-4">
@@ -271,12 +274,15 @@ export default async function IdeaPage({
 
           {/* CTA for visitors */}
           <div className="bg-blue-50 rounded-xl p-6 text-center">
-            <h3 className="font-bold text-xl mb-2">Have a similar idea?</h3>
+            <h3 className="font-bold text-xl mb-2">
+              Ready to Validate Your Startup Idea?
+            </h3>
             <p className="text-gray-700 mb-4">
-              Validate your own version and see how the market responds.
+              Use our platform to test your own concept and get the data you
+              need to succeed.
             </p>
 
-            <CustomLink href={`/submit`}>Create similar idea</CustomLink>
+            <CustomLink href={`/submit`}>Validate Your Idea Now</CustomLink>
           </div>
         </div>
 
