@@ -3,6 +3,8 @@ import { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/metadata";
 import { Idea } from "@/types/idea";
 
+export const revalidate = 3600; // 1 hour
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const ideasResponse = await fetch(
     process.env.NEXT_PUBLIC_API_URL + "/ideas?limit=1000&offset=0",
