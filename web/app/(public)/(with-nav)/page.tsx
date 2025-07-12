@@ -1,6 +1,12 @@
+import { ChartBar, Lightbulb, Monitor } from "lucide-react";
 import { Metadata } from "next";
-import React from "react";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { OptimizedImage } from "@/components/ui/image";
 import { Link } from "@/components/ui/link";
 
@@ -12,243 +18,327 @@ export const metadata: Metadata = createMetadata({
     "Stop guessing. Start validating. FounderSignal helps you test your startup ideas with real users and data-driven insights in under 72 hours. Build your MVP, get feedback, and find your market.",
 });
 
+const faqs = [
+  {
+    question: "What exactly is a 'fake MVP'?",
+    answer: (
+      <>
+        A &quot;fake MVP&quot; is a realistic, no-code landing page that
+        describes your product or service and captures user interest (e.g.,
+        email sign-ups, pre-orders). It looks and feels like a real product
+        page, but the backend functionality is simulated to gather demand data
+        before you build anything.
+      </>
+    ),
+  },
+  {
+    question: "How does the 72-hour validation work?",
+    answer: (
+      <>
+        Once you define your idea, we launch your no-code MVP. We then collect
+        real user interactions. Our dashboard provides live analytics and
+        AI-summarized feedback.
+      </>
+    ),
+  },
+  {
+    question: "What kind of insights will I get?",
+    answer: (
+      <>
+        You&apos;ll receive data on unique visitors, conversion rates
+        (sign-ups), user demographics (if collected), and qualitative feedback
+        via surveys or comments. Our AI provides summaries and actionable
+        recommendations based on this data.
+      </>
+    ),
+  },
+  {
+    question: "Is my idea safe and private?",
+    answer: (
+      <>
+        Absolutely. Your idea details and all collected user data are kept
+        confidential and secure. We do not share your proprietary information.
+      </>
+    ),
+  },
+  {
+    question: "What happens after I validate my idea?",
+    answer: (
+      <>
+        With concrete data and user insights, you&apos;ll have the confidence to
+        proceed with building your actual product, pivot your idea, or even seek
+        funding with proven market demand. FounderSignal provides the clarity
+        you need for your next step.
+      </>
+    ),
+  },
+];
+
 export default function Home() {
   return (
-    <React.Fragment>
-      <main className="w-full flex min-h-screen flex-col items-center gap-8">
-        <section className="max-w-7xl mx-auto px-4 md:px-12 py-12 lg:py-20 w-full flex flex-col lg:flex-row justify-between gap-6 md:gap-8 lg:gap-12">
-          <div className="flex flex-col space-y-6 lg:w-1/2">
-            <div className="inline-flex items-center px-3 py-1.5 bg-primary/10 rounded-full w-max">
-              <span className="w-2 h-2 rounded-full bg-primary mr-2 animate-pulse"></span>
-              <p className="text-sm font-medium text-primary">
-                Validate faster, launch smarter
-              </p>
-            </div>
-
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-              Test startup ideas{" "}
-              <span className="text-primary">in 72 hours</span>
-            </h1>
-
-            <h2 className="text-xl md:text-2xl text-gray-600">
-              Real-time micro-validation with a fake MVP. No coding required.
-            </h2>
-
-            <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <Link href="/submit">Get started for free</Link>
-
-              <Link href="#how-it-works" variant="outline">
-                <span>How it works</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 ml-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </Link>
-            </div>
-            {/* 
-            <div className="pt-4">
-              <p className="text-sm text-gray-500">Trusted by founders from</p>
-              <div className="flex flex-wrap gap-6 items-center mt-3">
-                <div className="text-gray-400 font-medium">Y Combinator</div>
-                <div className="text-gray-400 font-medium">TechStars</div>
-                <div className="text-gray-400 font-medium">500 Startups</div>
-              </div>
-            </div> */}
+    <main className="w-full flex min-h-screen flex-col items-center gap-8">
+      <section className="max-w-7xl mx-auto px-4 md:px-12 py-12 lg:py-20 w-full flex flex-col lg:flex-row justify-between gap-6 md:gap-8 lg:gap-12 items-center">
+        <div className="flex flex-col space-y-6 lg:w-1/2">
+          <div className="inline-flex items-center px-3 py-1.5 bg-primary/10 rounded-full w-max">
+            <span className="w-2 h-2 rounded-full bg-primary mr-2 animate-pulse"></span>
+            <p className="text-sm font-medium text-primary">
+              Stop guessing. Start validating.
+            </p>
           </div>
 
-          <div className="lg:w-1/2 w-full">
-            <div className="relative w-full aspect-square md:aspect-[4/3] rounded-xl bg-gray-100 overflow-hidden shadow-lg">
-              <OptimizedImage
-                src="/assets/images/home_hero.webp"
-                alt="FounderSignal Steps"
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
-                objectFit="contain"
-                className="w-full h-full"
-              />
-            </div>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            Validate Your Startup Idea{" "}
+            <span className="text-primary">in 72 Hours</span>
+          </h1>
+
+          <p className="text-xl md:text-2xl text-gray-600">
+            Get real-time market insights with a{" "}
+            <strong>no-code fake MVP</strong>. Understand user demand, refine
+            your concept, and <strong>launch with confidence.</strong>
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 pt-2">
+            <Link href="/submit">Start Your Free Validation</Link>
+
+            <Link href="#how-it-works" variant="outline">
+              <span>How It Works</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 ml-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </Link>
           </div>
-        </section>
+        </div>
 
-        <section
-          id="how-it-works"
-          className="bg-primary/5 w-full py-12 lg:py-20"
-        >
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                How FounderSignal Works
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Validate your startup idea without writing a single line of
-                code.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-              <div className="flex flex-col items-center text-center p-6">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                  <span className="text-primary font-bold text-xl">1</span>
-                </div>
-                <h3 className="text-xl font-bold mb-3">Describe Your Idea</h3>
-                <p className="text-gray-600">
-                  Tell us about your startup concept, target audience, and what
-                  problem you&apos;re solving.
-                </p>
-              </div>
-
-              <div className="flex flex-col items-center text-center p-6">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                  <span className="text-primary font-bold text-xl">2</span>
-                </div>
-                <h3 className="text-xl font-bold mb-3">Create Fake MVP</h3>
-                <p className="text-gray-600">
-                  We build a realistic landing page with sign-up form for your
-                  idea with no code required.
-                </p>
-              </div>
-
-              <div className="flex flex-col items-center text-center p-6">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                  <span className="text-primary font-bold text-xl">3</span>
-                </div>
-                <h3 className="text-xl font-bold mb-3">Collect Real Data</h3>
-                <p className="text-gray-600">
-                  Get actionable insights from user interest, behavior metrics,
-                  and detailed analytics.
-                </p>
-              </div>
-            </div>
+        <div className="lg:w-1/2 w-full mt-8 lg:mt-0">
+          <div className="relative w-full aspect-video rounded-xl bg-gray-100 overflow-hidden shadow-lg border border-gray-200">
+            {/* Replace this with a short, compelling video or GIF demonstrating the "fake MVP" creation or the output/dashboard. */}
+            {/* Example: A founder quickly typing an idea, then seeing a simple landing page auto-generated, then a glimpse of feedback. */}
+            {/* If a video, make it autoplay muted and loop. If a GIF, ensure it's optimized. */}
+            {/* For now, let's keep the existing image path but know this is the PLACEHOLDER for the demo. */}
+            <OptimizedImage
+              src="/assets/images/home_hero.webp"
+              alt="FounderSignal Platform Demo"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              priority
+              objectFit="cover"
+              className="w-full h-full"
+            />
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="max-w-7xl mx-auto w-full py-12 lg:py-20 px-4 md:px-12">
+      <section id="how-it-works" className="bg-primary/5 w-full py-12 lg:py-20">
+        <div className="max-w-7xl mx-auto px-4 md:px-12">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Validation Success Stories
+              How FounderSignal Works in 3 Simple Steps
             </h2>
+
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              See how founders like you validated their ideas with
-              FounderSignal.
+              Validate your startup idea without writing a single line of code.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white h-full p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-full overflow-hidden">
-                  <OptimizedImage
-                    src="https://randomuser.me/api/portraits/women/33.jpg"
-                    alt="Founder portrait"
-                    width={64}
-                    height={64}
-                    objectFit="contain"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">MealPrep SaaS Platform</h3>
-                  <p className="text-gray-600">Food Tech Startup</p>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+            <div className="flex flex-col items-center text-center p-6">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+                <Lightbulb className="h-8 w-8 text-primary" />
               </div>
-              <p className="text-gray-700 mb-4 flex-grow">
-                We had a hypothesis that busy professionals would pay for
-                AI-generated meal plans, but weren&apos;t sure about market
-                demand. FounderSignal helped us test this in just 3 days with
-                200+ sign-ups and detailed feedback. The insights helped us
-                refine our pricing strategy and identify key features our target
-                users actually valued.
+
+              <h3 className="text-xl font-bold mb-3">Describe Your Idea</h3>
+
+              <p className="text-gray-600">
+                Tell us about your startup concept, target audience, and the
+                problem you&apos;re solving. Our AI helps refine your pitch.
               </p>
-              <div className="flex flex-wrap gap-4 text-sm">
-                <div className="px-3 py-1 bg-green-100 text-green-800 rounded-full">
-                  72% Conversion Rate
-                </div>
-                <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
-                  $15K Saved
-                </div>
-                <div className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full">
-                  3 Days to Results
-                </div>
-              </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full flex flex-col">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-full overflow-hidden">
-                  <OptimizedImage
-                    src="https://randomuser.me/api/portraits/men/42.jpg"
-                    alt="Founder portrait"
-                    width={64}
-                    height={64}
-                    objectFit="contain"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">TaskFlow AI Assistant</h3>
-                  <p className="text-gray-600">Productivity SaaS</p>
-                </div>
+            <div className="flex flex-col items-center text-center p-6">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+                <Monitor className="h-8 w-8 text-primary" />
               </div>
-              <p className="text-gray-700 mb-4 flex-grow">
-                I was unsure if small business owners would adopt an AI task
-                management tool. Within 72 hours of testing with FounderSignal,
-                we collected 150+ interested users and discovered our ideal
-                price point was 40% higher than initially planned.
+
+              <h3 className="text-xl font-bold mb-3">
+                Create Your No-Code MVP
+              </h3>
+
+              <p className="text-gray-600">
+                Generate a realistic landing page with a sign-up form, tailored
+                to your idea - no coding, no design skills needed.
               </p>
-              <div className="flex flex-wrap gap-4 text-sm">
-                <div className="px-3 py-1 bg-green-100 text-green-800 rounded-full">
-                  63% Conversion Rate
-                </div>
-                <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
-                  $22K Raised Post-Validation
-                </div>
-                <div className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full">
-                  150+ Early Adopters
-                </div>
+            </div>
+
+            <div className="flex flex-col items-center text-center p-6">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+                <ChartBar className="h-8 w-8 text-primary" />
               </div>
+
+              <h3 className="text-xl font-bold mb-3">
+                Collect Real-Time Insights
+              </h3>
+
+              <p className="text-gray-600">
+                Get actionable insights from user interest, conversion rates,
+                and detailed analytics. Our AI summarizes key feedback.
+              </p>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="bg-primary/5 w-full py-12 lg:py-20">
-          <div className="max-w-5xl mx-auto text-center px-4 md:px-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to Validate Your Startup Idea?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              Get data-driven insights on your startup concept before you build.
-              Our platform specializes in idea validation and startup
-              validation, helping you test your business hypothesis with real
-              users.
-            </p>
+      <section className="max-w-7xl mx-auto w-full py-12 lg:py-20 px-4 md:px-12">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            See How FounderSignal Validates
+          </h2>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/submit"
-                className="px-8 py-4 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors"
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Explore a concrete example of how we help founders test their ideas
+            effectively.
+          </p>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-8 md:gap-12 justify-center items-center">
+          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col items-center text-center max-w-sm">
+            <div className="w-20 h-20 mb-4 flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                xmlnsXlink="http://www.w3.org/1999/xlink"
+                version="1.1"
+                width="256"
+                height="256"
+                viewBox="0 0 256 256"
+                xmlSpace="preserve"
               >
-                Start your validation
-              </Link>
-              {/* <Link href="/pricing" variant="outline" className="px-8 py-4">
-                View pricing options
-              </Link> */}
+                <g
+                  style={{
+                    stroke: "none",
+                    strokeWidth: 0,
+                    strokeDasharray: "none",
+                    strokeLinecap: "butt",
+                    strokeLinejoin: "miter",
+                    strokeMiterlimit: 10,
+                    fill: "none",
+                    fillRule: "nonzero",
+                    opacity: 1,
+                  }}
+                  transform="translate(1.4065934065934016 1.4065934065934016) scale(2.81 2.81)"
+                >
+                  <circle
+                    cx="45"
+                    cy="45"
+                    r="45"
+                    style={{
+                      stroke: "none",
+                      strokeWidth: 1,
+                      strokeDasharray: "none",
+                      strokeLinecap: "butt",
+                      strokeLinejoin: "miter",
+                      strokeMiterlimit: 10,
+                      fill: "rgb(255,69,0)",
+                      fillRule: "nonzero",
+                      opacity: 1,
+                    }}
+                    transform="  matrix(1 0 0 1 0 0) "
+                  />
+                  <path
+                    d="M 75.011 45 c -0.134 -3.624 -3.177 -6.454 -6.812 -6.331 c -1.611 0.056 -3.143 0.716 -4.306 1.823 c -5.123 -3.49 -11.141 -5.403 -17.327 -5.537 l 2.919 -14.038 l 9.631 2.025 c 0.268 2.472 2.483 4.262 4.955 3.993 c 2.472 -0.268 4.262 -2.483 3.993 -4.955 s -2.483 -4.262 -4.955 -3.993 c -1.421 0.145 -2.696 0.973 -3.4 2.204 L 48.68 17.987 c -0.749 -0.168 -1.499 0.302 -1.667 1.063 c 0 0.011 0 0.011 0 0.022 l -3.322 15.615 c -6.264 0.101 -12.36 2.025 -17.55 5.537 c -2.64 -2.483 -6.801 -2.36 -9.284 0.291 c -2.483 2.64 -2.36 6.801 0.291 9.284 c 0.515 0.481 1.107 0.895 1.767 1.186 c -0.045 0.66 -0.045 1.32 0 1.98 c 0 10.078 11.745 18.277 26.23 18.277 c 14.485 0 26.23 -8.188 26.23 -18.277 c 0.045 -0.66 0.045 -1.32 0 -1.98 C 73.635 49.855 75.056 47.528 75.011 45 z M 30.011 49.508 c 0 -2.483 2.025 -4.508 4.508 -4.508 c 2.483 0 4.508 2.025 4.508 4.508 s -2.025 4.508 -4.508 4.508 C 32.025 53.993 30.011 51.991 30.011 49.508 z M 56.152 62.058 v -0.179 c -3.199 2.405 -7.114 3.635 -11.119 3.468 c -4.005 0.168 -7.919 -1.063 -11.119 -3.468 c -0.425 -0.515 -0.347 -1.286 0.168 -1.711 c 0.447 -0.369 1.085 -0.369 1.544 0 c 2.707 1.98 6.007 2.987 9.362 2.83 c 3.356 0.179 6.667 -0.783 9.407 -2.74 c 0.492 -0.481 1.297 -0.47 1.779 0.022 C 56.655 60.772 56.644 61.577 56.152 62.058 z M 55.537 54.34 c -0.078 0 -0.145 0 -0.224 0 l 0.034 -0.168 c -2.483 0 -4.508 -2.025 -4.508 -4.508 s 2.025 -4.508 4.508 -4.508 s 4.508 2.025 4.508 4.508 C 59.955 52.148 58.02 54.239 55.537 54.34 z"
+                    style={{
+                      stroke: "none",
+                      strokeWidth: 1,
+                      strokeDasharray: "none",
+                      strokeLinecap: "butt",
+                      strokeLinejoin: "miter",
+                      strokeMiterlimit: 10,
+                      fill: "rgb(255,255,255)",
+                      fillRule: "nonzero",
+                      opacity: 1,
+                    }}
+                    transform=" matrix(1 0 0 1 0 0) "
+                    strokeLinecap="round"
+                  />
+                </g>
+              </svg>
             </div>
 
-            <p className="mt-6 text-gray-500">
-              No credit card required to get started • 3-day results guaranteed
+            <h3 className="font-bold text-xl mb-2">
+              Reddit Validation Example
+            </h3>
+
+            <p className="text-gray-700 mb-4 flex-grow">
+              See a sample of insights you&apos;d get from testing your idea
+              within targeted Reddit communities.
             </p>
+
+            <Link
+              href="/samples/reddit-validation"
+              className="w-full text-center"
+            >
+              View Sample Report
+            </Link>
           </div>
-        </section>
-      </main>
-    </React.Fragment>
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto w-full py-12 lg:py-20 px-4 md:px-12">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Frequently Asked Questions
+          </h2>
+
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Answers to common questions about FounderSignal and validating your
+            ideas.
+          </p>
+        </div>
+
+        <Accordion type="single" collapsible className="w-full">
+          {faqs.map((faq, index) => (
+            <AccordionItem value={`item-${index}`} key={index}>
+              <AccordionTrigger className="text-lg text-left font-medium">
+                {faq.question}
+              </AccordionTrigger>
+
+              <AccordionContent className="text-base text-gray-700">
+                {faq.answer}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </section>
+
+      <section className="bg-primary/5 w-full py-12 lg:py-20">
+        <div className="max-w-5xl mx-auto text-center px-4 md:px-12">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Ready to Confidently Launch Your Next Big Idea?
+          </h2>
+
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+            Stop building in the dark. Start validating with real data and user
+            feedback in just 72 hours.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/submit">Start Your Free Validation Today!</Link>
+          </div>
+
+          <p className="mt-6 text-gray-500">
+            No credit card required to get started • Risk-free 3-day validation
+          </p>
+        </div>
+      </section>
+    </main>
   );
 }
