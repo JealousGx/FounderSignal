@@ -44,7 +44,14 @@ export const createMetadata = (pageMetadata: {
 
   return {
     title,
+    applicationName: siteConfig.name,
+    metadataBase: new URL(siteConfig.url),
     description,
+    alternates: {
+      canonical: url,
+    },
+    publisher: siteConfig.name,
+    creator: siteConfig.name,
     keywords: combinedKeywords,
     openGraph: {
       title,
@@ -66,5 +73,16 @@ export const createMetadata = (pageMetadata: {
       images: [ogImageUrl],
     },
     robots,
+    appleWebApp: {
+      capable: true,
+      title: siteConfig.name,
+      statusBarStyle: "default",
+    },
+    formatDetection: {
+      telephone: false,
+    },
+    verification: {
+      yandex: "bdb83ce4b3dc86b6",
+    },
   };
 };
