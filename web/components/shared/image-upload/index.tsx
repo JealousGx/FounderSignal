@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import imageCompression from "browser-image-compression";
 import { AlertCircle, Image as ImageIcon, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -29,20 +30,61 @@ export function ImageUpload({
   const [isDragActive, setIsDragActive] = useState(false);
   const [isDragReject, setIsDragReject] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(value || null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const handleFileSelect = useCallback(
-    (file: File) => {
+    async (file: File) => {
       if (!file) return;
-      const url = URL.createObjectURL(file);
-      setPreviewUrl((prev) => {
-        if (prev) {
-          URL.revokeObjectURL(prev);
+
+      setIsCompressing(true);
+
+      try {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          fileType: "image/webp",
+          quality: 0.8,
+        };
+
+        let processedFile = file;
+
+        if (file.type.startsWith("image/") && file.type !== "image/svg+xml") {
+          try {
+            processedFile = await imageCompression(file, options);
+
+            console.log("Original file size:", file.size / 1024 / 1024, "MB");
+
+            console.log(
+              "Compressed file size:",
+              processedFile.size / 1024 / 1024,
+              "MB"
+            );
+          } catch (compressError) {
+            console.warn(
+              "Client-side image compression failed, using original file:",
+              compressError
+            );
+
+            processedFile = file; // Fallback to original if compression fails
+          }
         }
 
-        return url;
-      });
+        const url = URL.createObjectURL(processedFile);
+        setPreviewUrl((prev) => {
+          if (prev) {
+            URL.revokeObjectURL(prev);
+          }
 
-      onChange(file);
+          return url;
+        });
+
+        onChange(processedFile);
+      } catch (error) {
+        console.error("Error compressing image:", error);
+      } finally {
+        setIsCompressing(false);
+      }
     },
     [onChange]
   );
@@ -137,9 +179,15 @@ export function ImageUpload({
   useEffect(() => {
     if (value && value !== previewUrl) {
       setPreviewUrl(value);
+    } else if (!value && previewUrl && !isUploading && !isCompressing) {
+      URL.revokeObjectURL(previewUrl);
+
+      setPreviewUrl(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
+
+  const isLoading = isUploading || isCompressing;
 
   return (
     <div className={cn("space-y-4 w-max", className)}>
@@ -162,7 +210,7 @@ export function ImageUpload({
             size="icon"
             className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={handleRemove}
-            disabled={disabled || isUploading}
+            disabled={disabled || isLoading}
           >
             <X className="h-3 w-3" />
           </Button>
@@ -179,7 +227,7 @@ export function ImageUpload({
             isDragActive && !isDragReject && "border-primary bg-primary/10",
             isDragReject && "border-destructive bg-destructive/10",
             disabled && "opacity-50 cursor-not-allowed",
-            isUploading && "pointer-events-none"
+            isLoading && "pointer-events-none"
           )}
         >
           <label htmlFor="icon-upload" className="block cursor-pointer">
@@ -189,11 +237,11 @@ export function ImageUpload({
               accept=".svg,.png,.jpg,.jpeg,.webp"
               className="hidden"
               onChange={handleInputChange}
-              disabled={disabled || isUploading}
+              disabled={disabled || isLoading}
             />
 
             <div className="flex flex-col items-center justify-center space-y-3">
-              {isUploading ? (
+              {isLoading ? (
                 <>
                   <div className="relative">
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -202,7 +250,9 @@ export function ImageUpload({
                   </div>
                   <div className="text-center space-y-2">
                     <p className="text-sm font-medium text-gray-900">
-                      Uploading icon...
+                      {isCompressing
+                        ? "Compressing image..."
+                        : "Uploading image..."}
                     </p>
                   </div>
                 </>
