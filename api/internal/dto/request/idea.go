@@ -5,6 +5,7 @@ type CreateIdea struct {
 	Description    string `json:"description" binding:"required,min=30"`
 	TargetAudience string `json:"targetAudience" binding:"required,min=8"`
 	CTAButton      string `json:"ctaButtonText"`
+	ForceNew       bool   `json:"forceNew"`
 }
 
 type UpdateIdea struct {

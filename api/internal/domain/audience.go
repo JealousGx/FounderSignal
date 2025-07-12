@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // AudienceMember represents a subscriber who has signed up for an idea
@@ -17,6 +18,8 @@ type AudienceMember struct {
 	Converted      bool       `gorm:"default:false" json:"converted"`
 	LastActive     *time.Time `json:"lastActive,omitempty"`
 	Visits         int        `gorm:"default:0" json:"visits"`
+
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Relationships
 	Idea         Idea         `gorm:"foreignKey:IdeaID" json:"idea,omitempty"`

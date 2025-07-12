@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"foundersignal/internal/domain"
 	"foundersignal/internal/dto/response"
+	"log"
 	"strings"
 	"time"
 
@@ -21,6 +23,10 @@ type IdeaRepository interface {
 	GetByIds(ctx context.Context, ids []uuid.UUID) ([]*domain.Idea, error)
 	GetIdeasWithActivity(ctx context.Context, userID string, from, to time.Time, options ...QueryOption) ([]*response.IdeaWithActivity, error)
 	GetCountForUser(ctx context.Context, userId string, start, end *time.Time, status *domain.IdeaStatus) (int64, error)
+	GetByUserId(ctx context.Context, userId string) ([]*domain.Idea, error)
+	HardDelete(ctx context.Context, ideaId uuid.UUID) error
+	FindDeletedByTitleAndUserID(ctx context.Context, userID, title string) (*domain.Idea, error)
+	Restore(ctx context.Context, idea *domain.Idea) error
 }
 
 type IdeaQuerySpec struct {
@@ -83,28 +89,36 @@ func (r *ideaRepository) Delete(ctx context.Context, ideaId uuid.UUID) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Delete all related records first to maintain referential integrity
 		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.MVPSimulator{}).Error; err != nil {
-			return err
+			return fmt.Errorf("failed to delete MVPs: %w", err)
 		}
 		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.Signal{}).Error; err != nil {
-			return err
+			return fmt.Errorf("failed to delete Signals: %w", err)
 		}
 		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.Feedback{}).Error; err != nil {
-			return err
+			return fmt.Errorf("failed to delete Feedback: %w", err)
 		}
 		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.AudienceMember{}).Error; err != nil {
-			return err
+			return fmt.Errorf("failed to delete Audience Members: %w", err)
 		}
 		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.IdeaReaction{}).Error; err != nil {
-			return err
+			return fmt.Errorf("failed to delete Idea Reactions: %w", err)
 		}
 		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.Report{}).Error; err != nil {
-			return err
+			return fmt.Errorf("failed to delete Reports: %w", err)
+		}
+		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.RedditValidation{}).Error; err != nil {
+			return fmt.Errorf("failed to delete Reddit Validations: %w", err)
+		}
+		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.Activity{}).Error; err != nil {
+			return fmt.Errorf("failed to delete Activities: %w", err)
+		}
+		if err := tx.Where("idea_id = ?", ideaId).Delete(&domain.FeedbackReaction{}).Error; err != nil {
+			return fmt.Errorf("failed to delete Feedback Reactions: %w", err)
 		}
 
 		// Finally, delete the idea itself
 		if err := tx.Delete(&domain.Idea{}, ideaId).Error; err != nil {
-			fmt.Println("Error deleting idea:", err)
-			return err
+			return fmt.Errorf("failed to delete Idea: %w", err)
 		}
 
 		return nil
@@ -298,6 +312,189 @@ func (r *ideaRepository) GetCountForUser(ctx context.Context, userId string, sta
 	}
 
 	return count, nil
+}
+
+func (r *ideaRepository) HardDelete(ctx context.Context, ideaId uuid.UUID) error {
+	var feedbackIDs []uuid.UUID
+	err := r.db.WithContext(ctx).Unscoped().Model(&domain.Feedback{}).Where("idea_id = ?", ideaId).Pluck("id", &feedbackIDs).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("No Feedback (active or soft-deleted) found for idea %s. feedbackIDs will be empty.", ideaId)
+		} else {
+			return fmt.Errorf("failed to pluck feedback IDs for idea %s: %w", ideaId, err)
+		}
+	}
+
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// --- CRITICAL: Order of deletion MATTERS ---
+		// Always delete child records BEFORE their parent records.
+
+		if len(feedbackIDs) > 0 {
+			if err := tx.Unscoped().Where("feedback_id IN (?)", feedbackIDs).Delete(&domain.FeedbackReaction{}).Error; err != nil {
+				return fmt.Errorf("failed to hard delete Feedback Reactions: %w", err)
+			}
+		}
+
+		if err := tx.Unscoped().Where("idea_id = ?", ideaId).Delete(&domain.Feedback{}).Error; err != nil {
+			return fmt.Errorf("failed to hard delete Feedback: %w", err)
+		}
+
+		if err := tx.Unscoped().Where("idea_id = ?", ideaId).Delete(&domain.Signal{}).Error; err != nil {
+			return fmt.Errorf("failed to hard delete Signals: %w", err)
+		}
+		if err := tx.Unscoped().Where("idea_id = ?", ideaId).Delete(&domain.AudienceMember{}).Error; err != nil {
+			return fmt.Errorf("failed to hard delete Audience Members: %w", err)
+		}
+		if err := tx.Unscoped().Where("idea_id = ?", ideaId).Delete(&domain.MVPSimulator{}).Error; err != nil {
+			return fmt.Errorf("failed to hard delete MVPs: %w", err)
+		}
+		if err := tx.Unscoped().Where("idea_id = ?", ideaId).Delete(&domain.IdeaReaction{}).Error; err != nil {
+			return fmt.Errorf("failed to hard delete Idea Reactions: %w", err)
+		}
+		if err := tx.Unscoped().Where("idea_id = ?", ideaId).Delete(&domain.Report{}).Error; err != nil {
+			return fmt.Errorf("failed to hard delete Reports: %w", err)
+		}
+		if err := tx.Unscoped().Where("idea_id = ?", ideaId).Delete(&domain.RedditValidation{}).Error; err != nil {
+			return fmt.Errorf("failed to hard delete Reddit Validations: %w", err)
+		}
+		if err := tx.Unscoped().Where("idea_id = ?", ideaId).Delete(&domain.Activity{}).Error; err != nil {
+			return fmt.Errorf("failed to hard delete Activities: %w", err)
+		}
+
+		// Finally, permanently delete the idea itself
+		if err := tx.Unscoped().Delete(&domain.Idea{}, ideaId).Error; err != nil {
+			return fmt.Errorf("failed to hard delete idea: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func (r *ideaRepository) FindDeletedByTitleAndUserID(ctx context.Context, userID, title string) (*domain.Idea, error) {
+	var idea domain.Idea
+
+	// Unscoped() is key here to include soft-deleted records
+	result := r.db.WithContext(ctx).Unscoped().
+		Where("user_id = ? AND title = ? AND deleted_at IS NOT NULL", userID, title).
+		First(&idea)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+
+		return nil, result.Error
+	}
+
+	return &idea, nil
+}
+
+// Restore updates a soft-deleted idea's fields with new request data
+// and then sets its deleted_at to NULL, effectively restoring it.
+// It also restores all related soft-deleted entities for this idea.
+func (r *ideaRepository) Restore(ctx context.Context, idea *domain.Idea) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+
+		// 1. Restore the Idea itself
+		idea.DeletedAt = gorm.DeletedAt{}
+
+		result := tx.Save(idea)
+		if result.Error != nil {
+			return fmt.Errorf("failed to save restored idea: %w", result.Error)
+		}
+		if result.RowsAffected == 0 {
+			return fmt.Errorf("no idea was updated during restore for ID %s", idea.ID)
+		}
+
+		ideaID := idea.ID
+
+		var softDeletedFeedbackIDs []uuid.UUID
+		if err := tx.Unscoped().
+			Model(&domain.Feedback{}).
+			Select("id").
+			Where("idea_id = ? AND deleted_at IS NOT NULL", ideaID).
+			Pluck("id", &softDeletedFeedbackIDs).Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("failed to find soft-deleted feedback IDs for idea %s: %w", ideaID, err)
+			}
+		}
+
+		// Restore MVPSimulator
+		if err := tx.Unscoped().
+			Model(&domain.MVPSimulator{}).
+			Where("idea_id = ? AND deleted_at IS NOT NULL", ideaID).
+			Update("deleted_at", nil).Error; err != nil {
+			return fmt.Errorf("failed to restore MVPs: %w", err)
+		}
+
+		// Restore Signals
+		if err := tx.Unscoped().
+			Model(&domain.Signal{}).
+			Where("idea_id = ? AND deleted_at IS NOT NULL", ideaID).
+			Update("deleted_at", nil).Error; err != nil {
+			return fmt.Errorf("failed to restore Signals: %w", err)
+		}
+
+		if err := tx.Unscoped().
+			Model(&domain.Feedback{}).
+			Where("idea_id = ? AND deleted_at IS NOT NULL", ideaID).
+			Update("deleted_at", nil).Error; err != nil {
+			return fmt.Errorf("failed to restore Feedback: %w", err)
+		}
+
+		// This must happen AFTER Feedback records are prepared for restore,
+		// and uses the collected soft-deleted Feedback IDs.
+		if len(softDeletedFeedbackIDs) > 0 {
+			if err := tx.Unscoped().
+				Model(&domain.FeedbackReaction{}).
+				Where("feedback_id IN (?) AND deleted_at IS NOT NULL", softDeletedFeedbackIDs).
+				Update("deleted_at", nil).Error; err != nil {
+				return fmt.Errorf("failed to restore Feedback Reactions: %w", err)
+			}
+		}
+
+		// Restore AudienceMembers
+		if err := tx.Unscoped().
+			Model(&domain.AudienceMember{}).
+			Where("idea_id = ? AND deleted_at IS NOT NULL", ideaID).
+			Update("deleted_at", nil).Error; err != nil {
+			return fmt.Errorf("failed to restore Audience Members: %w", err)
+		}
+
+		// Restore IdeaReactions
+		if err := tx.Unscoped().
+			Model(&domain.IdeaReaction{}).
+			Where("idea_id = ? AND deleted_at IS NOT NULL", ideaID).
+			Update("deleted_at", nil).Error; err != nil {
+			return fmt.Errorf("failed to restore Idea Reactions: %w", err)
+		}
+
+		// Restore Reports
+		if err := tx.Unscoped().
+			Model(&domain.Report{}).
+			Where("idea_id = ? AND deleted_at IS NOT NULL", ideaID).
+			Update("deleted_at", nil).Error; err != nil {
+			return fmt.Errorf("failed to restore Reports: %w", err)
+		}
+
+		// Restore RedditValidations
+		if err := tx.Unscoped().
+			Model(&domain.RedditValidation{}).
+			Where("idea_id = ? AND deleted_at IS NOT NULL", ideaID).
+			Update("deleted_at", nil).Error; err != nil {
+			return fmt.Errorf("failed to restore Reddit Validations: %w", err)
+		}
+
+		// Restore Activities
+		if err := tx.Unscoped().
+			Model(&domain.Activity{}).
+			Where("idea_id = ? AND deleted_at IS NOT NULL", ideaID).
+			Update("deleted_at", nil).Error; err != nil {
+			return fmt.Errorf("failed to restore Activities: %w", err)
+		}
+
+		return nil
+	})
 }
 
 func (r *ideaRepository) getRelatedIdeas(ctx context.Context, idea domain.Idea) []*domain.Idea {

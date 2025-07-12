@@ -112,6 +112,31 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		Status:         string(ideaStatus),
 	}
 
+	existingDeletedIdea, err := s.repo.FindDeletedByTitleAndUserID(ctx, userId, req.Title)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to check for existing deleted idea: %w", err)
+	}
+
+	if existingDeletedIdea != nil {
+		if req.ForceNew {
+			if err := s.repo.HardDelete(ctx, existingDeletedIdea.ID); err != nil {
+				return uuid.Nil, fmt.Errorf("failed to hard delete previous idea for new creation: %w", err)
+			}
+
+			log.Printf("Successfully hard-deleted old idea %s to create a new one with title '%s'", existingDeletedIdea.ID, req.Title)
+		} else {
+			idea.ID = existingDeletedIdea.ID
+			idea.CreatedAt = existingDeletedIdea.CreatedAt
+			idea.UpdatedAt = time.Now()
+
+			// If a soft-deleted idea is found, restore it instead of creating a new one
+			if err := s.repo.Restore(ctx, idea); err != nil {
+				return uuid.Nil, fmt.Errorf("failed to restore idea: %w", err)
+			}
+			return existingDeletedIdea.ID, nil
+		}
+	}
+
 	ideaId, err := s.repo.Create(ctx, idea)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to create idea: %w", err)
