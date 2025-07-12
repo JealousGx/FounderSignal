@@ -24,6 +24,7 @@ export function useAutoSave({
   handleImageUploads,
   cleanupOrphanedAssets,
   isSavingRef,
+  assetUrlMapRef,
 }: {
   ideaId: string | undefined;
   mvpId: string | null;
@@ -36,6 +37,7 @@ export function useAutoSave({
   handleImageUploads: (assets: Assets) => Promise<AssetUrlMap>;
   cleanupOrphanedAssets: (html: string) => Promise<void>;
   isSavingRef: React.RefObject<boolean>;
+  assetUrlMapRef: React.RefObject<AssetUrlMap>;
 }) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -63,9 +65,7 @@ export function useAutoSave({
           throw new Error("No content to save");
         }
 
-        const uploadedAssetsRes = await handleImageUploads(
-          grapeEditor.AssetManager.getAllVisible()
-        );
+        await handleImageUploads(grapeEditor.AssetManager.getAllVisible());
 
         const bodyContent = grapeEditor.getHtml({ cleanId: true });
         const styles = grapeEditor.getCss({ avoidProtected: true });
@@ -90,7 +90,7 @@ export function useAutoSave({
         }
 
         // Replace all base64 strings in the HTML with the new cloud URLs
-        html = optimizeHtmlImages(html, uploadedAssetsRes);
+        html = optimizeHtmlImages(html, assetUrlMapRef.current);
 
         // Clean up orphaned assets
         await cleanupOrphanedAssets(html);
@@ -135,6 +135,7 @@ export function useAutoSave({
       metaDescription,
       cleanupOrphanedAssets,
       setIsDirty,
+      assetUrlMapRef,
     ]
   );
 

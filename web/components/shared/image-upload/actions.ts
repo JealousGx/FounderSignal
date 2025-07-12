@@ -1,7 +1,8 @@
 "use server";
 
-import { getSignedUrlForUpload } from "@/lib/r2";
 import { auth } from "@clerk/nextjs/server";
+
+import { getSignedUrlForUpload } from "@/lib/r2";
 
 export const uploadImageWithSignedUrl = async (
   fileString: string,
@@ -21,7 +22,10 @@ export const uploadImageWithSignedUrl = async (
       };
     }
 
-    const signedUrl = await getSignedUrlForUpload(fileKey, contentType);
+    const { signedUrl, key } = await getSignedUrlForUpload(
+      fileKey,
+      contentType
+    );
 
     if (!signedUrl) {
       return {
@@ -50,7 +54,7 @@ export const uploadImageWithSignedUrl = async (
       };
     }
 
-    const imageUrl = `${process.env.NEXT_PUBLIC_R2_ENDPOINT}/${fileKey}`;
+    const imageUrl = `${process.env.NEXT_PUBLIC_R2_ENDPOINT}/${key}`;
 
     return {
       uploaded: true,

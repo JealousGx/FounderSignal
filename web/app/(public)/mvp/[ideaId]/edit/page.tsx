@@ -40,8 +40,12 @@ export default function EditLandingPage() {
   const editorRef = useRef<HTMLDivElement>(null);
 
   const grapeEditor = useGrapesEditor(editorRef, isSavingRef, setDirty);
-  const { setCurrentAssets, handleImageUploads, cleanupOrphanedAssets } =
-    useAssets(ideaId, grapeEditor);
+  const {
+    setCurrentAssets,
+    handleImageUploads,
+    cleanupOrphanedAssets,
+    assetUrlMapRef,
+  } = useAssets(ideaId, grapeEditor);
 
   const { handleSave, saveStatus } = useAutoSave({
     ideaId,
@@ -55,6 +59,7 @@ export default function EditLandingPage() {
     handleImageUploads,
     cleanupOrphanedAssets,
     isSavingRef,
+    assetUrlMapRef,
   });
 
   const handleMetaTitleChange = (newTitle: string) => {
