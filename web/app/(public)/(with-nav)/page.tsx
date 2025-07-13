@@ -7,7 +7,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { OptimizedImage } from "@/components/ui/image";
 import { Link } from "@/components/ui/link";
 
 import { createMetadata } from "@/lib/metadata";
@@ -122,19 +121,15 @@ export default function Home() {
 
         <div className="lg:w-1/2 w-full mt-8 lg:mt-0">
           <div className="relative w-full aspect-video rounded-xl bg-gray-100 overflow-hidden shadow-lg border border-gray-200">
-            {/* Replace this with a short, compelling video or GIF demonstrating the "fake MVP" creation or the output/dashboard. */}
-            {/* Example: A founder quickly typing an idea, then seeing a simple landing page auto-generated, then a glimpse of feedback. */}
-            {/* If a video, make it autoplay muted and loop. If a GIF, ensure it's optimized. */}
-            {/* For now, let's keep the existing image path but know this is the PLACEHOLDER for the demo. */}
-            <OptimizedImage
-              src="/assets/images/home_hero.webp"
-              alt="FounderSignal Platform Demo"
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority
-              objectFit="cover"
-              className="w-full h-full"
-            />
+            <iframe
+              width="560"
+              height="315"
+              src="https://www.youtube.com/embed/3hjUeTAXixw?autoplay=1&mute=1&loop=1&playlist=3hjUeTAXixw&playsinline=1&controls=0&showinfo=0&modestbranding=1&iv_load_policy=3"
+              title="FounderSignal Platform Demo"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            ></iframe>
           </div>
         </div>
       </section>
