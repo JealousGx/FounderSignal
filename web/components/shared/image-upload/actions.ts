@@ -1,12 +1,14 @@
 "use server";
 
-import { getSignedUrlForUpload } from "@/lib/r2";
 import { auth } from "@clerk/nextjs/server";
+
+import { getSignedUrlForUpload } from "@/lib/r2";
+import sharp from "sharp";
 
 export const uploadImageWithSignedUrl = async (
   fileString: string,
-  fileKey: string,
-  contentType: string
+  originalFileKey: string,
+  originalContentType: string
 ): Promise<{
   error?: string;
   uploaded: boolean;
@@ -14,14 +16,72 @@ export const uploadImageWithSignedUrl = async (
 }> => {
   try {
     const user = await auth();
-    if (!user) {
+    if (!user.userId) {
       return {
         error: "User not authenticated",
         uploaded: false,
       };
     }
 
-    const signedUrl = await getSignedUrlForUpload(fileKey, contentType);
+    const binaryData = Buffer.from(fileString, "base64");
+
+    let processedBuffer: Buffer = binaryData;
+    let finalContentType: string = originalContentType;
+    let finalFileKey: string = originalFileKey;
+
+    const baseFileName = originalFileKey.split(".").slice(0, -1).join(".");
+
+    if (
+      originalContentType.startsWith("image/") &&
+      originalContentType !== "image/svg+xml"
+    ) {
+      try {
+        const image = sharp(binaryData);
+
+        const outputFormat = "webp";
+        const quality = 80;
+        const maxWidth = 1200;
+        const maxHeight = 1200;
+
+        processedBuffer = await image
+          .resize({
+            width: maxWidth,
+            height: maxHeight,
+            fit: sharp.fit.inside,
+            withoutEnlargement: true,
+          })
+          .toFormat(outputFormat, { quality: quality })
+          .toBuffer();
+
+        finalContentType = `image/${outputFormat}`;
+        finalFileKey = `${baseFileName}.${outputFormat}`;
+
+        console.log(
+          `Server-side processed image to ${outputFormat}: Original size ${binaryData.length} bytes, New size ${processedBuffer.length} bytes`
+        );
+      } catch (sharpError) {
+        console.error(
+          "Sharp image processing failed, uploading original image:",
+          sharpError
+        );
+        processedBuffer = binaryData;
+        finalContentType = originalContentType;
+        finalFileKey = originalFileKey;
+      }
+    } else if (originalContentType === "image/svg+xml") {
+      processedBuffer = binaryData;
+      finalContentType = originalContentType;
+      finalFileKey = originalFileKey;
+    } else {
+      processedBuffer = binaryData;
+      finalContentType = originalContentType;
+      finalFileKey = originalFileKey;
+    }
+
+    const { signedUrl, key } = await getSignedUrlForUpload(
+      finalFileKey,
+      finalContentType
+    );
 
     if (!signedUrl) {
       return {
@@ -30,37 +90,35 @@ export const uploadImageWithSignedUrl = async (
       };
     }
 
-    const binaryData = Buffer.from(fileString, "base64");
-
     const response = await fetch(signedUrl, {
       method: "PUT",
       headers: {
-        "Content-Type": contentType,
+        "Content-Type": finalContentType,
       },
-      body: binaryData,
+      body: processedBuffer,
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Error uploading image:", errorText);
+      console.error("Error uploading image to R2:", errorText);
 
       return {
-        error: "Failed to upload image",
+        error: "Failed to upload image to storage",
         uploaded: false,
       };
     }
 
-    const imageUrl = `${process.env.NEXT_PUBLIC_R2_ENDPOINT}/${fileKey}`;
+    const imageUrl = `${process.env.NEXT_PUBLIC_R2_ENDPOINT}/${key}`;
 
     return {
       uploaded: true,
       imageUrl,
     };
   } catch (error) {
-    console.error("Error uploading image:", error);
+    console.error("Unhandled error during image upload:", error);
 
     return {
-      error: "Failed to generate signed URL",
+      error: "An unexpected error occurred during image upload.",
       uploaded: false,
     };
   }

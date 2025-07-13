@@ -134,7 +134,9 @@ export default function PrivacyPolicyPage() {
           discovering the breach.
         </p>
 
-        <h2 className="text-xl font-semibold">7. Data Retention</h2>
+        <h2 className="text-xl font-semibold">
+          7. Data Retention and Deletion
+        </h2>
         <p className="mb-4">
           We will retain your personal information only for as long as is
           necessary for the purposes set out in this Privacy Policy, including
@@ -142,6 +144,29 @@ export default function PrivacyPolicyPage() {
           requirements. When you delete your account, we will delete your
           personal information, but may retain your anonymized user-generated
           content and usage data.
+          <ul className="mb-4 list-disc pl-6">
+            <li>
+              <strong>Resource Deletion:</strong> When you choose to delete
+              individual resources (e.g., a startup idea, a landing page) from
+              your account, we perform a <strong>soft delete</strong>. This
+              means the resource is no longer publicly accessible or actively
+              used, but we retain a copy for some time to allow for potential
+              restoration in case of accidental deletion or if you change your
+              mind. During this period, the data remains subject to our security
+              and privacy measures.
+            </li>
+            <li>
+              <strong>Account Deletion:</strong> When you delete your entire
+              FounderSignal account, all associated personal information and
+              user-generated content (including all your ideas and landing
+              pages, whether soft-deleted or active) will be{" "}
+              <strong>permanently hard-deleted</strong> from our systems. This
+              action is irreversible, and your data cannot be recovered once
+              your account is deleted. We may retain anonymized usage data for
+              analytical purposes, but this data will not be linked back to you
+              personally.
+            </li>
+          </ul>
         </p>
 
         <h2 className="text-xl font-semibold">

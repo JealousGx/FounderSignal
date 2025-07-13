@@ -1,5 +1,5 @@
-import { Asset, Assets, Component, Editor } from "grapesjs";
-import { useCallback, useRef, useState } from "react";
+import { Asset, Assets, Component, Components, Editor } from "grapesjs";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { uploadImageWithSignedUrl } from "@/components/shared/image-upload/actions";
@@ -20,6 +20,9 @@ export function useAssets(
   grapeEditor: Editor | null
 ) {
   const [currentAssets, setCurrentAssets] = useState<Set<string>>(new Set());
+  const [assetsMarkedForDeletion, setAssetsMarkedForDeletion] = useState<
+    Set<string>
+  >(new Set());
   const assetUrlMapRef = useRef<AssetUrlMap>(new Map());
 
   if (!ideaId) {
@@ -36,13 +39,27 @@ export function useAssets(
     ) => {
       if (!grapeEditor) return;
 
-      // Get all components in the editor
-      const allComponents = grapeEditor.Components.getComponents();
-      const imageComponents = allComponents.filter(
-        (comp: Component) => comp.getType() === "image"
-      );
+      const allComps = grapeEditor.getWrapper()?.get("components");
+      const imageComponents: Component[] = [];
 
-      imageComponents.forEach((img: Component) => {
+      const findImageComponents = (components: Components) => {
+        components.forEach((comp: Component) => {
+          if (comp.get("type") === "image") {
+            imageComponents.push(comp);
+          }
+
+          const innerComponents = comp.get("components");
+          if (innerComponents?.length) {
+            findImageComponents(innerComponents);
+          }
+        });
+      };
+
+      if (allComps) {
+        findImageComponents(allComps);
+      }
+
+      imageComponents.forEach((img) => {
         const currentSrc = img.getAttributes().src;
         if (currentSrc && urlMap.has(currentSrc)) {
           const assetData = urlMap.get(currentSrc)!;
@@ -62,15 +79,9 @@ export function useAssets(
       const assetManager = grapeEditor.AssetManager;
       if (assetManager) {
         urlMap.forEach((data, base64String) => {
-          const existingAsset = assetManager.get(base64String);
-          if (existingAsset) {
-            existingAsset.set({
-              src: data.cloudUrl,
-              width: data.dimensions.width,
-              height: data.dimensions.height,
-            });
-          } else {
-            // If the asset doesn't exist, create a new one
+          assetManager.remove(base64String);
+
+          if (!assetManager.get(data.cloudUrl)) {
             assetManager.add({
               src: data.cloudUrl,
               width: data.dimensions.width,
@@ -132,17 +143,27 @@ export function useAssets(
 
         console.log("Image uploaded successfully:", uploadResponse.imageUrl);
 
-        // Add to current assets tracking
-        setCurrentAssets((prev) => new Set(prev).add(fileName));
-
         return {
           base64String: dataUrl,
           cloudUrl: uploadResponse.imageUrl,
           dimensions,
+          fileName,
         };
       });
 
       const uploadedAssets = await Promise.all(uploadPromises);
+
+      const newFileNames = uploadedAssets
+        .map((asset) => extractFileNameFromUrl(asset.cloudUrl))
+        .filter((name) => name !== null);
+      setCurrentAssets((prev) => new Set([...prev, ...newFileNames]));
+
+      setAssetsMarkedForDeletion((prev) => {
+        const newState = new Set(prev);
+        newFileNames.forEach((fileName) => newState.delete(fileName));
+        return newState;
+      });
+
       const urlMap = new Map(
         uploadedAssets.map((a) => [
           a.base64String,
@@ -168,23 +189,39 @@ export function useAssets(
       const doc = parser.parseFromString(finalHtml, "text/html");
       const images = doc.querySelectorAll("img[src]");
 
-      const usedAssets = new Set<string>();
+      const usedAssetsInHtml = new Set<string>();
       images.forEach((img) => {
         const src = img.getAttribute("src");
         if (src && !src.startsWith("data:")) {
           const fileName = extractFileNameFromUrl(src);
           if (fileName) {
-            usedAssets.add(fileName);
+            usedAssetsInHtml.add(fileName);
           }
         }
       });
 
-      // Find orphaned assets (in currentAssets but not in usedAssets)
-      const orphanedAssets = Array.from(currentAssets).filter(
-        (asset) => !usedAssets.has(asset)
+      const actualUsedAssets = new Set(
+        Array.from(usedAssetsInHtml).filter(
+          (fileName) => !assetsMarkedForDeletion.has(fileName)
+        )
       );
 
-      if (orphanedAssets.length === 0) return;
+      const assetsToConsiderForDeletion = new Set([
+        ...Array.from(currentAssets),
+        ...Array.from(assetsMarkedForDeletion), // Include assets explicitly marked for deletion
+      ]);
+
+      // Find orphaned assets (in assetsToConsiderForDeletion but not in usedAssets)
+      const orphanedAssets = Array.from(assetsToConsiderForDeletion).filter(
+        (asset) => !actualUsedAssets.has(asset)
+      );
+
+      if (orphanedAssets.length === 0) {
+        setCurrentAssets(actualUsedAssets);
+        setAssetsMarkedForDeletion(new Set());
+
+        return;
+      }
 
       console.log("Cleaning up orphaned assets:", orphanedAssets.length);
 
@@ -223,15 +260,40 @@ export function useAssets(
       }
 
       // Update current assets tracking
-      setCurrentAssets(usedAssets);
+      setCurrentAssets(actualUsedAssets);
+      setAssetsMarkedForDeletion(new Set());
     },
-    [currentAssets]
+    [currentAssets, assetsMarkedForDeletion]
   );
+
+  const handleAssetRemove = useCallback(async (asset: Asset) => {
+    const assetSrc = asset.get("src");
+    if (assetSrc && !assetSrc.startsWith("data:")) {
+      const fileName = extractFileNameFromUrl(assetSrc);
+      if (fileName) {
+        console.log("Marking asset for deletion:", fileName);
+        setAssetsMarkedForDeletion((prev) => new Set([...prev, fileName]));
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (grapeEditor) {
+      // Listen for the asset:remove event to mark assets for deletion
+      grapeEditor.on("asset:remove", handleAssetRemove);
+
+      // Cleanup on unmount or editor change
+      return () => {
+        grapeEditor.off("asset:remove", handleAssetRemove);
+      };
+    }
+  }, [grapeEditor, handleAssetRemove]);
 
   return {
     currentAssets,
     setCurrentAssets,
     handleImageUploads,
     cleanupOrphanedAssets,
+    assetUrlMapRef,
   };
 }

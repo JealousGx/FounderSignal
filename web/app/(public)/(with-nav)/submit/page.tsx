@@ -1,13 +1,16 @@
 "use client";
 
 import { AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -20,8 +23,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { submitIdea, SubmitIdeaState } from "./action";
 import { formSchema } from "./schema";
 
@@ -41,6 +42,7 @@ export default function SubmitPage() {
       description: "",
       targetAudience: "",
       ctaButtonText: "Join waitlist",
+      forceNew: "true",
     },
   });
 
@@ -197,6 +199,39 @@ export default function SubmitPage() {
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="forceNew"
+              render={({ field }) => (
+                <FormItem className="flex items-center space-x-2">
+                  <FormControl>
+                    <div>
+                      <input
+                        type="hidden"
+                        name={field.name}
+                        value={field.value}
+                      />
+
+                      <Checkbox
+                        checked={field.value !== "true"}
+                        onCheckedChange={(checked) =>
+                          field.onChange(checked ? "false" : "true")
+                        }
+                        id="forceNew"
+                      />
+                    </div>
+                  </FormControl>
+                  <FormLabel
+                    htmlFor="forceNew"
+                    className="text-sm font-medium text-gray-700 mb-0"
+                  >
+                    Restore old if exists?
+                  </FormLabel>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="flex items-start p-3 bg-primary/10 rounded-lg">
               <AlertCircle className="text-primary/80 mr-3 h-5 w-5 mt-0.5" />
 
@@ -218,7 +253,10 @@ export default function SubmitPage() {
       <div className="mt-8 text-center text-sm text-gray-500">
         <p>
           Need help?{" "}
-          <a href="#" className="text-primary hover:underline">
+          <a
+            href="mailto:support@foundersignal.app"
+            className="text-primary hover:underline"
+          >
             Contact our support team
           </a>
         </p>

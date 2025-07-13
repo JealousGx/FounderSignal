@@ -19,6 +19,7 @@ type RedditValidationService interface {
 	GetValidation(ctx context.Context, validationID uuid.UUID) (*response.RedditValidationResponse, error)
 	GetValidationsForUser(ctx context.Context, userID string, queryParams domain.QueryParams) (*response.RedditValidationListResponse, error)
 	ProcessValidationAsync(ctx context.Context, validationID uuid.UUID)
+	GetSampleValidation(ctx context.Context) *response.RedditValidationResponse
 }
 
 type redditValidationService struct {
@@ -27,6 +28,7 @@ type redditValidationService struct {
 	userRepo       repository.UserRepository
 	redditClient   *reddit.RedditClient
 	analyzer       *ValidationAnalyzer
+	sampleID       uuid.UUID
 }
 
 func NewRedditValidationService(
@@ -35,6 +37,7 @@ func NewRedditValidationService(
 	userRepo repository.UserRepository,
 	redditClient *reddit.RedditClient,
 	analyzer *ValidationAnalyzer,
+	sampleID uuid.UUID,
 ) RedditValidationService {
 	return &redditValidationService{
 		validationRepo: validationRepo,
@@ -42,6 +45,7 @@ func NewRedditValidationService(
 		userRepo:       userRepo,
 		redditClient:   redditClient,
 		analyzer:       analyzer,
+		sampleID:       sampleID,
 	}
 }
 
@@ -226,6 +230,17 @@ func (s *redditValidationService) GetValidationsForUser(ctx context.Context, use
 		Validations: responses,
 		Total:       total,
 	}, nil
+}
+
+func (s *redditValidationService) GetSampleValidation(ctx context.Context) *response.RedditValidationResponse {
+	res, err := s.GetValidation(ctx, s.sampleID)
+
+	if err != nil {
+		fmt.Printf("Failed to get sample validation: %v\n", err)
+		return nil
+	}
+
+	return res
 }
 
 func (s *redditValidationService) convertToResponse(validation *domain.RedditValidation) *response.RedditValidationResponse {

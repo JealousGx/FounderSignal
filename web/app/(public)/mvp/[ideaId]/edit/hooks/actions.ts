@@ -14,7 +14,7 @@ export const updateMVP = async (
   mvpName?: string
 ) => {
   const user = await auth();
-  if (!user) {
+  if (!user.userId) {
     return { error: "You must be signed in to update an idea." };
   }
 

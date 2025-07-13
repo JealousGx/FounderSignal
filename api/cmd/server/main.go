@@ -17,6 +17,7 @@ import (
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"golang.org/x/time/rate"
 )
 
@@ -58,6 +59,7 @@ func main() {
 			DiscordWebhookURL: cfg.Envs.DISCORD_WEBHOOK_URL,
 			Environment:       cfg.Envs.APP_ENV,
 		},
+		SampleRedditValidationID: uuid.MustParse(cfg.Envs.SAMPLE_REDDIT_VALIDATION_ID),
 	}
 
 	db := database.GetDB()

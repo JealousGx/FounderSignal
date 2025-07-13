@@ -12,6 +12,7 @@ type RedditValidationHandler interface {
 	GenerateValidation(c *gin.Context)
 	GetValidation(c *gin.Context)
 	GetValidationsForUser(c *gin.Context)
+	GetSampleValidation(c *gin.Context)
 }
 
 type redditValidationHandler struct {
@@ -56,6 +57,12 @@ func (h *redditValidationHandler) GenerateValidation(c *gin.Context) {
 }
 
 func (h *redditValidationHandler) GetValidation(c *gin.Context) {
+	_, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
 	validationIDStr := c.Param("validationId")
 	validationID, err := uuid.Parse(validationIDStr)
 	if err != nil {
@@ -87,4 +94,11 @@ func (h *redditValidationHandler) GetValidationsForUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, validations)
+}
+
+func (h *redditValidationHandler) GetSampleValidation(c *gin.Context) {
+
+	validation := h.service.GetSampleValidation(c.Request.Context())
+
+	c.JSON(http.StatusOK, validation)
 }

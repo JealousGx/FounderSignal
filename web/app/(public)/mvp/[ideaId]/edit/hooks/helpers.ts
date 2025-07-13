@@ -1,5 +1,5 @@
 export const getImageFileName = (ideaId: string, imageName: string) => {
-  return `${ideaId}/${imageName}`;
+  return `${ideaId}/${encodeURIComponent(imageName)}`;
 };
 
 export const extractFileNameFromUrl = (url: string): string | null => {
@@ -52,7 +52,10 @@ export const optimizeHtmlImages = (
     // Responsive images
     const existingStyle = img.getAttribute("style") || "";
     const newStyle = "max-width:100%;height:auto";
-    img.setAttribute("style", `${existingStyle}${existingStyle ? ";" : ""}${newStyle}`);
+    img.setAttribute(
+      "style",
+      `${existingStyle}${existingStyle ? ";" : ""}${newStyle}`
+    );
 
     // Add async decoding to all images
     img.setAttribute("decoding", "async");

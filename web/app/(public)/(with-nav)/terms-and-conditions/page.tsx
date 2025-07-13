@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 
 import { createMetadata } from "@/lib/metadata";
 
@@ -42,7 +43,9 @@ export default function TermsAndConditionsPage() {
           </strong>
         </p>
 
-        <h2 className="text-xl font-semibold">3. User-Generated Content</h2>
+        <h2 className="text-xl font-semibold">
+          3. User-Generated Content and Data
+        </h2>
         <p className="mb-4">
           You are solely responsible for the content you submit, including its
           legality, reliability, and appropriateness. By submitting content, you
@@ -56,6 +59,16 @@ export default function TermsAndConditionsPage() {
             you do not have the right to share.
           </strong>{" "}
           All ideas submitted to the platform are considered non-confidential.
+        </p>
+        <p className="mb-4">
+          For details on how we collect, use, store, and delete your data,
+          please refer to our{" "}
+          <Link href="/privacy-policy" className="underline">
+            Privacy Policy
+          </Link>
+          . This includes information on our data retention periods and the
+          distinctions between soft deletion of individual resources and the
+          permanent hard deletion upon account closure.
         </p>
 
         <h2 className="text-xl font-semibold">4. Acceptable Use</h2>

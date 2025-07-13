@@ -29,6 +29,14 @@ export function Footer() {
             </Link>
 
             <Link
+              href="/faqs"
+              variant="ghost"
+              className="text-sm text-gray-500 hover:text-gray-900 p-0 h-auto"
+            >
+              FAQs
+            </Link>
+
+            <Link
               href="/refund"
               variant="ghost"
               className="text-sm text-gray-500 hover:text-gray-900 p-0 h-auto"

@@ -74,4 +74,6 @@ func registerPublicRoutes(router *gin.RouterGroup, h *Handlers) {
 	router.POST("/reports/submit", h.Report.SubmitContentReport)
 	router.POST("/reports/bug", h.Report.SubmitBugReport)
 
+	router.GET("/samples/reddit-validation", h.Reddit.GetSampleValidation)
+
 }

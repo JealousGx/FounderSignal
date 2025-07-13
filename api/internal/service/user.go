@@ -128,6 +128,12 @@ func (s *userService) ClerkUser(ctx context.Context, eventType string, clerkUser
 			return fmt.Errorf("user with ID %s does not exist", clerkUser.ID)
 		}
 
+		// Hard delete the user and all associated ideas and feedback
+		if err := s.ideaRepo.HardDeleteUserRelatedData(ctx, clerkUser.ID); err != nil {
+			log.Printf("Error hard deleting user %s associated ideas: %v", clerkUser.ID, err)
+			return err
+		}
+
 		if err := s.userRepo.Delete(ctx, clerkUser.ID); err != nil {
 			log.Printf("Error deleting user %s: %v", clerkUser.ID, err)
 			return err
@@ -138,7 +144,7 @@ func (s *userService) ClerkUser(ctx context.Context, eventType string, clerkUser
 		return fmt.Errorf("received unhandled webhook event type: %s", eventType)
 	}
 
-	log.Printf("Successfully created user %s in DB from webhook.", newUser.ID)
+	log.Printf("Successfully processed user %s in DB from webhook.", newUser.ID)
 	return nil
 }
 

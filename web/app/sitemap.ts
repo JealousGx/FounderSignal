@@ -1,23 +1,18 @@
 import { MetadataRoute } from "next";
 
 import { siteConfig } from "@/lib/metadata";
+import { staticApi } from "@/lib/static-api";
 import { Idea } from "@/types/idea";
 
 export const revalidate = 86400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const ideasResponse = await fetch(
-    process.env.NEXT_PUBLIC_API_URL + "/ideas?limit=1000&offset=0",
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      next: {
-        revalidate: 86400,
-        tags: ["ideas"],
-      },
-    }
-  ).then((res) => res.json());
+  const ideasResponse = await staticApi("/ideas?limit=1000&offset=0", {
+    next: {
+      revalidate: 86400,
+      tags: ["ideas"],
+    },
+  }).then((res) => res.json());
 
   const ideas: Idea[] = ideasResponse?.ideas ?? [];
 
@@ -56,6 +51,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
+      url: `${siteConfig.url}/faqs`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    },
+    {
       url: `${siteConfig.url}/terms-and-conditions`,
       lastModified: now,
       changeFrequency: "yearly" as const,
@@ -69,6 +70,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${siteConfig.url}/refund`,
+      lastModified: now,
+      changeFrequency: "yearly" as const,
+      priority: 0.3,
+    },
+    {
+      url: `${siteConfig.url}/samples/reddit-validation`,
       lastModified: now,
       changeFrequency: "yearly" as const,
       priority: 0.3,

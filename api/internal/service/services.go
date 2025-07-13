@@ -4,6 +4,8 @@ import (
 	"foundersignal/internal/pkg/reddit"
 	"foundersignal/internal/repository"
 	"foundersignal/internal/websocket"
+
+	"github.com/google/uuid"
 )
 
 type Services struct {
@@ -23,8 +25,9 @@ type Services struct {
 }
 
 type ServicesConfig struct {
-	Paddle PaddleServiceConfig
-	Report ReportServiceConfig
+	Paddle                   PaddleServiceConfig
+	Report                   ReportServiceConfig
+	SampleRedditValidationID uuid.UUID // ID for the sample Reddit validation
 }
 
 func NewServices(repos *repository.Repositories, broadcaster websocket.ActivityBroadcaster, aiService AIService, redditClient *reddit.RedditClient, cfg ServicesConfig) *Services {
@@ -39,7 +42,7 @@ func NewServices(repos *repository.Repositories, broadcaster websocket.ActivityB
 		MVP:         NewMVPService(repos.MVP, repos.Idea, repos.User, aiService),
 		Report:      NewReportService(repos.Report, repos.Idea, repos.Feedback, repos.Activity, analyticsService, broadcaster, cfg.Report),
 		Dashboard:   NewDashboardService(repos.Idea, repos.MVP, repos.Feedback, repos.Signal, repos.Audience, repos.Reaction, repos.Activity),
-		Reddit:      NewRedditValidationService(repos.Reddit, repos.Idea, repos.User, redditClient, NewValidationAnalyzer(aiService)),
+		Reddit:      NewRedditValidationService(repos.Reddit, repos.Idea, repos.User, redditClient, NewValidationAnalyzer(aiService), cfg.SampleRedditValidationID),
 		Broadcaster: broadcaster,
 		AI:          aiService,
 	}

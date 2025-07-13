@@ -60,7 +60,7 @@ export const MVP = ({ htmlContent, ideaId }: MVPProps) => {
       ref={iframeRef}
       title="MVP Landing Page Preview"
       style={{ width: "100%", height: "100vh", border: "none" }}
-      sandbox="allow-scripts allow-same-origin" // allow-forms if your MVP has forms that post
+      sandbox="allow-scripts allow-same-origin allow-modals"
       srcDoc={htmlContent} // Using srcDoc is an alternative to writing to iframe document
     />
   );

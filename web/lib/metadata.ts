@@ -27,8 +27,16 @@ export const createMetadata = (pageMetadata: {
   image?: string;
   urlPath?: string;
   keywords?: string[];
+  robots?: { index?: boolean; follow?: boolean };
 }): Metadata => {
-  const { title, description, image, urlPath, keywords = [] } = pageMetadata;
+  const {
+    title,
+    description,
+    image,
+    urlPath,
+    keywords = [],
+    robots,
+  } = pageMetadata;
   const ogImageUrl = image || siteConfig.ogImage;
   const url = `${siteConfig.url}${urlPath ? `/${urlPath}` : ""}`;
 
@@ -36,7 +44,14 @@ export const createMetadata = (pageMetadata: {
 
   return {
     title,
+    applicationName: siteConfig.name,
+    metadataBase: new URL(siteConfig.url),
     description,
+    alternates: {
+      canonical: siteConfig.url,
+    },
+    publisher: siteConfig.name,
+    creator: siteConfig.name,
     keywords: combinedKeywords,
     openGraph: {
       title,
@@ -56,6 +71,18 @@ export const createMetadata = (pageMetadata: {
       title,
       description,
       images: [ogImageUrl],
+    },
+    robots,
+    appleWebApp: {
+      capable: true,
+      title: siteConfig.name,
+      statusBarStyle: "default",
+    },
+    formatDetection: {
+      telephone: false,
+    },
+    verification: {
+      yandex: "bdb83ce4b3dc86b6",
     },
   };
 };

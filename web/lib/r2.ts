@@ -29,20 +29,22 @@ const S3 = new S3Client({
   },
 });
 
-export async function getSignedUrlForUpload(
-  key: string,
-  contentType: string
-): Promise<string> {
+export async function getSignedUrlForUpload(key: string, contentType: string) {
+  key = `${process.env.NODE_ENV === "production" ? "" : "dev/"}${key}`;
+
   const command = new PutObjectCommand({
     Bucket: R2_BUCKET,
-    Key: key,
+    Key: decodeURIComponent(key),
     ContentType: contentType,
     ACL: "public-read",
   });
 
   try {
     const signedUrl = await getSignedUrl(S3, command, { expiresIn: 3600 });
-    return signedUrl;
+    return {
+      signedUrl,
+      key,
+    };
   } catch (error) {
     console.error("Error generating signed URL:", error);
     throw error;
@@ -52,7 +54,7 @@ export async function getSignedUrlForUpload(
 export async function deleteFile(key: string) {
   const command = new DeleteObjectCommand({
     Bucket: R2_BUCKET,
-    Key: key,
+    Key: decodeURIComponent(key),
   });
 
   try {

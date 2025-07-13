@@ -45,7 +45,13 @@ export const submitIdea = async (
   const idea = validatedFields.data;
 
   try {
-    const response = await api.post("/dashboard/ideas", JSON.stringify(idea));
+    const response = await api.post(
+      "/dashboard/ideas",
+      JSON.stringify({
+        ...idea,
+        forceNew: idea.forceNew === "true",
+      })
+    );
     const responseData = await response.json();
 
     if (!response.ok || responseData.error) {
