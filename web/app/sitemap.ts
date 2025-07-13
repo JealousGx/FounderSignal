@@ -1,23 +1,18 @@
 import { MetadataRoute } from "next";
 
 import { siteConfig } from "@/lib/metadata";
+import { staticApi } from "@/lib/static-api";
 import { Idea } from "@/types/idea";
 
 export const revalidate = 86400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const ideasResponse = await fetch(
-    process.env.NEXT_PUBLIC_API_URL + "/ideas?limit=1000&offset=0",
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      next: {
-        revalidate: 86400,
-        tags: ["ideas"],
-      },
-    }
-  ).then((res) => res.json());
+  const ideasResponse = await staticApi("/ideas?limit=1000&offset=0", {
+    next: {
+      revalidate: 86400,
+      tags: ["ideas"],
+    },
+  }).then((res) => res.json());
 
   const ideas: Idea[] = ideasResponse?.ideas ?? [];
 

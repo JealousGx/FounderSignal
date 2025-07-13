@@ -2,14 +2,15 @@
 
 import { cache } from "react";
 
-import { api, QueryParams } from "@/lib/api";
+import { QueryParams } from "@/lib/api";
+import { staticApi } from "@/lib/static-api";
 import { constructNewPath } from "@/lib/utils";
 import { Idea } from "@/types/idea";
 
 export const getIdeas = cache(async (qs: QueryParams) => {
   try {
     const url = constructNewPath("/ideas", qs);
-    const response = await api.get(url, {
+    const response = await staticApi(url, {
       next: {
         revalidate: 3600,
         tags: [`ideas`],
