@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"foundersignal/internal/service"
 	"net/http"
 
@@ -100,9 +99,6 @@ func (h *redditValidationHandler) GetValidationsForUser(c *gin.Context) {
 func (h *redditValidationHandler) GetSampleValidation(c *gin.Context) {
 
 	validation := h.service.GetSampleValidation(c.Request.Context())
-	if jsonBytes, err := json.MarshalIndent(validation, "", "  "); err == nil {
-		println(string(jsonBytes))
-	}
 
 	if validation == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Sample validation not found"})

@@ -8,10 +8,9 @@ import { RedditValidation } from "@/types/reddit-validation";
 export const getRedditValidationSample = cache(async () => {
   try {
     const response = await staticApi("/samples/reddit-validation", {
-      cache: "no-store", // Disable caching to always get the latest sample
-      // next: {
-      //   revalidate: 31536000, // 1 year
-      // },
+      next: {
+        revalidate: 31536000, // 1 year
+      },
     });
 
     if (!response.ok) {
@@ -23,8 +22,6 @@ export const getRedditValidationSample = cache(async () => {
 
       return null;
     }
-
-    console.log("Response from getRedditValidationSample:", response);
 
     const contentLength = response.headers.get("content-length");
     const contentType = response.headers.get("content-type");
