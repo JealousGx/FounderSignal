@@ -26,6 +26,7 @@ type IdeaRepository interface {
 	GetByUserId(ctx context.Context, userId string) ([]*domain.Idea, error)
 	HardDelete(ctx context.Context, ideaId uuid.UUID) error
 	FindDeletedByTitleAndUserID(ctx context.Context, userID, title string) (*domain.Idea, error)
+	HardDeleteUserRelatedData(ctx context.Context, userId string) error
 	Restore(ctx context.Context, idea *domain.Idea) error
 }
 
@@ -364,6 +365,76 @@ func (r *ideaRepository) HardDelete(ctx context.Context, ideaId uuid.UUID) error
 		// Finally, permanently delete the idea itself
 		if err := tx.Unscoped().Delete(&domain.Idea{}, ideaId).Error; err != nil {
 			return fmt.Errorf("failed to hard delete idea: %w", err)
+		}
+
+		return nil
+	})
+}
+
+// HardDeleteUserRelatedData permanently deletes all data associated with a given user ID.
+// This includes all ideas created by the user and all related child records.
+func (r *ideaRepository) HardDeleteUserRelatedData(ctx context.Context, userId string) error {
+	var ideaIDs []uuid.UUID
+
+	err := r.db.WithContext(ctx).Unscoped().Model(&domain.Idea{}).Where("user_id = ?", userId).Pluck("id", &ideaIDs).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("No Ideas (active or soft-deleted) found for user %s. ideaIDs will be empty.", userId)
+		} else {
+			return fmt.Errorf("failed to pluck idea IDs for user %s: %w", userId, err)
+		}
+	}
+
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// If there are ideas, hard delete all associated records for each idea.
+		if len(ideaIDs) > 0 {
+			var feedbackIDs []uuid.UUID
+			err := tx.Unscoped().Model(&domain.Feedback{}).Where("idea_id IN (?)", ideaIDs).Pluck("id", &feedbackIDs).Error
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					log.Printf("No Feedback (active or soft-deleted) found for user's (%s) ideas. feedbackIDs will be empty.", userId)
+				} else {
+					return fmt.Errorf("failed to pluck feedback IDs for user's ideas %s: %w", userId, err)
+				}
+			}
+
+			// Delete child records first
+			if len(feedbackIDs) > 0 {
+				if err := tx.Unscoped().Where("feedback_id IN (?)", feedbackIDs).Delete(&domain.FeedbackReaction{}).Error; err != nil {
+					return fmt.Errorf("failed to hard delete Feedback Reactions for user %s: %w", userId, err)
+				}
+			}
+
+			// Delete records associated with ideas
+			if err := tx.Unscoped().Where("idea_id IN (?)", ideaIDs).Delete(&domain.Feedback{}).Error; err != nil {
+				return fmt.Errorf("failed to hard delete Feedback for user %s: %w", userId, err)
+			}
+			if err := tx.Unscoped().Where("idea_id IN (?)", ideaIDs).Delete(&domain.Signal{}).Error; err != nil {
+				return fmt.Errorf("failed to hard delete Signals for user %s: %w", userId, err)
+			}
+			if err := tx.Unscoped().Where("idea_id IN (?)", ideaIDs).Delete(&domain.AudienceMember{}).Error; err != nil {
+				return fmt.Errorf("failed to hard delete Audience Members for user %s: %w", userId, err)
+			}
+			if err := tx.Unscoped().Where("idea_id IN (?)", ideaIDs).Delete(&domain.MVPSimulator{}).Error; err != nil {
+				return fmt.Errorf("failed to hard delete MVPs for user %s: %w", userId, err)
+			}
+			if err := tx.Unscoped().Where("idea_id IN (?)", ideaIDs).Delete(&domain.IdeaReaction{}).Error; err != nil {
+				return fmt.Errorf("failed to hard delete Idea Reactions for user %s: %w", userId, err)
+			}
+			if err := tx.Unscoped().Where("idea_id IN (?)", ideaIDs).Delete(&domain.Report{}).Error; err != nil {
+				return fmt.Errorf("failed to hard delete Reports for user %s: %w", userId, err)
+			}
+			if err := tx.Unscoped().Where("idea_id IN (?)", ideaIDs).Delete(&domain.RedditValidation{}).Error; err != nil {
+				return fmt.Errorf("failed to hard delete Reddit Validations for user %s: %w", userId, err)
+			}
+			if err := tx.Unscoped().Where("idea_id IN (?)", ideaIDs).Delete(&domain.Activity{}).Error; err != nil {
+				return fmt.Errorf("failed to hard delete Activities for user %s: %w", userId, err)
+			}
+
+			// Finally, permanently delete the ideas themselves
+			if err := tx.Unscoped().Where("id IN (?)", ideaIDs).Delete(&domain.Idea{}).Error; err != nil {
+				return fmt.Errorf("failed to hard delete Ideas for user %s: %w", userId, err)
+			}
 		}
 
 		return nil

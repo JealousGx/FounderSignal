@@ -51,7 +51,7 @@ func (r *userRepository) FindByID(ctx context.Context, id string) (*domain.User,
 }
 
 func (r *userRepository) Delete(ctx context.Context, id string) error {
-	if err := r.db.WithContext(ctx).Delete(&domain.User{}, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Unscoped().Delete(&domain.User{}, id).Error; err != nil {
 		fmt.Println("Error deleting user:", err)
 		return err
 	}
