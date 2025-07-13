@@ -120,17 +120,16 @@ export default function Home() {
         </div>
 
         <div className="lg:w-1/2 w-full mt-8 lg:mt-0">
-          <div className="relative w-full aspect-video rounded-xl bg-gray-100 overflow-hidden shadow-lg border border-gray-200">
-            <iframe
-              width="560"
-              height="315"
-              src="https://www.youtube.com/embed/3hjUeTAXixw?autoplay=1&mute=1&loop=1&playlist=3hjUeTAXixw&playsinline=1&controls=0&showinfo=0&modestbranding=1&iv_load_policy=3"
-              title="FounderSignal Platform Demo"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-            ></iframe>
-          </div>
+          <iframe
+            width="560"
+            height="315"
+            src="https://www.youtube.com/embed/3hjUeTAXixw?autoplay=1&mute=1&loop=1&playlist=3hjUeTAXixw&playsinline=1&controls=0&showinfo=0&modestbranding=1&iv_load_policy=3"
+            title="FounderSignal Platform Demo"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+            loading="lazy"
+          ></iframe>
         </div>
       </section>
 
