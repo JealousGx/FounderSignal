@@ -9,7 +9,7 @@ export const getRedditValidationSample = cache(async () => {
   try {
     const response = await staticApi("/samples/reddit-validation", {
       next: {
-        revalidate: Infinity,
+        revalidate: 86400,
       },
     });
 

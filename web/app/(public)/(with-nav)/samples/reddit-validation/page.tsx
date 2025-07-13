@@ -42,7 +42,7 @@ import { createMetadata } from "@/lib/metadata";
 import { Metadata } from "next";
 import { getRedditValidationSample } from "./get-sample";
 
-export const revalidate = Infinity;
+export const revalidate = 86400;
 
 export const metadata: Metadata = createMetadata({
   title: "Reddit Market Validation Sample - AI Startup Insights & Trends",
