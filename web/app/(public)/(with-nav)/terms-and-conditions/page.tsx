@@ -1,6 +1,6 @@
 import { Metadata } from "next";
+import Link from "next/link";
 
-import { Link } from "@/components/ui/link";
 import { createMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createMetadata({
