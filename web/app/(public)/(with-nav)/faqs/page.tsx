@@ -318,6 +318,33 @@ const faqs = [
       </>
     ),
   },
+  {
+    question:
+      "What happens to my data if I delete an idea or my entire account?",
+    answer: (
+      <>
+        At FounderSignal, we offer clear data deletion processes:
+        <ul className="list-disc pl-5 mt-2">
+          <li>
+            <strong>Deleting an individual idea or resource:</strong> When you
+            delete an idea or a landing page, we perform a soft delete. This
+            means the content is no longer visible or active but is held for a
+            short period to allow you to restore it if it was deleted by
+            mistake.
+          </li>
+
+          <li>
+            <strong>Deleting your entire FounderSignal account:</strong> If you
+            decide to delete your complete FounderSignal account, all your
+            personal data, including all your ideas and associated resources,
+            will be permanently hard-deleted from our systems. This action is
+            irreversible, and your data cannot be recovered once your account is
+            deleted.
+          </li>
+        </ul>
+      </>
+    ),
+  },
 ];
 
 export default function FAQsPage() {
