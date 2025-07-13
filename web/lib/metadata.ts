@@ -48,7 +48,7 @@ export const createMetadata = (pageMetadata: {
     metadataBase: new URL(siteConfig.url),
     description,
     alternates: {
-      canonical: url,
+      canonical: siteConfig.url,
     },
     publisher: siteConfig.name,
     creator: siteConfig.name,
