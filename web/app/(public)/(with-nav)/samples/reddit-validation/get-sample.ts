@@ -23,6 +23,8 @@ export const getRedditValidationSample = cache(async () => {
       return null;
     }
 
+    console.log("Response from getRedditValidationSample:", response);
+
     const data = await response.json();
 
     return data as RedditValidation | null;
