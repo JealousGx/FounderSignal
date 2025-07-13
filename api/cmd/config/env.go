@@ -28,6 +28,8 @@ type Config struct {
 
 	DISCORD_WEBHOOK_URL string
 
+	SAMPLE_REDDIT_VALIDATION_ID string
+
 	APP_ENV string
 
 	RATE_LIMITER_RATE  float64
@@ -67,6 +69,8 @@ func initConfig() Config {
 		GeminiEmbeddingModelCode: getEnv("GEMINI_EMBEDDING_MODEL_CODE", "text-embedding-004"),
 
 		DISCORD_WEBHOOK_URL: getEnv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+
+		SAMPLE_REDDIT_VALIDATION_ID: getEnv("SAMPLE_REDDIT_VALIDATION_ID", "c52af4c0-28f5-45ad-bfa2-eba8e437b3ba"),
 
 		APP_ENV: getEnv("APP_ENV", "development"),
 
