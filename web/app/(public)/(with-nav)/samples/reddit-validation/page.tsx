@@ -42,7 +42,8 @@ import { createMetadata } from "@/lib/metadata";
 import { Metadata } from "next";
 import { getRedditValidationSample } from "./get-sample";
 
-export const revalidate = 31536000; // 1 year
+// export const revalidate = 31536000; // 1 year
+export const dynamic = "force-dynamic"; // Always revalidate to get the latest sample
 
 export const metadata: Metadata = createMetadata({
   title: "Reddit Market Validation Sample - AI Startup Insights & Trends",

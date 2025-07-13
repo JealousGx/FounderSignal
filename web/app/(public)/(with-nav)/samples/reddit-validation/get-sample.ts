@@ -8,9 +8,10 @@ import { RedditValidation } from "@/types/reddit-validation";
 export const getRedditValidationSample = cache(async () => {
   try {
     const response = await staticApi("/samples/reddit-validation", {
-      next: {
-        revalidate: 31536000, // 1 year
-      },
+      cache: "no-store", // Disable caching to always get the latest sample
+      // next: {
+      //   revalidate: 31536000, // 1 year
+      // },
     });
 
     if (!response.ok) {
