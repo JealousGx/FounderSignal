@@ -8,8 +8,9 @@ import { RedditValidation } from "@/types/reddit-validation";
 export const getRedditValidationSample = cache(async () => {
   try {
     const response = await staticApi("/samples/reddit-validation", {
+      cache: "force-cache",
       next: {
-        revalidate: 31536000, // 1 year
+        tags: ["reddit-validation"],
       },
     });
 
