@@ -9,7 +9,9 @@ import {
 } from "@/components/ui/accordion";
 import { Link } from "@/components/ui/link";
 
+import { YouTubeFacade } from "@/components/shared/youtube-facade";
 import { createMetadata } from "@/lib/metadata";
+import { prepareFaqLdJson } from "@/lib/prepare-faq-ldjson";
 
 export const metadata: Metadata = createMetadata({
   title: "FounderSignal - Validate Your Startup Idea in 72 Hours",
@@ -29,6 +31,8 @@ const faqs = [
         before you build anything.
       </>
     ),
+    schemaAnswer:
+      'A "fake MVP" is a realistic, no-code landing page that describes your product or service and captures user interest (e.g., email sign-ups, pre-orders). It looks and feels like a real product page, but the backend functionality is simulated to gather demand data before you build anything.',
   },
   {
     question: "How does the 72-hour validation work?",
@@ -39,6 +43,8 @@ const faqs = [
         AI-summarized feedback.
       </>
     ),
+    schemaAnswer:
+      "Once you define your idea, we launch your no-code MVP. We then collect real user interactions. Our dashboard provides live analytics and AI-summarized feedback.",
   },
   {
     question: "What kind of insights will I get?",
@@ -50,6 +56,8 @@ const faqs = [
         recommendations based on this data.
       </>
     ),
+    schemaAnswer:
+      "You will receive data on unique visitors, conversion rates (sign-ups), user demographics (if collected), and qualitative feedback via surveys or comments. Our AI provides summaries and actionable recommendations based on this data.",
   },
   {
     question: "Is my idea safe and private?",
@@ -59,6 +67,8 @@ const faqs = [
         confidential and secure. We do not share your proprietary information.
       </>
     ),
+    schemaAnswer:
+      "Absolutely. Your idea details and all collected user data are kept confidential and secure. We do not share your proprietary information.",
   },
   {
     question: "What happens after I validate my idea?",
@@ -70,8 +80,14 @@ const faqs = [
         you need for your next step.
       </>
     ),
+    schemaAnswer:
+      "With concrete data and user insights, you'll have the confidence to proceed with building your actual product, pivot your idea, or even seek funding with proven market demand. FounderSignal provides the clarity you need for your next step.",
   },
 ];
+
+const faqSchema = prepareFaqLdJson(
+  faqs.map((faq) => ({ question: faq.question, answer: faq.schemaAnswer }))
+);
 
 export default function Home() {
   return (
@@ -102,6 +118,7 @@ export default function Home() {
             <Link href="#how-it-works" variant="outline">
               <span>How It Works</span>
               <svg
+                aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 ml-2"
                 fill="none"
@@ -120,16 +137,22 @@ export default function Home() {
         </div>
 
         <div className="lg:w-1/2 w-full mt-8 lg:mt-0">
-          <iframe
-            width="560"
-            height="315"
-            src="https://www.youtube.com/embed/3hjUeTAXixw?autoplay=1&mute=1&loop=1&playlist=3hjUeTAXixw&playsinline=1&controls=0&showinfo=0&modestbranding=1&iv_load_policy=3"
+          <YouTubeFacade
+            videoId="3hjUeTAXixw"
             title="FounderSignal Platform Demo"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-            loading="lazy"
-          ></iframe>
+            options={{
+              autoplay: true,
+              mute: true,
+              loop: true,
+              playlist: "3hjUeTAXixw",
+              playsinline: true,
+              controls: false,
+              showinfo: false,
+              modestbranding: true,
+              iv_load_policy: 3,
+            }}
+            embed={true}
+          />
         </div>
       </section>
 
@@ -208,6 +231,7 @@ export default function Home() {
           <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col items-center text-center max-w-sm">
             <div className="w-20 h-20 mb-4 flex items-center justify-center">
               <svg
+                aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 xmlnsXlink="http://www.w3.org/1999/xlink"
                 version="1.1"
@@ -333,6 +357,11 @@ export default function Home() {
           </p>
         </div>
       </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
     </main>
   );
 }
