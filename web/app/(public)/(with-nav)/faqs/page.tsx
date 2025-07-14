@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/accordion";
 
 import { createMetadata } from "@/lib/metadata";
+import { prepareFaqLdJson } from "@/lib/prepare-faq-ldjson";
 
 export const metadata: Metadata = createMetadata({
   title: "FAQ - Your Startup Idea Validation Questions Answered",
@@ -31,6 +32,8 @@ const faqs = [
         confirming market demand before you invest heavily in development.
       </>
     ),
+    schemaAnswer:
+      "FounderSignal is an AI-powered platform designed for startup founders to quickly validate business ideas and minimize risk. We help you create high-converting MVP landing pages in minutes, collect crucial user engagement data, and facilitate early market feedback to ensure you build something people truly want. Our goal is to save you time and money by confirming market demand before you invest heavily in development.",
   },
   {
     question: "Who should use FounderSignal for their startup idea?",
@@ -45,6 +48,8 @@ const faqs = [
         design, FounderSignal is built for you.
       </>
     ),
+    schemaAnswer:
+      "FounderSignal is ideal for aspiring entrepreneurs, first-time founders, serial entrepreneurs, and startup teams looking to efficiently test new concepts. If you have an idea but need to quickly prove market demand, understand user interest, and get actionable feedback without extensive coding or design, FounderSignal is built for you.",
   },
   {
     question:
@@ -64,6 +69,8 @@ const faqs = [
         market demand, rather than just building a page.
       </>
     ),
+    schemaAnswer:
+      "Generic website builders or manual coding offer flexibility, but FounderSignal provides a specialized, end-to-end idea validation workflow designed specifically for founders. We integrate AI-powered idea generation, optimized landing page templates for conversion, and crucial engagement tracking and feedback mechanisms (like Reddit validation), all in one place. This saves you immense time and effort, ensuring your validation process is structured, data-driven, and focused on proving market demand, rather than just building a page.",
   },
   {
     question:
@@ -81,6 +88,8 @@ const faqs = [
         testable hypotheses, not just generating generic concepts.
       </>
     ),
+    schemaAnswer:
+      "While many tools offer general AI brainstorming, FounderSignal's AI is specifically fine-tuned for startup idea generation and refinement tailored for validation. Our AI helps you craft clear, concise value propositions and messaging that are effective for testing market interest, directly feeding into your landing page creation. It's about translating raw ideas into testable hypotheses, not just generating generic concepts.",
   },
   {
     question:
@@ -98,6 +107,8 @@ const faqs = [
         significantly reducing your time-to-validation and overall startup risk.
       </>
     ),
+    schemaAnswer:
+      "Manual idea validation can be time-consuming, prone to bias, and lack sufficient data for informed decisions. Risks include wasting development time on unproven ideas, misinterpreting feedback, and struggling to reach a broad, relevant audience. FounderSignal mitigates these by offering rapid, data-driven validation, structured feedback collection, and methods like our streamlined Reddit validation to efficiently gather unbiased insights, significantly reducing your time-to-validation and overall startup risk.",
   },
   {
     question:
@@ -114,6 +125,8 @@ const faqs = [
         saving significant resources compared to building in a vacuum.
       </>
     ),
+    schemaAnswer:
+      "The biggest pitfall for founders is building a product without confirmed market demand. FounderSignal directly addresses this by forcing you to validate interest before you code. Through our MVP landing page testing and real-time engagement analytics, you gain concrete evidence of demand. This allows you to pivot early, refine your concept based on real user data, or even abandon an unviable idea quickly, saving significant resources compared to building in a vacuum.",
   },
   {
     question: "How does the idea validation process work with FounderSignal?",
@@ -142,6 +155,8 @@ const faqs = [
         </ul>
       </>
     ),
+    schemaAnswer:
+      "Our process is streamlined into three core steps: 1. AI Idea Generation & Refinement: Use our AI to refine your initial concept or generate new variations. 2. Rapid Landing Page Creation: Instantly create professional, conversion-focused landing pages for your idea - no coding or design skills needed. 3. Engagement Tracking & Feedback: Launch your page, collect real user engagement data (page views, clicks, sign-ups), and leverage our integrated tools for targeted market feedback, including Reddit validation for higher tiers. This data helps you make informed decisions.",
   },
   {
     question: "Can I validate any type of business idea with FounderSignal?",
@@ -156,6 +171,8 @@ const faqs = [
         you validate it.
       </>
     ),
+    schemaAnswer:
+      "Yes, FounderSignal is highly versatile. Our platform is effective for validating a wide range of business models, including SaaS products, e-commerce concepts, mobile app ideas, digital services, and more. As long as your idea can be effectively presented and tested through a focused landing page to gauge interest, FounderSignal can help you validate it.",
   },
   {
     question:
@@ -170,6 +187,8 @@ const faqs = [
         development phase, giving you a strong foundation for validation.
       </>
     ),
+    schemaAnswer:
+      "Our AI generation feature uses advanced algorithms to help you brainstorm, articulate, and refine your startup idea. You can input a basic concept, and the AI will suggest clear value propositions, target audiences, and even initial messaging for your MVP landing page. This accelerates your idea development phase, giving you a strong foundation for validation.",
   },
   {
     question:
@@ -193,6 +212,8 @@ const faqs = [
         decisions and avoid common pitfalls.
       </>
     ),
+    schemaAnswer:
+      "Reddit validation with FounderSignal is a powerful, AI-driven market intelligence feature for Pro and Business plan users. We go beyond simple guidance: our AI analyzes thousands of relevant Reddit communities to uncover critical insights. This includes identifying pain points, performing market assessments, highlighting emerging trends, understanding the voice of the customer, and mapping the competitive landscape. It also helps you spot startup opportunities and understand key patterns in top Reddit threads. This deep analysis provides unfiltered, raw feedback and crucial early market traction, helping you make data-backed decisions and avoid common pitfalls.",
   },
   {
     question: "What is 'Private testing mode' and when should I use it?",
@@ -207,6 +228,8 @@ const faqs = [
         discreet until you&apos;re ready to scale.
       </>
     ),
+    schemaAnswer:
+      "Private testing mode (available on Pro and Business plans) allows you to share your validation landing page with a select, trusted audience only. This is ideal for confidential startup ideas or when you want to gather initial feedback from a small group of advisors, potential beta users, or investors before a wider public launch. It ensures your idea remains discreet until you're ready to scale.",
   },
   {
     question:
@@ -223,6 +246,8 @@ const faqs = [
         resonates.
       </>
     ),
+    schemaAnswer:
+      "FounderSignal provides real-time analytics on your landing pages to show you how users interact with your idea. You'll track essential metrics such as page views, unique visitors, call-to-action click-through rates (CTR), and form submission conversions. This data provides clear insights into user interest and helps you understand if your message resonates.",
   },
   {
     question: "Can I use my own custom domain for my validation landing pages?",
@@ -245,6 +270,8 @@ const faqs = [
         Stay tuned for updates on its release!
       </>
     ),
+    schemaAnswer:
+      "Currently, validation landing pages are hosted on FounderSignal. However, custom domain support is a highly requested feature and is planned for implementation as an exclusive enhancement for our Business plan in the near future. This will allow you to brand your validation pages with your own domain (e.g., validate.mycompany.com), providing a more professional and seamless experience for your potential customers and significantly enhancing your brand credibility. Stay tuned for updates on its release!",
   },
   {
     question:
@@ -258,6 +285,8 @@ const faqs = [
         ideas are confidential and accessible only by you.
       </>
     ),
+    schemaAnswer:
+      "Absolutely. We prioritize the security and privacy of your startup ideas and data. FounderSignal uses industry-standard encryption, secure servers, and robust data protection measures to ensure your information is safe. Your ideas are confidential and accessible only by you.",
   },
   {
     question: "Who owns the data collected from my landing pages?",
@@ -265,10 +294,11 @@ const faqs = [
       <>
         <strong>You retain full ownership of all data collected</strong> through
         your FounderSignal landing pages. We simply provide the tools for you to
-        collect, track, and analyze this data. You can export your data at any
-        time.
+        collect, track, and analyze this data.
       </>
     ),
+    schemaAnswer:
+      "You retain full ownership of all data collected through your FounderSignal landing pages. We simply provide the tools for you to collect, track, and analyze this data.",
   },
   {
     question: "Can I invite team members to collaborate on ideas?",
@@ -280,6 +310,8 @@ const faqs = [
         working on this functionality for future releases.
       </>
     ),
+    schemaAnswer:
+      "Team collaboration features are a planned enhancement for our Business plan. Currently, accounts are individual, but we understand the importance of teamwork in startups and are actively working on this functionality for future releases.",
   },
   {
     question: "How can I get support if I have questions or issues?",
@@ -297,6 +329,8 @@ const faqs = [
         knowledge base with tutorials and guides.
       </>
     ),
+    schemaAnswer:
+      "We're here to help! You can reach our support team by email at support@foundersignal.app. Business plan users receive priority support for expedited assistance. We also plan to build out a comprehensive knowledge base with tutorials and guides.",
   },
   {
     question:
@@ -317,6 +351,8 @@ const faqs = [
         tools and the knowledge to succeed.
       </>
     ),
+    schemaAnswer:
+      "Yes! We regularly publish articles and guides on our Medium blog covering startup idea validation best practices, MVP development, market research, and more. We believe in empowering founders with both the tools and the knowledge to succeed.",
   },
   {
     question:
@@ -344,8 +380,14 @@ const faqs = [
         </ul>
       </>
     ),
+    schemaAnswer:
+      "At FounderSignal, we offer clear data deletion processes: 1. Deleting an individual idea or resource: When you delete an idea or a landing page, we perform a soft delete. This means the content is no longer visible or active but is held for a short period to allow you to restore it if it was deleted by mistake. 2. Deleting your entire FounderSignal account: If you decide to delete your complete FounderSignal account, all your personal data, including all your ideas and associated resources, will be permanently hard-deleted from our systems. This action is irreversible, and your data cannot be recovered once your account is deleted.",
   },
 ];
+
+const faqSchema = prepareFaqLdJson(
+  faqs.map((faq) => ({ question: faq.question, answer: faq.schemaAnswer }))
+);
 
 export default function FAQsPage() {
   return (
@@ -375,6 +417,11 @@ export default function FAQsPage() {
           </AccordionItem>
         ))}
       </Accordion>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
     </section>
   );
 }

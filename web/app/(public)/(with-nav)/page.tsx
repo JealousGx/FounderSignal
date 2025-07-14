@@ -10,6 +10,7 @@ import {
 import { Link } from "@/components/ui/link";
 
 import { createMetadata } from "@/lib/metadata";
+import { prepareFaqLdJson } from "@/lib/prepare-faq-ldjson";
 
 export const metadata: Metadata = createMetadata({
   title: "FounderSignal - Validate Your Startup Idea in 72 Hours",
@@ -29,6 +30,8 @@ const faqs = [
         before you build anything.
       </>
     ),
+    schemaAnswer:
+      'A "fake MVP" is a realistic, no-code landing page that describes your product or service and captures user interest (e.g., email sign-ups, pre-orders). It looks and feels like a real product page, but the backend functionality is simulated to gather demand data before you build anything.',
   },
   {
     question: "How does the 72-hour validation work?",
@@ -39,6 +42,8 @@ const faqs = [
         AI-summarized feedback.
       </>
     ),
+    schemaAnswer:
+      "Once you define your idea, we launch your no-code MVP. We then collect real user interactions. Our dashboard provides live analytics and AI-summarized feedback.",
   },
   {
     question: "What kind of insights will I get?",
@@ -50,6 +55,8 @@ const faqs = [
         recommendations based on this data.
       </>
     ),
+    schemaAnswer:
+      "You will receive data on unique visitors, conversion rates (sign-ups), user demographics (if collected), and qualitative feedback via surveys or comments. Our AI provides summaries and actionable recommendations based on this data.",
   },
   {
     question: "Is my idea safe and private?",
@@ -59,6 +66,8 @@ const faqs = [
         confidential and secure. We do not share your proprietary information.
       </>
     ),
+    schemaAnswer:
+      "Absolutely. Your idea details and all collected user data are kept confidential and secure. We do not share your proprietary information.",
   },
   {
     question: "What happens after I validate my idea?",
@@ -70,8 +79,14 @@ const faqs = [
         you need for your next step.
       </>
     ),
+    schemaAnswer:
+      "With concrete data and user insights, you'll have the confidence to proceed with building your actual product, pivot your idea, or even seek funding with proven market demand. FounderSignal provides the clarity you need for your next step.",
   },
 ];
+
+const faqSchema = prepareFaqLdJson(
+  faqs.map((faq) => ({ question: faq.question, answer: faq.schemaAnswer }))
+);
 
 export default function Home() {
   return (
@@ -333,6 +348,11 @@ export default function Home() {
           </p>
         </div>
       </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
     </main>
   );
 }

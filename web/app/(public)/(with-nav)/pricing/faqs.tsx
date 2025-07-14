@@ -5,6 +5,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+import { prepareFaqLdJson } from "@/lib/prepare-faq-ldjson";
+
 const faqs = [
   {
     question: "Is there a free trial available?",
@@ -48,6 +50,8 @@ const faqs = [
   },
 ];
 
+const faqSchema = prepareFaqLdJson(faqs);
+
 export function FAQs() {
   return (
     <section className="w-full max-w-4xl mx-auto py-16 md:py-24 px-4">
@@ -74,6 +78,11 @@ export function FAQs() {
           </AccordionItem>
         ))}
       </Accordion>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
     </section>
   );
 }
