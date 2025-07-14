@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/accordion";
 import { Link } from "@/components/ui/link";
 
+import { YouTubeFacade } from "@/components/shared/youtube-facade";
 import { createMetadata } from "@/lib/metadata";
 import { prepareFaqLdJson } from "@/lib/prepare-faq-ldjson";
 
@@ -135,16 +136,22 @@ export default function Home() {
         </div>
 
         <div className="lg:w-1/2 w-full mt-8 lg:mt-0">
-          <iframe
-            width="560"
-            height="315"
-            src="https://www.youtube.com/embed/3hjUeTAXixw?autoplay=1&mute=1&loop=1&playlist=3hjUeTAXixw&playsinline=1&controls=0&showinfo=0&modestbranding=1&iv_load_policy=3"
+          <YouTubeFacade
+            videoId="3hjUeTAXixw"
             title="FounderSignal Platform Demo"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-            loading="lazy"
-          ></iframe>
+            options={{
+              autoplay: true,
+              mute: true,
+              loop: true,
+              playlist: "3hjUeTAXixw",
+              playsinline: true,
+              controls: false,
+              showinfo: false,
+              modestbranding: true,
+              iv_load_policy: 3,
+            }}
+            embed={true}
+          />
         </div>
       </section>
 
