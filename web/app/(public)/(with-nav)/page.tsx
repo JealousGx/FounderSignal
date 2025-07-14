@@ -118,6 +118,7 @@ export default function Home() {
             <Link href="#how-it-works" variant="outline">
               <span>How It Works</span>
               <svg
+                aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 ml-2"
                 fill="none"
@@ -230,6 +231,7 @@ export default function Home() {
           <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col items-center text-center max-w-sm">
             <div className="w-20 h-20 mb-4 flex items-center justify-center">
               <svg
+                aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 xmlnsXlink="http://www.w3.org/1999/xlink"
                 version="1.1"
