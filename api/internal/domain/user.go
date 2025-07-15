@@ -33,10 +33,34 @@ const (
 	DefaultIdeaLimit  = 1
 )
 
+type PlanDetails struct {
+	IdeaLimit  int
+	MVPLimit   int
+	AIGenLimit int
+}
+
+var PlanConfig = map[UserPlan]PlanDetails{
+	StarterPlan: {
+		IdeaLimit:  StarterIdeaLimit,
+		MVPLimit:   StarterMVPLimit,
+		AIGenLimit: StarterAIGenLimit,
+	},
+	ProPlan: {
+		IdeaLimit:  ProIdeaLimit,
+		MVPLimit:   ProMVPLimit,
+		AIGenLimit: ProAIGenLimit,
+	},
+	BusinessPlan: {
+		IdeaLimit:  BusinessIdeaLimit,
+		MVPLimit:   BusinessMVPLimit,
+		AIGenLimit: BusinessAIGenLimit,
+	},
+}
+
 // User represents an application user, linked to a Clerk user.
 // It stores application-specific data like subscription plan and limits.
 type User struct {
-	ID        string `gorm:"type:varchar(255);not null;uniqueIndex:idx_user_clerk_id;primaryKey" json:"id"`
+	ID        string `gorm:"type:varchar(255);not null;primaryKey" json:"id"`
 	Username  string `gorm:"type:varchar(255);uniqueIndex:idx_user_username" json:"username,omitempty"` // Unique username for the user, can be used for login
 	Email     string `gorm:"type:varchar(255);uniqueIndex" json:"email"`
 	FirstName string `gorm:"type:varchar(255)" json:"firstName,omitempty"`
@@ -68,48 +92,33 @@ type User struct {
 	Ideas []Idea `gorm:"foreignKey:UserID" json:"ideas,omitempty"`
 }
 
-func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
-	if u.IdeaLimit == 0 {
+func (u *User) BeforeSave(tx *gorm.DB) (err error) {
+	if tx.Statement.Changed("Plan") || u.IdeaLimit == 0 {
 		u.IdeaLimit = GetIdeaLimitForPlan(u.Plan)
 	}
 	return nil
 }
 
-func GetIdeaLimitForPlan(plan UserPlan) int {
-	switch plan {
-	case ProPlan:
-		return ProIdeaLimit
-	case BusinessPlan:
-		return BusinessIdeaLimit
-	case StarterPlan:
-		fallthrough
-	default:
-		return StarterIdeaLimit
+// GetPlanDetails retrieves the full configuration for a given plan.
+func GetPlanDetails(plan UserPlan) PlanDetails {
+	details, ok := PlanConfig[plan]
+
+	if !ok {
+		// Default to starter plan if the plan is unknown
+		return PlanConfig[StarterPlan]
 	}
+	return details
+}
+
+func GetIdeaLimitForPlan(plan UserPlan) int {
+	return GetPlanDetails(plan).IdeaLimit
+
 }
 
 func GetMVPLimitForPlan(plan UserPlan) int {
-	switch plan {
-	case ProPlan:
-		return ProMVPLimit
-	case BusinessPlan:
-		return BusinessMVPLimit
-	case StarterPlan:
-		fallthrough
-	default:
-		return StarterMVPLimit
-	}
+	return GetPlanDetails(plan).MVPLimit
 }
 
 func GetAIGenLimitForPlan(plan UserPlan) int {
-	switch plan {
-	case ProPlan:
-		return ProAIGenLimit
-	case BusinessPlan:
-		return BusinessAIGenLimit
-	case StarterPlan:
-		fallthrough
-	default:
-		return StarterAIGenLimit
-	}
+	return GetPlanDetails(plan).AIGenLimit
 }
