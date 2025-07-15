@@ -1,5 +1,10 @@
 "use client";
 
+import { Menu } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -8,12 +13,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
-import { Menu } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { AuthButtons } from "../auth-buttons";
 import { NavbarLogo } from "./navbar-logo";
+
+import { cn } from "@/lib/utils";
 
 interface MobileNavProps {
   isSignedIn?: boolean;
@@ -22,8 +25,14 @@ interface MobileNavProps {
 export function MobileNav({ isSignedIn }: MobileNavProps) {
   const pathname = usePathname();
 
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon">
           <Menu className="h-5 w-5" />
@@ -72,6 +81,7 @@ export function MobileNav({ isSignedIn }: MobileNavProps) {
           >
             Pricing
           </Link>
+
           <div className="h-[1px] bg-border mb-6" />
           <AuthButtons isSignedIn={isSignedIn} variant="vertical" />
         </nav>
