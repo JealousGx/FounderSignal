@@ -3,15 +3,15 @@ import { BugReportTrigger } from "./shared/report-bug/trigger";
 
 export function Footer() {
   return (
-    <footer className="bg-gray-50 border-t">
+    <footer className="bg-gray-50 border-t py-8">
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-gray-500 text-center sm:text-left">
-            &copy; {new Date().getFullYear()} FounderSignal. All rights
-            reserved.
+            &copy; {new Date().getFullYear()} <br className="sm:hidden" />
+            FounderSignal. All rights reserved.
           </p>
 
-          <div className="flex items-center space-x-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-end">
             <Link
               href="/terms-and-conditions"
               variant="ghost"

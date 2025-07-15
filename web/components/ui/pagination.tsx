@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "./button";
 import {
@@ -33,9 +34,9 @@ export const PaginationWithPageSize = ({
   pageSizeOptions?: number[];
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 w-full">
-      <div className="flex items-center">
-        <span className="text-sm mr-3">Page size:</span>
+    <div className="flex w-full flex-col-reverse items-center justify-between gap-4 sm:flex-row mt-6">
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+        <span className="text-sm">Page size:</span>
         <Select
           value={itemsPerPage.toString()}
           onValueChange={handlePageSizeChange}
@@ -102,7 +103,7 @@ export function Pagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className={`flex items-center space-x-2 ${className}`}>
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
       <Button
         variant="outline"
         size="sm"

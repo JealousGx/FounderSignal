@@ -91,16 +91,25 @@ export function YouTubeFacade({
 
   if (showVideo) {
     return (
-      <iframe
-        width={options.width || "560"}
-        height={options.height || "315"}
-        src={videoUrl}
-        title={title}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        referrerPolicy="strict-origin-when-cross-origin"
-        allowFullScreen
-        loading="lazy"
-      ></iframe>
+      <div className="relative pt-[56.25%]">
+        <iframe
+          className="absolute top-0 left-0 w-full h-full"
+          width={options.width || "100%"}
+          height={options.height || "100%"}
+          style={{
+            aspectRatio:
+              options.width && options.height
+                ? `${options.width} / ${options.height}`
+                : undefined,
+          }}
+          src={videoUrl}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+          loading="lazy"
+        ></iframe>
+      </div>
     );
   }
 
@@ -110,8 +119,8 @@ export function YouTubeFacade({
       onClick={() => setShowVideo(true)}
       style={{
         position: "relative",
-        width: "560px",
-        height: "315px",
+        width: options.width || "560px",
+        height: options.height || "315px",
         cursor: "pointer",
         backgroundImage: `url(https://i.ytimg.com/vi/${videoId}/hqdefault.jpg)`,
         backgroundSize: "cover",
