@@ -18,6 +18,6 @@ jobs:
           RESPONSE=$(curl -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $CLOUDFLARE_API_KEY" \
-            -d '{"purge_everything":true}')
+            --data '{"purge_everything":true}')
           echo "Response: $RESPONSE"
           echo "Cache cleared successfully"
