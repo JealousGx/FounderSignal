@@ -27,6 +27,7 @@ export interface LandingPage {
   name: string;
   isActive: boolean;
   htmlContent: string;
+  htmlUrl: string;
   views: number;
   signups: number;
   createdAt: string;

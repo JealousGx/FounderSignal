@@ -30,7 +30,6 @@ export const getMVP = cache(async (ideaId: string, mvpId?: string | null) => {
 
     const response = await api.get(url, {
       next: {
-        revalidate: 3600,
         tags: [`mvp-${ideaId}`],
       },
     });
@@ -46,6 +45,29 @@ export const getMVP = cache(async (ideaId: string, mvpId?: string | null) => {
     }
 
     const data = await response.json();
+
+    if (data?.htmlUrl) {
+      try {
+        const response = await fetch(data.htmlUrl, {
+          headers: {
+            "Content-Type": "text/html",
+          },
+          next: {
+            tags: [`mvp-${ideaId}`], // Cache tag for revalidation
+          },
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const content = await response.text();
+
+        data.htmlContent = content;
+      } catch (error) {
+        console.error("Failed to fetch HTML content:", error);
+        data.htmlContent = undefined;
+      }
+    }
 
     return data;
   } catch (error) {

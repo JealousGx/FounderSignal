@@ -1,16 +1,39 @@
+import { Metadata } from "next";
 import { Suspense } from "react";
 
 import { Link } from "@/components/ui/link";
 import { getMVP } from "./action";
 import { MVP } from "./mvp";
 
-export const revalidate = 3600;
+import { createMetadata } from "@/lib/metadata";
 
-export default async function MVPPage({
-  params,
-}: {
+type Props = {
   params: Promise<{ ideaId: string }>;
-}) {
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { ideaId } = await params;
+  const data = await getMVP(ideaId);
+
+  if (!data?.idea) {
+    return {
+      title: "Idea Not Found",
+    };
+  }
+
+  const idea = data.idea;
+  const title = `${idea.title}`;
+  const description = idea.description;
+
+  return createMetadata({
+    title,
+    description,
+    image: idea.imageUrl,
+    urlPath: `mvp/${ideaId}`,
+  });
+}
+
+export default async function MVPPage({ params }: Props) {
   const { ideaId } = await params;
   const mvp = await getMVP(ideaId);
 
@@ -39,7 +62,7 @@ export default async function MVPPage({
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      {mvp && <MVP htmlContent={mvp.htmlContent} ideaId={ideaId} />}
+      <MVP htmlContent={mvp.htmlContent} ideaId={ideaId} />
     </Suspense>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { Edit, Eye, MoreVertical, Power, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/components/ui/link";
 
-import { deleteMvp, setMVPActive } from "./actions";
+import { deleteMvp, fetchHtmlContent, setMVPActive } from "./actions";
 
 import { LandingPage } from "@/types/idea";
 
@@ -29,6 +30,10 @@ interface LandingPageCardProps {
 }
 
 export function LandingPageCard({ mvp }: LandingPageCardProps) {
+  const [htmlContent, setHtmlContent] = useState<string | undefined>(
+    mvp.htmlContent
+  );
+
   const conversionRate =
     mvp.views > 0 ? ((mvp.signups / mvp.views) * 100).toFixed(2) : "0";
 
@@ -54,6 +59,23 @@ export function LandingPageCard({ mvp }: LandingPageCardProps) {
       error: (err) => err.error || "An error occurred.",
     });
   };
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!mvp.htmlUrl) return;
+
+    (async () => {
+      const content = await fetchHtmlContent(mvp.ideaId, mvp.id, mvp.htmlUrl);
+
+      if (isMounted && content) {
+        setHtmlContent(content);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [mvp]);
 
   return (
     <Card className="bg-white border-gray-200">
@@ -135,7 +157,7 @@ export function LandingPageCard({ mvp }: LandingPageCardProps) {
       <div className="px-6 pb-4 flex-grow">
         <div className="relative h-48 w-full overflow-hidden rounded-md border bg-muted">
           <iframe
-            srcDoc={mvp.htmlContent}
+            srcDoc={htmlContent}
             className="absolute top-0 left-0 h-[768px] w-[2045px] origin-top-left scale-[0.25] transform pointer-events-none"
             title={`Preview of ${mvp.name}`}
             sandbox="allow-scripts"

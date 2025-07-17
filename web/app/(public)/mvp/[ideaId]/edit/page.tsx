@@ -34,6 +34,7 @@ export default function EditLandingPage() {
   const [metaDescription, setMetaDescription] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [isAIEditModalOpen, setIsAIEditModalOpen] = useState(false);
 
   const [isDirty, setIsDirty, setDirty] = useUnsavedChanges();
   const isSavingRef = useRef(false);
@@ -45,7 +46,7 @@ export default function EditLandingPage() {
     handleImageUploads,
     cleanupOrphanedAssets,
     assetUrlMapRef,
-  } = useAssets(ideaId, grapeEditor);
+  } = useAssets(ideaId, mvpId, grapeEditor);
 
   const { handleSave, saveStatus } = useAutoSave({
     ideaId,
@@ -198,6 +199,53 @@ export default function EditLandingPage() {
     toast.success("New landing page generated and loaded!");
   };
 
+  const handleEditAIGenerate = async (
+    title: string,
+    description: string,
+    ctaBtnText?: string,
+    instructions?: string
+  ) => {
+    if (!ideaId || !mvpId) {
+      console.error("Idea ID or MVP ID is not available");
+      return;
+    }
+
+    if (!grapeEditor) {
+      console.error("GrapeJS editor is not initialized");
+      return;
+    }
+
+    const fullHtml = grapeEditor.getHtml({ cleanId: true });
+    toast.promise(
+      generateMVPWithAI(
+        ideaId,
+        mvpId,
+        title,
+        description,
+        ctaBtnText,
+        `Modify the existing landing page with AI using the current content as a base. \n\nCurrent HTML:\n${fullHtml}\n\nMake sure to:\n- Maintain the existing structure and sections. MAKE SURE YOU DO NOT OVERRIDE IT.\n- Follow all previous guidelines provided for landing page creation.\n\nAdditional Instructions: ${instructions}.`
+      ),
+      {
+        loading: "Updating landing page with AI...",
+        success: (result) => {
+          if (!result || result.error || !result.htmlContent) {
+            return `Error: ${result.error || "Failed to update landing page."}`;
+          }
+
+          loadHtmlIntoEditor(
+            result.htmlContent,
+            metaTitle,
+            metaDescription,
+            true
+          );
+
+          return "Landing page updated successfully!";
+        },
+        error: (error) => `Failed to updated landing page: ${error}`,
+      }
+    );
+  };
+
   return (
     <div className="relative w-full h-screen">
       <style jsx global>{`
@@ -258,6 +306,7 @@ export default function EditLandingPage() {
         onSave={handleSave}
         onSettingsClick={() => setIsModalOpen(true)}
         onAIGenerateClick={() => setIsAIModalOpen(true)}
+        onEditAIGenerateClick={() => setIsAIEditModalOpen(true)}
         saveStatus={saveStatus}
       />
 
@@ -278,6 +327,15 @@ export default function EditLandingPage() {
         onGenerate={handleAIGenerate}
         initialTitle={metaTitle}
         initialDescription={metaDescription}
+      />
+
+      <AIGenerateModal
+        isModalOpen={isAIEditModalOpen}
+        setIsModalOpen={setIsAIEditModalOpen}
+        onGenerate={handleEditAIGenerate}
+        initialTitle={metaTitle}
+        initialDescription={metaDescription}
+        isEditAIGenerate={true}
       />
     </div>
   );

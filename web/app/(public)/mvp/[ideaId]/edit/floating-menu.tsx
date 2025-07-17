@@ -6,6 +6,7 @@ import {
   Save,
   Settings,
   Sparkles,
+  Wand2,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -22,11 +23,13 @@ export const FloatingActionMenu = ({
   onSave,
   onSettingsClick,
   onAIGenerateClick,
+  onEditAIGenerateClick,
   saveStatus,
 }: {
   onSave: () => void;
   onSettingsClick: () => void;
   onAIGenerateClick: () => void;
+  onEditAIGenerateClick: () => void;
   saveStatus: SaveStatus;
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -81,6 +84,20 @@ export const FloatingActionMenu = ({
               size="sm"
               variant="outline"
               className="bg-gradient-to-br from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 border-0 rounded-full w-10 h-10 p-0 shadow-lg"
+              onClick={onEditAIGenerateClick}
+            >
+              <Wand2 className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Edit with AI</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 border-0 rounded-full w-10 h-10 p-0 shadow-lg"
               onClick={onAIGenerateClick}
             >
               <Sparkles className="w-4 h-4" />

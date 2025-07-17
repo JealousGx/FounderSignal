@@ -83,16 +83,17 @@ type MVPSimulator struct {
 	IdeaID        uuid.UUID `gorm:"type:uuid;not null;index" json:"ideaId"`
 	Name          string    `gorm:"not null" json:"name"`
 	IsActive      bool      `gorm:"default:false;not null" json:"isActive"`
-	HTMLContent   string    `gorm:"type:text" json:"htmlContent"`
+	HTMLContent   *string   `gorm:"type:text" json:"htmlContent"`
+	HTMLURL       string    `gorm:"type:text" json:"htmlUrl"`       // URL to the r2 hosted HTML content
 	AIGenerations int       `gorm:"default:0" json:"aiGenerations"` // Number of AI-generated content pieces
 
 	Views   int `gorm:"-" json:"views"`
 	Signups int `gorm:"-" json:"signups"`
 
 	// Relationships
-	Idea            Idea             `gorm:"foreignKey:IdeaID" json:"-"`
-	Signals         []Signal         `gorm:"foreignKey:MVPSimulatorID" json:"-"`
-	AudienceMembers []AudienceMember `gorm:"foreignKey:MVPSimulatorID" json:"-"`
+	Idea            Idea             `gorm:"foreignKey:IdeaID" json:"idea,omitempty"`
+	Signals         []Signal         `gorm:"foreignKey:MVPSimulatorID" json:"signals,omitempty"`
+	AudienceMembers []AudienceMember `gorm:"foreignKey:MVPSimulatorID" json:"audience,omitempty"`
 }
 
 func (m *MVPSimulator) AfterFind(tx *gorm.DB) (err error) {

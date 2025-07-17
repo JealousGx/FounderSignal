@@ -62,10 +62,10 @@ func (s *mvpService) Create(ctx context.Context, userId string, ideaId uuid.UUID
 	}
 
 	mvp := &domain.MVPSimulator{
-		IdeaID:      ideaId,
-		Name:        req.Name,
-		HTMLContent: req.HTMLContent,
-		IsActive:    false, // Default to false, can be set active later
+		IdeaID:   ideaId,
+		Name:     req.Name,
+		HTMLURL:  req.HTMLURL,
+		IsActive: false, // Default to false, can be set active later
 	}
 
 	id, err := s.repo.Create(ctx, mvp)
@@ -114,6 +114,8 @@ func (s *mvpService) GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *st
 		return nil, nil
 	}
 
+	mvp.Idea = *idea
+
 	return mvp, nil
 }
 
@@ -130,8 +132,8 @@ func (s *mvpService) Update(ctx context.Context, ideaId uuid.UUID, userId string
 	if req.Name != nil {
 		mvp.Name = *req.Name
 	}
-	if req.HTMLContent != "" {
-		mvp.HTMLContent = req.HTMLContent
+	if *req.HTMLURL != "" {
+		mvp.HTMLURL = *req.HTMLURL
 	}
 
 	return s.repo.Update(ctx, mvp)

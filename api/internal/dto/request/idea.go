@@ -6,6 +6,7 @@ type CreateIdea struct {
 	TargetAudience string `json:"targetAudience" binding:"required,min=8"`
 	CTAButton      string `json:"ctaButtonText"`
 	ForceNew       bool   `json:"forceNew"`
+	HTMLURL        string `json:"htmlUrl"` // URL to the r2 hosted HTML content
 }
 
 type UpdateIdea struct {
@@ -20,13 +21,13 @@ type UpdateIdea struct {
 }
 
 type CreateMVP struct {
-	Name        string `json:"name"`
-	HTMLContent string `json:"htmlContent"`
-	IsActive    bool   `json:"isActive"`
+	Name     string `json:"name"`
+	HTMLURL  string `json:"htmlUrl"` // URL to the r2 hosted HTML content
+	IsActive bool   `json:"isActive"`
 }
 
 type UpdateMVP struct {
-	Name        *string `json:"name"`
-	IsActive    *bool   `json:"isActive"`
-	HTMLContent string  `json:"htmlContent" binding:"required"`
+	Name     *string `json:"name"`
+	IsActive *bool   `json:"isActive"`
+	HTMLURL  *string `json:"htmlUrl"` // URL to the r2 hosted HTML content
 }
