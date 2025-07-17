@@ -37,18 +37,6 @@ export const updateIdeaRequest = async (
       return res;
     });
 
-export const updateMvpRequest = async (
-  ideaId: string,
-  mvpId: string,
-  updatedMVP: Record<string, unknown>
-) =>
-  api
-    .put(`/dashboard/ideas/${ideaId}/mvp/${mvpId}`, JSON.stringify(updatedMVP))
-    .then((res) => {
-      revalidateTag(`mvp-${mvpId}`);
-      return res;
-    });
-
 export const updateIdea = async (
   prevState: UpdateIdeaState | null,
   formData: FormData
@@ -274,5 +262,33 @@ export const createMVP = async (ideaId: string) => {
     return {
       error: "Error creating MVP",
     };
+  }
+};
+
+export const fetchHtmlContent = async (
+  ideaId: string,
+  mvpId: string,
+  htmlUrl: string
+) => {
+  try {
+    const response = await fetch(htmlUrl, {
+      headers: {
+        "Content-Type": "text/html",
+      },
+      next: {
+        tags: [`mvp-${ideaId}`],
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch HTML content: ${response.statusText}`);
+    }
+
+    const htmlContent = await response.text();
+
+    return htmlContent;
+  } catch (error) {
+    console.error(`Error fetching HTML content for mvp ${mvpId}:`, error);
+    return null;
   }
 };

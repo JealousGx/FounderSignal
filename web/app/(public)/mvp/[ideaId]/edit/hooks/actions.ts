@@ -5,7 +5,7 @@ import { revalidateTag } from "next/cache";
 
 import { getLandingPagePromptTemplate } from "@/constants/prompts/landing-page";
 import { api } from "@/lib/api";
-import { deleteFile } from "@/lib/r2";
+import { deleteFile, getSignedUrlForUpload } from "@/lib/r2";
 
 export const updateMVP = async (
   ideaId: string,
@@ -18,10 +18,37 @@ export const updateMVP = async (
     return { error: "You must be signed in to update an idea." };
   }
 
+  const htmlPutSignedUrl = await getSignedUrlForUpload(
+    `${ideaId}/mvp/${mvpId}`,
+    "text/html"
+  );
+
+  if (!htmlPutSignedUrl) {
+    return { error: "Failed to get signed URL for HTML upload." };
+  }
+
   try {
+    const htmlUploadResponse = await fetch(htmlPutSignedUrl.signedUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "text/html",
+      },
+      body: htmlContent,
+    });
+
+    if (!htmlUploadResponse.ok) {
+      console.error(
+        "Failed to upload HTML content:",
+        htmlUploadResponse.statusText
+      );
+      return { error: "Failed to upload HTML content." };
+    }
+
+    const htmlUrl = `${process.env.NEXT_PUBLIC_R2_ENDPOINT}/${htmlPutSignedUrl.key}`;
+
     const response = await api.put(
       `/dashboard/ideas/${ideaId}/mvp${mvpId ? `/${mvpId}` : ""}`,
-      JSON.stringify({ htmlContent, name: mvpName })
+      JSON.stringify({ htmlUrl, name: mvpName })
     );
     const responseData = await response.json();
 
@@ -85,7 +112,6 @@ export const generateMVPWithAI = async (
   }
 
   const prompt = getLandingPagePromptTemplate(
-    ideaId,
     title,
     description,
     ctaBtnText,

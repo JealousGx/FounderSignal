@@ -114,12 +114,13 @@ export function useAutoSave({
         }
 
         setSaveStatus("error");
+
+        toast.error(err.message || "Failed to save landing page.");
+      } finally {
         if (!isAutoSave) {
           toast.dismiss();
         }
 
-        toast.error(err.message || "Failed to save landing page.");
-      } finally {
         isSavingRef.current = false;
         setTimeout(() => setSaveStatus("idle"), 2000);
       }

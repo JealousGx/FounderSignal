@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const idea = data.idea;
-  const title = `${idea.title} - Startup Idea Validation | FounderSignal`;
+  const title = `${idea.title} - Startup Idea Validation`;
   const description =
     `Validation data for the startup idea: ${idea.title}. See signups, conversion rates, and user feedback. ` +
     (idea.description

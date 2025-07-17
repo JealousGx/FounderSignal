@@ -12,7 +12,7 @@ export const MVP = ({ htmlContent, ideaId }: MVPProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    if (iframeRef.current && htmlContent) {
+    if (iframeRef?.current && htmlContent) {
       const doc =
         iframeRef.current.contentDocument ||
         iframeRef.current.contentWindow?.document;

@@ -262,6 +262,8 @@ func seedIdeas(ctx context.Context, db *gorm.DB, uniqueIdeaTitles []string, coun
 			signups = idea.TargetSignups/2 + randomInt(0, idea.TargetSignups/2)
 		}
 
+		htmlContent := generateHTMLContent(idea.Title, idea.Description, randomElement(ctaButtons, "Sign Up", 100))
+
 		mvp := &domain.MVPSimulator{
 			Base: domain.Base{
 				ID: uuid.New(),
@@ -269,7 +271,7 @@ func seedIdeas(ctx context.Context, db *gorm.DB, uniqueIdeaTitles []string, coun
 			IsActive:    true,
 			IdeaID:      idea.ID,
 			Name:        fmt.Sprintf("%s MVP Simulator", currentTitle),
-			HTMLContent: generateHTMLContent(idea.Title, idea.Description, randomElement(ctaButtons, "Sign Up", 100)),
+			HTMLContent: &htmlContent,
 		}
 
 		numFeedbacks := randomInt(0, 10)

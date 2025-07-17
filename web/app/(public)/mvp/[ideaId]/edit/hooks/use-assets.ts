@@ -17,6 +17,7 @@ export type AssetUrlMap = Map<
 
 export function useAssets(
   ideaId: string | undefined,
+  mvpId: string | null,
   grapeEditor: Editor | null
 ) {
   const [currentAssets, setCurrentAssets] = useState<Set<string>>(new Set());
@@ -96,7 +97,7 @@ export function useAssets(
 
   const handleImageUploads = useCallback(
     async (assets: Assets) => {
-      if (!ideaId) return new Map();
+      if (!ideaId || !mvpId) return new Map();
 
       const assetsToUpload = assets.models.filter(
         (m: Asset) => typeof m.id === "string" && m.id.startsWith("data:image")
@@ -108,7 +109,7 @@ export function useAssets(
 
       const uploadPromises = assetsToUpload.map(async (asset) => {
         const dataUrl = asset.id as string;
-        const fileName = getImageFileName(ideaId, asset.attributes.name);
+        const fileName = getImageFileName(ideaId, mvpId, asset.attributes.name);
 
         const dimensions = {
           width: asset.attributes.width,
@@ -179,7 +180,7 @@ export function useAssets(
 
       return combinedMap;
     },
-    [ideaId, updateImageSources]
+    [ideaId, mvpId, updateImageSources]
   );
 
   const cleanupOrphanedAssets = useCallback(

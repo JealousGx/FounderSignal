@@ -1,5 +1,9 @@
-export const getImageFileName = (ideaId: string, imageName: string) => {
-  return `${ideaId}/${encodeURIComponent(imageName)}`;
+export const getImageFileName = (
+  ideaId: string,
+  mvpId: string,
+  imageName: string
+) => {
+  return `${ideaId}/${mvpId}/${encodeURIComponent(imageName)}`;
 };
 
 export const extractFileNameFromUrl = (url: string): string | null => {

@@ -147,8 +147,8 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		IdeaID:   ideaId,
 		Name:     "Initial Version",
 		IsActive: true,
+		HTMLURL:  req.HTMLURL,
 	}
-	mvp.HTMLContent = generateLandingPageContent(ideaId, mvp.ID, idea.Title, idea.Description, req.CTAButton)
 
 	if _, err := s.mvpRepo.Create(ctx, mvp); err != nil {
 		log.Printf("Error creating MVP for idea %s: %v", idea.ID, err)
@@ -527,117 +527,6 @@ func (s *ideaService) getUserDashboardStats(ctx context.Context, userId string) 
 		SignupsChange:     signupChange,
 		ViewsChange:       viewChange,
 	}, nil
-}
-
-func generateLandingPageContent(ideaId, mvpId uuid.UUID, headline, subheadline, ctaBtn string) string {
-	const TAILWIND_CSS_URL = "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-
-	return fmt.Sprintf(
-		`<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>%s</title>
-    <meta name="description" content="%s">
-    <link href="%s" rel="stylesheet">
-</head>
-<body>
-    <div class="container mx-auto px-4 py-8">
-          <h1 class="text-4xl font-bold text-center mb-8">
-            Your Landing Page
-          </h1>
-          <p class="text-lg text-center mb-8">
-            Start building your MVP landing page!
-          </p>
-          <div class="text-center">
-            <button
-              id="ctaButton"
-              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >
-              %s
-            </button>
-          </div>
-        </div>
-    <script data-founder-signal-script="true">(function() {
-            const ideaId = "%s";
-			const mvpId = "%s";
-            const postTrackEvent = (eventType, metadata) => {
-                if (window.parent && window.parent.postMessage) {
-                    window.parent.postMessage({ type: 'founderSignalTrack', eventType: eventType, ideaId: ideaId, mvpId: mvpId, metadata: metadata }, '*');
-                }
-            };
-
-            // 1. Track Page View
-            postTrackEvent('pageview', { path: window.location.pathname, title: document.title });
-
-            // 2. Track CTA Click
-            const $ctaButton = document.getElementById('ctaButton');
-            if ($ctaButton) {
-                $ctaButton.addEventListener('click', function() {
-                    postTrackEvent('cta_click', { buttonText: $ctaButton.innerText, ctaElementId: $ctaButton.id });
-                    alert('Thanks for your interest!'); // Optional: client-side feedback
-                });
-            }
-
-            // 3. Track Scroll Depth
-            let scrollReached = { 25: false, 50: false, 75: false, 100: false };
-            let scrollTimeout;
-            function handleScroll() {
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(() => {
-                    const docElem = document.documentElement;
-                    const scrollHeight = docElem.scrollHeight - docElem.clientHeight;
-                    if (scrollHeight === 0) { // Content not scrollable or fully visible
-                        if (!scrollReached[100]) {
-                            postTrackEvent('scroll_depth', { percentage: 100 });
-                            scrollReached[100] = true;
-                        }
-                        return;
-                    }
-                    const scrollTop = window.pageYOffset || docElem.scrollTop;
-                    const currentPercentage = Math.min(100, Math.round((scrollTop / scrollHeight) * 100));
-
-                    [25, 50, 75, 100].forEach(depth => {
-                        if (currentPercentage >= depth && !scrollReached[depth]) {
-                            postTrackEvent('scroll_depth', { percentage: depth });
-                            scrollReached[depth] = true;
-                        }
-                    });
-                }, 150); // Debounce scroll events
-            }
-            // Initial check in case content is not scrollable but covers depths
-            handleScroll(); 
-            window.addEventListener('scroll', handleScroll, { passive: true });
-
-            // 4. Track Time on Page
-            const startTime = Date.now();
-            const sendTimeOnPage = () => {
-                const durationSeconds = Math.round((Date.now() - startTime) / 1000);
-                postTrackEvent('time_on_page', { duration_seconds: durationSeconds });
-            };
-            
-            // More reliable way to send data on page unload
-            window.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'hidden') {
-                    sendTimeOnPage();
-                }
-            });
-            // As a fallback, though 'pagehide' or 'beforeunload' can be unreliable for async.
-            // The postMessage should be synchronous enough.
-            window.addEventListener('pagehide', sendTimeOnPage);
-
-        })();
-    </script>
-</body>
-</html>`,
-		headline,
-		subheadline,
-		TAILWIND_CSS_URL,
-		ctaBtn,
-		ideaId.String(),
-		mvpId.String(),
-	)
 }
 
 // calculateTrendRatio calculates the percentage change as a ratio.
