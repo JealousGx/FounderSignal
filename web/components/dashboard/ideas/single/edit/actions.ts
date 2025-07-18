@@ -1,10 +1,16 @@
 "use server";
 
-import { api } from "@/lib/api";
 import { auth } from "@clerk/nextjs/server";
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
+
 import { updateIdeaSchema, updateMVPSchema } from "./schema";
+
+import { api } from "@/lib/api";
+import {
+  revalidateAPICfCache,
+  revalidateCfCache,
+} from "@/lib/cloudfront/cache";
 
 type FieldError = Partial<
   Record<keyof z.infer<typeof updateIdeaSchema>, string>
@@ -82,6 +88,10 @@ export const updateIdea = async (
     }
 
     revalidateTag(`idea-${ideaId}`);
+    await Promise.all([
+      await revalidateCfCache(`/explore/${ideaId}`),
+      await revalidateAPICfCache(`/ideas/${ideaId}`),
+    ]);
 
     return {
       message: `Idea updated successfully!`,
@@ -118,6 +128,12 @@ export const deleteIdea = async (id: string) => {
     }
 
     revalidateTag(`ideas`);
+    await Promise.all([
+      revalidateCfCache(`/explore/${id}`),
+      revalidateCfCache(`/explore`),
+      revalidateAPICfCache(`/ideas/`),
+      revalidateAPICfCache(`/ideas/${id}`),
+    ]);
 
     return {
       message: `Idea deleted successfully!`,
@@ -153,6 +169,12 @@ export const updateIdeaAttributes = async (
       };
     }
 
+    revalidateTag(`idea-${ideaId}`);
+    await Promise.all([
+      revalidateCfCache(`/explore/${ideaId}`),
+      revalidateAPICfCache(`/ideas/${ideaId}`),
+    ]);
+
     return responseData;
   });
 };
@@ -183,6 +205,10 @@ export const setMVPActive = async (ideaId: string, mvpId: string) => {
     }
 
     revalidateTag(`mvp-${mvpId}`);
+    await Promise.all([
+      revalidateCfCache(`/mvp/${ideaId}`),
+      revalidateAPICfCache(`/ideas/${ideaId}/mvp`),
+    ]);
 
     return {
       message: `Landing page "${responseData.mvp.name}" is now active!`,
@@ -218,6 +244,10 @@ export const deleteMvp = async (ideaId: string, mvpId: string) => {
     }
 
     revalidateTag(`mvp-${mvpId}`);
+    await Promise.all([
+      revalidateCfCache(`/mvp/${ideaId}`),
+      revalidateAPICfCache(`/ideas/${ideaId}/mvp`),
+    ]);
 
     return {
       message: `Landing page "${responseData.mvp.name}" deleted successfully!`,

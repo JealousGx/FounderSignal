@@ -1,10 +1,16 @@
 "use server";
 
-import { api } from "@/lib/api";
 import { auth } from "@clerk/nextjs/server";
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
+
 import { formSchema } from "./schema";
+
+import { api } from "@/lib/api";
+import {
+  revalidateAPICfCache,
+  revalidateCfCache,
+} from "@/lib/cloudfront/cache";
 
 type FieldError = Partial<Record<keyof z.infer<typeof formSchema>, string>>;
 
@@ -65,6 +71,10 @@ export const submitIdea = async (
     }
 
     revalidateTag("ideas");
+    await Promise.all([
+      revalidateCfCache("/explore"),
+      revalidateAPICfCache("/ideas/"),
+    ]);
 
     return {
       message: `Idea "${idea.title}" submitted successfully!`,

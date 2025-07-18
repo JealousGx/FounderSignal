@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 
-import { getSignedUrlForUpload } from "@/lib/r2";
+import { getSignedUrlForUpload } from "@/lib/cloudfront/r2";
 import sharp from "sharp";
 
 export const uploadImageWithSignedUrl = async (

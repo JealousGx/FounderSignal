@@ -5,7 +5,11 @@ import { revalidateTag } from "next/cache";
 
 import { getLandingPagePromptTemplate } from "@/constants/prompts/landing-page";
 import { api } from "@/lib/api";
-import { deleteFile, getSignedUrlForUpload } from "@/lib/r2";
+import {
+  revalidateAPICfCache,
+  revalidateCfCache,
+} from "@/lib/cloudfront/cache";
+import { deleteFile, getSignedUrlForUpload } from "@/lib/cloudfront/r2";
 
 export const updateMVP = async (
   ideaId: string,
@@ -65,6 +69,10 @@ export const updateMVP = async (
     }
 
     revalidateTag(`mvp-${ideaId}`);
+    await Promise.all([
+      revalidateCfCache(`/mvp/${ideaId}`),
+      revalidateAPICfCache(`/ideas/${ideaId}/mvp`),
+    ]);
 
     return {
       message: `Landing page updated successfully!`,

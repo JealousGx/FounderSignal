@@ -1,9 +1,15 @@
 "use server";
 
-import { api } from "@/lib/api";
 import { auth } from "@clerk/nextjs/server";
 import { revalidateTag } from "next/cache";
+
 import { ReplyFormValues, messageSchema } from "./schema";
+
+import { api } from "@/lib/api";
+import {
+  revalidateAPICfCache,
+  revalidateCfCache,
+} from "@/lib/cloudfront/cache";
 
 type FieldError = Partial<Record<keyof ReplyFormValues, string>>;
 
@@ -71,6 +77,10 @@ export const submitReply = async (
     }
 
     revalidateTag(`comments-${ideaId}`);
+    await Promise.all([
+      revalidateCfCache(`/explore/${ideaId}`),
+      revalidateAPICfCache(`/ideas/${ideaId}/feedback`),
+    ]);
 
     return {
       message: commentId
@@ -101,9 +111,11 @@ export const submitReaction = async (
 
   let revalidationTag = `idea-${ideaId}`;
   let path = `/dashboard/ideas/${ideaId}/reaction`;
+  let cfAPIRevalidationPath = `/ideas/${ideaId}`;
   if (commentId) {
     path = `/dashboard/ideas/${ideaId}/feedback/${commentId}/reaction`;
     revalidationTag = `comments-${ideaId}`;
+    cfAPIRevalidationPath = `/ideas/${ideaId}/feedback`;
   }
 
   const payload = {
@@ -123,6 +135,10 @@ export const submitReaction = async (
     }
 
     revalidateTag(revalidationTag);
+    await Promise.all([
+      revalidateCfCache(`/explore/${ideaId}`),
+      revalidateAPICfCache(cfAPIRevalidationPath),
+    ]);
 
     return {
       message: "Reaction submitted successfully!",
@@ -169,6 +185,10 @@ export const updateComment = async (
     }
 
     revalidateTag(`comments-${ideaId}`);
+    await Promise.all([
+      revalidateCfCache(`/explore/${ideaId}`),
+      revalidateAPICfCache(`/ideas/${ideaId}/feedback`),
+    ]);
 
     return {
       message: "Comment updated successfully!",
@@ -207,6 +227,10 @@ export const deleteComment = async (
     }
 
     revalidateTag(`comments-${ideaId}`);
+    await Promise.all([
+      revalidateCfCache(`/explore/${ideaId}`),
+      revalidateAPICfCache(`/ideas/${ideaId}/feedback`),
+    ]);
 
     return {
       message: "Comment deleted successfully!",
