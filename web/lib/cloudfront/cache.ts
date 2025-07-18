@@ -17,14 +17,14 @@ export const revalidateCfCache = async (path: string) => {
     return;
   }
 
-  const url = `${process.env.NEXT_PUBLIC_APP_URL}${path}`;
+  const url = new URL(`${process.env.NEXT_PUBLIC_APP_URL}${path}`);
 
-  console.log("Invalidating Cloudflare cache for URL:", url);
+  console.log("Invalidating Cloudflare cache for URL:", url.toString());
 
   try {
     const res = await customFetch(
       JSON.stringify({
-        prefixes: [url],
+        prefixes: [url.hostname + url.pathname],
       })
     );
 
@@ -61,14 +61,14 @@ export const revalidateAPICfCache = async (path: string) => {
     return;
   }
 
-  const url = `${process.env.NEXT_PUBLIC_API_URL}${path}`;
+  const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}${path}`);
 
-  console.log("Invalidating API Cloudflare cache for URL:", url);
+  console.log("Invalidating API Cloudflare cache for URL:", url.toString());
 
   try {
     const res = await customFetch(
       JSON.stringify({
-        prefixes: [url],
+        prefixes: [url.hostname + url.pathname],
       })
     );
 
