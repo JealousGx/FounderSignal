@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"foundersignal/internal/domain"
 	"time"
@@ -29,14 +28,6 @@ func NewReactionRepo(db *gorm.DB) *reactionRepository {
 }
 
 func (r *reactionRepository) AddFeedbackReaction(ctx context.Context, reaction *domain.FeedbackReaction) error {
-
-	ideaJSON, jsonErr := json.MarshalIndent(reaction, "", "  ") // Marshal to JSON with indentation
-	if jsonErr != nil {
-		fmt.Println("Error marshalling idea to JSON:", jsonErr)
-	} else {
-		fmt.Println("Found idea (JSON):", string(ideaJSON))
-	}
-
 	err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "feedback_id"}, {Name: "user_id"}},
 		DoUpdates: clause.Assignments(map[string]interface{}{

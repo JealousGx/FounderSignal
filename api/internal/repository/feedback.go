@@ -96,7 +96,9 @@ func (r *fbRepository) GetByIdea(ctx context.Context, ideaId uuid.UUID, queryPar
 	}
 
 	query = query.Preload("Reactions").
-		Preload("Replies")
+		Preload("Replies", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at ASC, id ASC").Preload("Reactions")
+		})
 
 	isDescending := true // Default sort direction
 	if queryParams.SortBy != "" && strings.HasSuffix(strings.ToLower(queryParams.SortBy), "asc") {

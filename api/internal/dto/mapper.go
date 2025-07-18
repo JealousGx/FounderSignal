@@ -191,7 +191,6 @@ func mapFeedbackToIdeaComments(feedbacks []domain.Feedback, requestingUserID *st
 	rootComments := make([]response.IdeaComment, 0)
 
 	// Pass 1: Create all comment response objects and store pointers in a map.
-	// Initialize Replies as empty; they will be populated in Pass 2.
 	for _, fb := range flatFeedbacks {
 		var likedByUser, dislikedByUser bool
 		if requestingUserID != nil && fb.Reactions != nil {
@@ -222,33 +221,22 @@ func mapFeedbackToIdeaComments(feedbacks []domain.Feedback, requestingUserID *st
 	}
 
 	// Pass 2: Link replies to their parents.
-	// This pass populates the .Replies field of the commentNode structs *in the allCommentsMap*.
 	for _, fb := range flatFeedbacks {
-		// We are interested in comments that are replies (have a ParentID)
 		if fb.ParentID != nil && *fb.ParentID != uuid.Nil {
 			if parentNode, parentExists := allCommentsMap[*fb.ParentID]; parentExists {
-				// childNode is the current feedback item's representation from the map
-				if childNode, childExists := allCommentsMap[fb.ID]; childExists {
-					parentNode.Replies = append(parentNode.Replies, *childNode)
-				}
+				parentNode.Replies = append(parentNode.Replies, *allCommentsMap[fb.ID])
 			}
 			// If parentNode doesn't exist, this childNode is an orphan.
-			// It won't be added to any parent's Replies list.
 			// It will be picked up as a root comment in Pass 3 if its parent is missing.
 		}
 	}
 
 	// Pass 3: Populate rootComments.
-	// Iterate through the flat list again. A comment is a root if it has no parent
-	// or if its designated parent was not found in the current batch (making it an orphan root).
 	for _, fb := range flatFeedbacks {
 		isRoot := false
 		if fb.ParentID == nil || *fb.ParentID == uuid.Nil {
 			isRoot = true
 		} else {
-			// It has a ParentID, but check if the parent actually exists in our map.
-			// If the parent isn't in allCommentsMap (e.g., not part of this fetched batch),
-			// then this comment, despite having a ParentID, effectively becomes a root for this dataset.
 			if _, parentExistsInMap := allCommentsMap[*fb.ParentID]; !parentExistsInMap {
 				isRoot = true
 			}
@@ -256,6 +244,7 @@ func mapFeedbackToIdeaComments(feedbacks []domain.Feedback, requestingUserID *st
 
 		if isRoot {
 			if commentNode, exists := allCommentsMap[fb.ID]; exists {
+				// Dereference the pointer when adding to the final rootComments slice
 				rootComments = append(rootComments, *commentNode)
 			}
 		}
