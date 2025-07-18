@@ -61,7 +61,7 @@ export const revalidateAPICfCache = async (path: string) => {
     return;
   }
 
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/v1${path}`;
+  const url = `${process.env.NEXT_PUBLIC_API_URL}${path}`;
 
   try {
     const res = await customFetch(
