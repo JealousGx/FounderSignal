@@ -8,21 +8,23 @@
  * invalidate the cache for `https://example.com/some/path`, you would pass
  * `/some/path`.
  * @returns A promise that resolves when the cache invalidation is complete.
- * If the environment is set to "test", it will skip the cache invalidation
+ * If the environment is set to "local", it will skip the cache invalidation
  * and log a message instead.
  */
 export const revalidateCfCache = async (path: string) => {
-  if (process.env.NODE_ENV === "test") {
-    console.log("Skipping Cloudflare cache invalidation in development mode.");
+  if (process.env.ENVIRONMENT === "local") {
+    console.log("Skipping Cloudflare cache invalidation in local mode.");
     return;
   }
 
   const url = `${process.env.NEXT_PUBLIC_APP_URL}${path}`;
 
+  console.log("Invalidating Cloudflare cache for URL:", url);
+
   try {
     const res = await customFetch(
       JSON.stringify({
-        files: [url],
+        prefixes: [url],
       })
     );
 
@@ -50,23 +52,23 @@ export const revalidateCfCache = async (path: string) => {
  * invalidate the cache for `https://example.com/api/v1/some/path`, you would pass
  * `/some/path`.
  * @returns A promise that resolves when the cache invalidation is complete.
- * If the environment is set to "test", it will skip the cache invalidation
+ * If the environment is set to "local", it will skip the cache invalidation
  * and log a message instead.
  */
 export const revalidateAPICfCache = async (path: string) => {
-  if (process.env.NODE_ENV === "test") {
-    console.log(
-      "Skipping API Cloudflare cache invalidation in development mode."
-    );
+  if (process.env.ENVIRONMENT === "local") {
+    console.log("Skipping API Cloudflare cache invalidation in local mode.");
     return;
   }
 
   const url = `${process.env.NEXT_PUBLIC_API_URL}${path}`;
 
+  console.log("Invalidating API Cloudflare cache for URL:", url);
+
   try {
     const res = await customFetch(
       JSON.stringify({
-        files: [url],
+        prefixes: [url],
       })
     );
 
