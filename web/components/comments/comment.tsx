@@ -47,7 +47,7 @@ type CommentActionsType = {
 
 export const CommentItem = ({
   ideaId,
-  comment,
+  comment: initialComment,
   userId,
   ReplyForm,
   ideaCreatorId,
@@ -60,6 +60,7 @@ export const CommentItem = ({
 }) => {
   const searchParams = useSearchParams();
 
+  const [comment, setComment] = useState(initialComment);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [updatedContent, setUpdatedContent] = useState(comment.content);
@@ -86,6 +87,11 @@ export const CommentItem = ({
       return () => clearTimeout(timer);
     }
   }, [isHighlighted]);
+
+  useEffect(() => {
+    setComment(initialComment);
+    setUpdatedContent(initialComment.content);
+  }, [initialComment]);
 
   const handleReplyClick = () => {
     setShowReplyForm(true);

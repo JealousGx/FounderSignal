@@ -1,7 +1,13 @@
 "use server";
 
-import { api } from "@/lib/api";
+import { revalidateTag } from "next/cache";
 import { cache } from "react";
+
+import { api } from "@/lib/api";
+import {
+  revalidateAPICfCache,
+  revalidateCfCache,
+} from "@/lib/cloudfront/cache";
 
 export async function sendSignal(
   ideaId: string,
@@ -15,6 +21,12 @@ export async function sendSignal(
       JSON.stringify({ eventType, metadata })
     );
     console.log(`Signal '${eventType}' sent for idea ${ideaId}`, metadata);
+
+    revalidateTag(`idea-${ideaId}`);
+    await Promise.all([
+      revalidateCfCache(`/explore/${ideaId}`),
+      revalidateAPICfCache(`/ideas/${ideaId}`),
+    ]);
   } catch (error) {
     console.error("Error in sendSignal:", error);
   }
