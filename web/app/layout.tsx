@@ -28,9 +28,69 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   robots: { index: true, follow: true },
   icons: {
-    icon: "/assets/favicon/favicon.ico",
-    shortcut: "/assets/favicon/favicon-16x16.png",
-    apple: "/assets/favicon/apple-touch-icon.png",
+    icon: [
+      { url: "/assets/favicon/favicon.ico", sizes: "any" },
+      {
+        url: "/assets/favicon/favicon-32x32.png",
+        sizes: "32x32",
+        type: "image/png",
+      },
+      {
+        url: "/assets/favicon/favicon-16x16.png",
+        sizes: "16x16",
+        type: "image/png",
+      },
+      { url: "/assets/favicon/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      {
+        url: "/assets/favicon/apple-icon-180x180.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+      {
+        url: "/assets/favicon/apple-icon-152x152.png",
+        sizes: "152x152",
+        type: "image/png",
+      },
+      {
+        url: "/assets/favicon/apple-icon-120x120.png",
+        sizes: "120x120",
+        type: "image/png",
+      },
+      {
+        url: "/assets/favicon/apple-icon-114x114.png",
+        sizes: "114x114",
+        type: "image/png",
+      },
+      {
+        url: "/assets/favicon/apple-icon-72x72.png",
+        sizes: "72x72",
+        type: "image/png",
+      },
+      {
+        url: "/assets/favicon/apple-icon-60x60.png",
+        sizes: "60x60",
+        type: "image/png",
+      },
+    ],
+    shortcut: [
+      {
+        url: "/assets/favicon/favicon-16x16.png",
+        sizes: "16x16",
+        type: "image/png",
+      },
+      {
+        url: "/assets/favicon/favicon-32x32.png",
+        sizes: "32x32",
+        type: "image/png",
+      },
+      {
+        url: "/assets/favicon/favicon-96x96.png",
+        sizes: "96x96",
+        type: "image/png",
+      },
+    ],
   },
   openGraph: {
     type: "website",
@@ -46,6 +106,12 @@ export const metadata: Metadata = {
         height: 630,
         alt: siteConfig.title,
       },
+      {
+        url: "/assets/favicon/android-chrome-512x512.png",
+        width: 512,
+        height: 512,
+        alt: "FounderSignal App Icon",
+      },
     ],
   },
   twitter: {
@@ -55,7 +121,7 @@ export const metadata: Metadata = {
     images: [siteConfig.ogImage],
     creator: "@khiljimateenn",
   },
-  manifest: `/assets/favicon/site.webmanifest`,
+  manifest: `/assets/favicon/manifest.json`,
   authors: [
     {
       name: "JealousGx",
