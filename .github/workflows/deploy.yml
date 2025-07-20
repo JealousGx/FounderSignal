@@ -1,9 +1,9 @@
 name: Deploy and Clear Cache
 
 on:
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
     inputs:
       environment:
@@ -19,113 +19,124 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     outputs:
-      env: ${{ steps.deploy.outputs.env }}
+      # env: ${{ steps.deploy.outputs.env }}
+      env: ${{ github.event.inputs.environment }}
+    environment: ${{ github.event.inputs.environment }}
 
     steps:
-      - name: Deploy to Vercel
-        id: deploy
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_PROJECT_NAME: ${{ secrets.VERCEL_PROJECT_NAME }}
-          VERCEL_REPO_ID: ${{ secrets.VERCEL_REPO_ID }}
+      # - name: Deploy to Vercel
+      #   id: deploy
+      #   env:
+      #     VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      #     VERCEL_PROJECT_NAME: ${{ secrets.VERCEL_PROJECT_NAME }}
+      #     VERCEL_REPO_ID: ${{ secrets.VERCEL_REPO_ID }}
 
-        run: |
-          ENV="${{ github.event.inputs.environment }}"
+      #   run: |
+      #     ENV="${{ github.event.inputs.environment }}"
 
-          if [ -z "$ENV" ]; then
-            ENV="staging"
-          fi
+      #     if [ -z "$ENV" ]; then
+      #       ENV="staging"
+      #     fi
 
-          echo "Deploying to environment: $ENV"
-          echo "Vercel Project Name: $VERCEL_PROJECT_NAME"
+      #     echo "Deploying to environment: $ENV"
+      #     echo "Vercel Project Name: $VERCEL_PROJECT_NAME"
 
-          GIT_REF="refs/heads/${GITHUB_REF#refs/heads/}"  # branch name ref
-          GIT_SHA="$GITHUB_SHA" # commit SHA
+      #     GIT_REF="refs/heads/${GITHUB_REF#refs/heads/}"  # branch name ref
+      #     GIT_SHA="$GITHUB_SHA" # commit SHA
 
-          echo "Git Ref: $GIT_REF"
-          echo "Git SHA: $GIT_SHA"
-          echo "Repo ID: $VERCEL_REPO_ID"
+      #     echo "Git Ref: $GIT_REF"
+      #     echo "Git SHA: $GIT_SHA"
+      #     echo "Repo ID: $VERCEL_REPO_ID"
 
-           # Build the JSON payload
-          PAYLOAD=$(jq -n \
-            --arg name "$VERCEL_PROJECT_NAME" \
-            --arg target "$ENV" \
-            --arg type "github" \
-            --arg ref "$GIT_REF" \
-            --arg sha "$GIT_SHA" \
-            --argjson repoId "$VERCEL_REPO_ID" \
-            '{name: $name, target: $target, gitSource: {type: $type, ref: $ref, sha: $sha, repoId: $repoId}}')
+      #      # Build the JSON payload
+      #     PAYLOAD=$(jq -n \
+      #       --arg name "$VERCEL_PROJECT_NAME" \
+      #       --arg target "$ENV" \
+      #       --arg type "github" \
+      #       --arg ref "$GIT_REF" \
+      #       --arg sha "$GIT_SHA" \
+      #       --argjson repoId "$VERCEL_REPO_ID" \
+      #       '{name: $name, target: $target, gitSource: {type: $type, ref: $ref, sha: $sha, repoId: $repoId}}')
 
-          echo "Payload: $PAYLOAD"
+      #     echo "Payload: $PAYLOAD"
 
-          echo "Starting '"$ENV"' deployment..."
-          RESPONSE=$(curl -s -X POST "https://api.vercel.com/v13/deployments" \
-            -H "Authorization: Bearer $VERCEL_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "$PAYLOAD")
+      #     echo "Starting '"$ENV"' deployment..."
+      #     RESPONSE=$(curl -s -X POST "https://api.vercel.com/v13/deployments" \
+      #       -H "Authorization: Bearer $VERCEL_TOKEN" \
+      #       -H "Content-Type: application/json" \
+      #       -d "$PAYLOAD")
 
-          echo "Vercel response: $RESPONSE"
+      #     echo "Vercel response: $RESPONSE"
 
-          DEPLOYMENT_ID=$(echo "$RESPONSE" | jq -r '.id // empty')
-          DEPLOYMENT_URL=$(echo "$RESPONSE" | jq -r '.url // empty')
+      #     DEPLOYMENT_ID=$(echo "$RESPONSE" | jq -r '.id // empty')
+      #     DEPLOYMENT_URL=$(echo "$RESPONSE" | jq -r '.url // empty')
 
+      #     if [ -z "$DEPLOYMENT_ID" ] || [ "$DEPLOYMENT_ID" = "null" ]; then
+      #       echo "Deployment failed or response invalid."
+      #       exit 1
+      #     fi
 
-          if [ -z "$DEPLOYMENT_ID" ] || [ "$DEPLOYMENT_ID" = "null" ]; then
-            echo "Deployment failed or response invalid."
-            exit 1
-          fi
+      #     echo "Deployment ID: $DEPLOYMENT_ID"
+      #     echo "Deployment URL: $DEPLOYMENT_URL"
 
-          echo "Deployment ID: $DEPLOYMENT_ID"
-          echo "Deployment URL: $DEPLOYMENT_URL"
+      #     # Set outputs for later steps
+      #     echo "env=$ENV" >> $GITHUB_OUTPUT
+      #     echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+      #     echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
 
-          # Set outputs for later steps
-          echo "env=$ENV" >> $GITHUB_OUTPUT
-          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
-          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+      # - name: Wait for Vercel Deployment to be Ready
+      #   id: wait_vercel
+      #   env:
+      #     VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      #   run: |
+      #     DEPLOYMENT_ID="${{ steps.deploy.outputs.deployment_id }}"
 
-      - name: Wait for Vercel Deployment to be Ready
-        id: wait_vercel
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: |
-          DEPLOYMENT_ID="${{ steps.deploy.outputs.deployment_id }}"
+      #     echo "Waiting 75 seconds before first status check..."
+      #     sleep 75  # initial delay of 1 minute 15 seconds, average deployment time
 
-          echo "Waiting 75 seconds before first status check..."
-          sleep 75  # initial delay of 1 minute 15 seconds, average deployment time
+      #     MAX_WAIT=60 # Maximum wait time in seconds
+      #     INTERVAL=20
+      #     ELAPSED=0
 
-          MAX_WAIT=60 # Maximum wait time in seconds
-          INTERVAL=20
-          ELAPSED=0
+      #     while [ $ELAPSED -lt $MAX_WAIT ]; do
+      #       STATUS_RESPONSE=$(curl -s -X GET "https://api.vercel.com/v13/deployments/${DEPLOYMENT_ID}" \
+      #         -H "Authorization: Bearer $VERCEL_TOKEN")
+      #       READY_STATE=$(echo "$STATUS_RESPONSE" | jq -r '.readyState')
 
-          while [ $ELAPSED -lt $MAX_WAIT ]; do
-            STATUS_RESPONSE=$(curl -s -X GET "https://api.vercel.com/v13/deployments/${DEPLOYMENT_ID}" \
-              -H "Authorization: Bearer $VERCEL_TOKEN")
-            READY_STATE=$(echo "$STATUS_RESPONSE" | jq -r '.readyState')
+      #       echo "Current status: $READY_STATE"
 
-            echo "Current status: $READY_STATE"
+      #       if [ "$READY_STATE" = "READY" ]; then
+      #         echo "Deployment is ready!"
+      #         exit 0
+      #       elif [ "$READY_STATE" = "ERROR" ]; then
+      #         echo "Deployment failed with error state."
+      #         exit 1
+      #       fi
 
-            if [ "$READY_STATE" = "READY" ]; then
-              echo "Deployment is ready!"
-              exit 0
-            elif [ "$READY_STATE" = "ERROR" ]; then
-              echo "Deployment failed with error state."
-              exit 1
-            fi
+      #       echo "Waiting $INTERVAL seconds before next check..."
+      #       sleep $INTERVAL
+      #       ELAPSED=$((ELAPSED + INTERVAL))
+      #     done
 
-            echo "Waiting $INTERVAL seconds before next check..."
-            sleep $INTERVAL
-            ELAPSED=$((ELAPSED + INTERVAL))
-          done
-
-          echo "Timeout exceeded waiting for deployment to be ready."
-          exit 1
+      #     echo "Timeout exceeded waiting for deployment to be ready."
+      #     exit 1
 
       - name: Clear Cloudflare Cache
-        if: steps.deploy.outputs.env == 'production'
+        # if: steps.deploy.outputs.env == 'production'
         env:
           CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
         run: |
+          if [ -z "$CLOUDFLARE_ZONE_ID" ]; then
+            echo "CLOUDFLARE_ZONE_ID is missing or empty"
+            exit 1
+          fi
+
+          if [ -z "$CLOUDFLARE_API_KEY" ]; then
+            echo "CLOUDFLARE_API_KEY is missing or empty"
+            exit 1
+          fi
+
           echo "Purging Cloudflare cache for production"
 
           RESPONSE=$(curl -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" \
