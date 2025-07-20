@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       env: ${{ steps.deploy.outputs.env }}
+    environment: ${{ github.event.inputs.environment }}
 
     steps:
       - name: Deploy to Vercel
@@ -126,6 +127,16 @@ jobs:
           CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
         run: |
+          if [ -z "$CLOUDFLARE_ZONE_ID" ]; then
+            echo "CLOUDFLARE_ZONE_ID is missing or empty"
+            exit 1
+          fi
+
+          if [ -z "$CLOUDFLARE_API_KEY" ]; then
+            echo "CLOUDFLARE_API_KEY is missing or empty"
+            exit 1
+          fi
+
           echo "Purging Cloudflare cache for production"
 
           RESPONSE=$(curl -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" \
