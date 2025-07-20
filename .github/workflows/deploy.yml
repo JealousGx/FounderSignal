@@ -27,6 +27,8 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_PROJECT_NAME: ${{ secrets.VERCEL_PROJECT_NAME }}
+          VERCEL_REPO_ID: ${{ secrets.VERCEL_REPO_ID }}
+
         run: |
           ENV="${{ github.event.inputs.environment }}"
 
@@ -42,6 +44,7 @@ jobs:
 
           echo "Git Ref: $GIT_REF"
           echo "Git SHA: $GIT_SHA"
+          echo "Repo ID: $VERCEL_REPO_ID"
 
            # Build the JSON payload
           PAYLOAD=$(jq -n \
@@ -50,7 +53,8 @@ jobs:
             --arg type "github" \
             --arg ref "$GIT_REF" \
             --arg sha "$GIT_SHA" \
-            '{name: $name, target: $target, gitSource: {type: $type, ref: $ref, sha: $sha}}')
+            --argjson repoId "$VERCEL_REPO_ID" \
+            '{name: $name, target: $target, gitSource: {type: $type, ref: $ref, sha: $sha, repoId: $repoId}}')
 
           echo "Payload: $PAYLOAD"
 
