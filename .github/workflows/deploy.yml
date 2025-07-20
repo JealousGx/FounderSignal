@@ -93,7 +93,7 @@ jobs:
           echo "Waiting 75 seconds before first status check..."
           sleep 75  # initial delay of 1 minute 15 seconds, average deployment time
 
-          MAX_WAIT=30 # Maximum wait time in seconds
+          MAX_WAIT=50 # Maximum wait time in seconds
           INTERVAL=10
           ELAPSED=0
 
