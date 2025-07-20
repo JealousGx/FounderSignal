@@ -9,13 +9,17 @@ export const openCheckout = async (
   }
 ) => {
   if (!user.id) {
-    return;
+    return {
+      error: "You need to be logged in to purchase a plan.",
+    };
   }
 
-  await paddle
+  return await paddle
     .then((p) => {
       if (!p) {
-        return;
+        return {
+          error: "Paddle SDK is not loaded.",
+        };
       }
 
       p.Checkout.open({
@@ -40,5 +44,11 @@ export const openCheckout = async (
         },
       });
     })
-    .catch(console.error);
+    .catch((err) => {
+      console.error("Paddle Checkout Error:", err);
+
+      return {
+        error: "An error occurred while opening the checkout.",
+      };
+    });
 };

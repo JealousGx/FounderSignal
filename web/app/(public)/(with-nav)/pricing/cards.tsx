@@ -9,6 +9,7 @@ import { IBillingFrequency } from "@/constants/billing-frequency";
 import { PricingTier } from "@/constants/pricing-tier";
 import { cn } from "@/lib/utils";
 import { useSession } from "@clerk/nextjs";
+import { toast } from "sonner";
 import { openCheckout } from "./actions";
 
 interface Props {
@@ -19,6 +20,32 @@ interface Props {
 
 export function PriceCards({ loading, frequency, priceMap }: Props) {
   const session = useSession();
+
+  const onClick = async (priceId: string) => {
+    if (!session.session?.user.id) {
+      return toast.error(
+        "You need to be logged in to purchase a plan. Please log in and try again."
+      );
+    }
+
+    toast.promise(
+      openCheckout(priceId, frequency.value === "year", {
+        id: session.session.user.id,
+        email: session.session.user.primaryEmailAddress?.emailAddress,
+      }),
+      {
+        loading: "Opening checkout...",
+        success: (err) => {
+          if (err?.error) {
+            return `Error opening checkout: ${err.error}`;
+          }
+
+          return "Checkout opened successfully. Please complete your purchase.";
+        },
+        error: (err) => `Error opening checkout: ${err.error}`,
+      }
+    );
+  };
 
   return (
     <div className="isolate mx-auto grid grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-3">
@@ -63,17 +90,7 @@ export function PriceCards({ loading, frequency, priceMap }: Props) {
             ) : (
               <Button
                 className="w-full"
-                onClick={async () =>
-                  await openCheckout(
-                    tier.priceId[frequency.value],
-                    frequency.value === "year",
-                    {
-                      id: session.session?.user.id,
-                      email:
-                        session.session?.user.primaryEmailAddress?.emailAddress,
-                    }
-                  )
-                }
+                onClick={onClick.bind(null, tier.priceId[frequency.value])}
               >
                 Get started
               </Button>
