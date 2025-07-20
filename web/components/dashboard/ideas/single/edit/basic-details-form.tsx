@@ -10,6 +10,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import {
   useActionState,
   useEffect,
@@ -20,7 +21,6 @@ import {
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { ImageUpload } from "@/components/shared/image-upload";
 import { uploadImageWithSignedUrl } from "@/components/shared/image-upload/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Idea } from "@/types/idea";
 import { updateIdea, UpdateIdeaState } from "./actions";
 import { UpdateIdeaFormValues, updateIdeaSchema } from "./schema";
+
+const ImageUpload = dynamic(
+  () =>
+    import("@/components/shared/image-upload").then((mod) => mod.ImageUpload),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center h-32">
+        Loading image upload...
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 interface BasicDetailsFormProps {
   idea: Idea;
