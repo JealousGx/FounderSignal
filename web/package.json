@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
@@ -20,6 +20,7 @@
     "@clerk/nextjs": "^6.18.5",
     "@grapesjs/react": "^2.0.0",
     "@hookform/resolvers": "^5.0.1",
+    "@next/bundle-analyzer": "^15.4.2",
     "@next/third-parties": "^15.4.1",
     "@paddle/paddle-js": "^1.4.1",
     "@paddle/paddle-node-sdk": "^2.7.3",
