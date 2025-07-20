@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import {
   revalidateAPICfCache,
   revalidateCfCache,
-} from "@/lib/cloudfront/cache";
+} from "@/lib/cloudflare/cache";
 
 export async function sendSignal(
   ideaId: string,

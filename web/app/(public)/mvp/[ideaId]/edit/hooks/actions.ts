@@ -8,8 +8,8 @@ import { api } from "@/lib/api";
 import {
   revalidateAPICfCache,
   revalidateCfCache,
-} from "@/lib/cloudfront/cache";
-import { deleteFile, getSignedUrlForUpload } from "@/lib/cloudfront/r2";
+} from "@/lib/cloudflare/cache";
+import { deleteFile, getSignedUrlForUpload } from "@/lib/cloudflare/r2";
 
 export const updateMVP = async (
   ideaId: string,
