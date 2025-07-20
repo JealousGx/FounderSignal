@@ -29,14 +29,36 @@ jobs:
           VERCEL_PROJECT_NAME: ${{ secrets.VERCEL_PROJECT_NAME }}
         run: |
           ENV="${{ github.event.inputs.environment }}"
+
+          if [ -z "$ENV" ]; then
+            ENV="staging"
+          fi
+
           echo "Deploying to environment: $ENV"
           echo "Vercel Project Name: $VERCEL_PROJECT_NAME"
+
+          GIT_REF="refs/heads/${GITHUB_REF#refs/heads/}"  # branch name ref
+          GIT_SHA="$GITHUB_SHA" # commit SHA
+
+          echo "Git Ref: $GIT_REF"
+          echo "Git SHA: $GIT_SHA"
+
+           # Build the JSON payload
+          PAYLOAD=$(jq -n \
+            --arg name "$VERCEL_PROJECT_NAME" \
+            --arg target "$ENV" \
+            --arg type "github" \
+            --arg ref "$GIT_REF" \
+            --arg sha "$GIT_SHA" \
+            '{name: $name, target: $target, gitSource: {type: $type, ref: $ref, sha: $sha}}')
+
+          echo "Payload: $PAYLOAD"
 
           echo "Starting '"$ENV"' deployment..."
           RESPONSE=$(curl -s -X POST "https://api.vercel.com/v13/deployments" \
             -H "Authorization: Bearer $VERCEL_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{"name": "'"$VERCEL_PROJECT_NAME"'", "target": "'"$ENV"'"}')
+            -d "$PAYLOAD")
 
           echo "Vercel response: $RESPONSE"
 
