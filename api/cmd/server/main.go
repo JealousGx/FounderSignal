@@ -56,8 +56,10 @@ func main() {
 			BusinessPlanID: cfg.Envs.PADDLE_BUSINESS_PLAN_ID,
 		},
 		Report: service.ReportServiceConfig{
-			DiscordWebhookURL: cfg.Envs.DISCORD_WEBHOOK_URL,
-			Environment:       cfg.Envs.APP_ENV,
+			DiscordContentReportWebhookURL:      cfg.Envs.DISCORD_CONTENT_REPORT_WEBHOOK_URL,
+			DiscordBugReportWebhookURL:          cfg.Envs.DISCORD_BUG_REPORT_WEBHOOK_URL,
+			DiscordFeatureSuggestionsWebhookURL: cfg.Envs.DISCORD_FEATURE_SUGGESTIONS_WEBHOOK_URL,
+			Environment:                         cfg.Envs.APP_ENV,
 		},
 		SampleRedditValidationID: uuid.MustParse(cfg.Envs.SAMPLE_REDDIT_VALIDATION_ID),
 	}

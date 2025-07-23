@@ -72,6 +72,7 @@ func registerPublicRoutes(router *gin.RouterGroup, h *Handlers) {
 	ideasRouter.POST("/:ideaId/mvp/:mvpId/signals", h.Signal.RecordSignal)
 
 	router.POST("/reports/submit", h.Report.SubmitContentReport)
+	router.POST("/reports/feature", h.Report.SubmitFeatureRequest)
 	router.POST("/reports/bug", h.Report.SubmitBugReport)
 
 	router.GET("/samples/reddit-validation", h.Reddit.GetSampleValidation)

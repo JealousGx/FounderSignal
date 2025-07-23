@@ -1,5 +1,5 @@
 import { Link } from "@/components/ui/link";
-import { BugReportTrigger } from "./shared/report-bug/trigger";
+import { FeedbackTrigger } from "./shared/user-feedback/trigger";
 
 export function Footer() {
   return (
@@ -44,7 +44,7 @@ export function Footer() {
               Refund Policy
             </Link>
 
-            <BugReportTrigger variant="footer" />
+            <FeedbackTrigger variant="footer" />
           </div>
         </div>
       </div>

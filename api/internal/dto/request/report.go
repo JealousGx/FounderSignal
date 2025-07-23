@@ -24,3 +24,8 @@ type CreateBugReport struct {
 	StepsToReproduce string `json:"stepsToReproduce" validate:"required,min=10,max=2000"`
 	PageURL          string `json:"pageUrl" validate:"required,url"`
 }
+
+type CreateFeatureRequest struct {
+	Title       string `json:"title" validate:"required,min=5,max=100"`
+	Description string `json:"description" validate:"required,min=10,max=2000"`
+}

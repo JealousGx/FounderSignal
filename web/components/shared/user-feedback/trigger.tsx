@@ -1,14 +1,21 @@
 "use client";
 
-import { Bug } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { BugReportDialog } from ".";
+
+const FeedbackDialog = dynamic(
+  () => import("./index").then((mod) => mod.FeedbackDialog),
+  {
+    ssr: false,
+  }
+);
 
 import { cn } from "@/lib/utils";
 
-export function BugReportTrigger({
+export function FeedbackTrigger({
   variant = "sidebar",
 }: {
   variant?: "sidebar" | "footer";
@@ -29,10 +36,11 @@ export function BugReportTrigger({
         )}
         onClick={() => setDialogOpen(true)}
       >
-        {isSidebar && <Bug className="w-5 h-5 mr-3 text-gray-500" />}
-        Report a Bug
+        {isSidebar && <MessageCircle className="w-5 h-5 mr-3 text-gray-500" />}
+        Give Feedback
       </Button>
-      <BugReportDialog isOpen={isDialogOpen} onOpenChange={setDialogOpen} />
+
+      <FeedbackDialog isOpen={isDialogOpen} onOpenChange={setDialogOpen} />
     </>
   );
 }

@@ -26,7 +26,9 @@ type Config struct {
 	GeminiModelCode          string
 	GeminiEmbeddingModelCode string
 
-	DISCORD_WEBHOOK_URL string
+	DISCORD_CONTENT_REPORT_WEBHOOK_URL      string
+	DISCORD_BUG_REPORT_WEBHOOK_URL          string
+	DISCORD_FEATURE_SUGGESTIONS_WEBHOOK_URL string
 
 	SAMPLE_REDDIT_VALIDATION_ID string
 
@@ -68,7 +70,9 @@ func initConfig() Config {
 		GeminiModelCode:          getEnv("GEMINI_MODEL_CODE", "gemini-1.5-flash"),
 		GeminiEmbeddingModelCode: getEnv("GEMINI_EMBEDDING_MODEL_CODE", "text-embedding-004"),
 
-		DISCORD_WEBHOOK_URL: getEnv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+		DISCORD_CONTENT_REPORT_WEBHOOK_URL:      getEnv("DISCORD_CONTENT_REPORT_WEBHOOK_URL", "https://discord.com/api/webhooks/1391302554700480583/YgCXoNWVTvNB7-DdRu8leZeDKnU4mzIaNSxmSwHtGhnUwbjW6lLWknKf300UNnvXHqxn"),
+		DISCORD_BUG_REPORT_WEBHOOK_URL:          getEnv("DISCORD_BUG_REPORT_WEBHOOK_URL", "https://discord.com/api/webhooks/1397460529613766766/upVIe1LbIghNFIwwexFtX8Bi9EoPLPhnNRAPWKAjJxZBDVwEUUNvciC7fzFHj1g2V6j9"),
+		DISCORD_FEATURE_SUGGESTIONS_WEBHOOK_URL: getEnv("DISCORD_FEATURE_SUGGESTIONS_WEBHOOK_URL", "https://discord.com/api/webhooks/1397460944707260426/Aqa9y-y3vxHGEYM_T-pOQylD3qHyT_tUabzRCQk3cnic7zk89tjGV1mKC6ez38uyEg_u"),
 
 		SAMPLE_REDDIT_VALIDATION_ID: getEnv("SAMPLE_REDDIT_VALIDATION_ID", "c52af4c0-28f5-45ad-bfa2-eba8e437b3ba"),
 

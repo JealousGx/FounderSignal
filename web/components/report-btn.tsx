@@ -1,10 +1,17 @@
 "use client";
 
 import { Flag } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 
-import { ReportDialog } from "./report";
 import { Button } from "./ui/button";
+
+const ReportDialog = dynamic(
+  () => import("./report").then((mod) => mod.ReportDialog),
+  {
+    ssr: false,
+  }
+);
 
 export const ReportButton = ({
   commentId,
