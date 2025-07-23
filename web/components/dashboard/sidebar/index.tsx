@@ -5,7 +5,7 @@ import { LogOut, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { BugReportTrigger } from "@/components/shared/report-bug/trigger";
+import { FeedbackTrigger } from "@/components/shared/user-feedback/trigger";
 import { Button } from "@/components/ui/button";
 import { ManageSubscriptions } from "./manage-subscriptions";
 import { NavItems } from "./navi-items";
@@ -68,7 +68,7 @@ export default function DashboardSidebar() {
 
       <div className="flex flex-col gap-2 px-3 mt-auto pt-4 border-t border-gray-200">
         <ManageSubscriptions />
-        <BugReportTrigger />
+        <FeedbackTrigger />
 
         <SignOutButton>
           <Button

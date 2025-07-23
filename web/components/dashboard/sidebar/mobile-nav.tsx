@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-import { BugReportTrigger } from "@/components/shared/report-bug/trigger";
+import { FeedbackTrigger } from "@/components/shared/user-feedback/trigger";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -93,7 +93,7 @@ export default function MobileDashboardNav() {
 
               <div className="flex flex-col gap-2 px-2 py-4 mt-auto border-t border-gray-200">
                 <ManageSubscriptions />
-                <BugReportTrigger />
+                <FeedbackTrigger />
 
                 <Button
                   variant="ghost"
