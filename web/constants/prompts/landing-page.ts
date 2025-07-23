@@ -8,7 +8,7 @@ export const getLandingPagePromptTemplate = (
 **Instructions:**
 1. The entire output must be a single HTML file. Do not wrap it in Markdown.
 2. Only return the HTML content without any additional text or explanations. The output should only contain body content, no <head> or <html> or any other tag. It will be scanned by advanced AI systems, so it must be perfect.
-3. The landing page should be visually appealing, modern, and professional.
+3. The landing page should be visually appealing, modern, and professional, clean, modern, beautiful, and minimalistic with rounded edges and subtle animations.
 4. The structure should include a hero section, a features/benefits section (3-4 features), and a final call-to-action section.
 5. Do not include any other "<script>" tags or external JavaScript files.
 6. The main call-to-action button must have id="ctaButton".
