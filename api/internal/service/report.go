@@ -28,6 +28,7 @@ type ReportService interface {
 
 	// SubmitContentReport sends a report, either for an idea or a comment, to the system for review.
 	SubmitContentReport(ctx context.Context, reporterId string, req request.CreateContentReport) error
+	SubmitFeatureRequest(ctx context.Context, userId string, req request.CreateFeatureRequest) error
 	SubmitBugReport(ctx context.Context, reporterId string, req request.CreateBugReport) error
 }
 
@@ -70,8 +71,10 @@ type DiscordFooter struct {
 }
 
 type ReportServiceConfig struct {
-	DiscordWebhookURL string // URL for Discord webhook to send notifications
-	Environment       string // Environment (e.g., "development", "production") to control logging and behavior
+	DiscordContentReportWebhookURL      string // Specific webhook for content reports
+	DiscordBugReportWebhookURL          string // Specific webhook for bug reports
+	DiscordFeatureSuggestionsWebhookURL string // Specific webhook for feature suggestions
+	Environment                         string // Environment (e.g., "development", "production") to control logging and behavior
 }
 
 func NewReportService(reportRepo repository.ReportRepository, ideaRepository repository.IdeaRepository, feedbackRepo repository.FeedbackRepository,
@@ -352,8 +355,8 @@ func (s *reportService) SubmitContentReport(ctx context.Context, reporterId stri
 		log.Printf("WARN: Could not find associated idea or idea creator for content report on content %s", req.ContentID)
 	}
 
-	if s.ReportConfig.DiscordWebhookURL == "" {
-		log.Println("WARN: DISCORD_WEBHOOK_URL is not set. Report notification will not be sent.")
+	if s.ReportConfig.DiscordContentReportWebhookURL == "" {
+		log.Println("WARN: DISCORD_CONTENT_REPORT_WEBHOOK_URL is not set. Report notification will not be sent.")
 		// Return nil because failing the user's request just because notifications are down isn't ideal.
 		return nil
 	}
@@ -392,7 +395,7 @@ func (s *reportService) SubmitContentReport(ctx context.Context, reporterId stri
 		return fmt.Errorf("internal server error when preparing report")
 	}
 
-	resp, err := http.Post(s.ReportConfig.DiscordWebhookURL, "application/json", bytes.NewBuffer(payloadBytes))
+	resp, err := http.Post(s.ReportConfig.DiscordContentReportWebhookURL, "application/json", bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		log.Printf("ERROR: Failed to send Discord webhook: %v", err)
 		return fmt.Errorf("failed to submit report")
@@ -407,10 +410,52 @@ func (s *reportService) SubmitContentReport(ctx context.Context, reporterId stri
 	return nil
 }
 
-func (s *reportService) SubmitBugReport(ctx context.Context, reporterId string, req request.CreateBugReport) error {
-	webhookURL := s.ReportConfig.DiscordWebhookURL
+func (s *reportService) SubmitFeatureRequest(ctx context.Context, userId string, req request.CreateFeatureRequest) error {
+	webhookURL := s.ReportConfig.DiscordFeatureSuggestionsWebhookURL
 	if webhookURL == "" {
-		log.Println("WARN: DISCORD_WEBHOOK_URL is not set. Bug report notification will not be sent.")
+		log.Println("WARN: DISCORD_FEATURE_SUGGESTIONS_WEBHOOK_URL is not set. Feature request notification will not be sent.")
+		return nil
+	}
+
+	if userId == "" {
+		userId = "Anonymous"
+	}
+
+	payload := DiscordWebhookPayload{
+		Embeds: []DiscordEmbed{
+			{
+				Title:       fmt.Sprintf("[%s] New Feature Request", strings.ToUpper(s.ReportConfig.Environment)),
+				Description: req.Description,
+				Color:       3066993, // Green
+				Fields: []DiscordField{
+					{Name: "Title", Value: req.Title, Inline: true},
+					{Name: "User ID", Value: userId, Inline: true},
+				},
+				Footer: DiscordFooter{
+					Text: fmt.Sprintf("Requested on %s", time.Now().Format(time.RFC1123)),
+				},
+			},
+		},
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("ERROR: Failed to marshal Discord payload: %v", err)
+		return fmt.Errorf("internal server error when preparing feature request")
+	}
+	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		log.Printf("ERROR: Failed to send Discord webhook: %v", err)
+		return fmt.Errorf("failed to submit feature request")
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+func (s *reportService) SubmitBugReport(ctx context.Context, reporterId string, req request.CreateBugReport) error {
+	webhookURL := s.ReportConfig.DiscordBugReportWebhookURL
+	if webhookURL == "" {
+		log.Println("WARN: DISCORD_BUG_REPORT_WEBHOOK_URL is not set. Bug report notification will not be sent.")
 		return nil
 	}
 

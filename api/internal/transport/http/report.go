@@ -15,7 +15,9 @@ type ReportHandler interface {
 	GenerateReport(c *gin.Context)
 	GetReportsList(c *gin.Context)
 	GetByID(c *gin.Context)
+
 	SubmitContentReport(c *gin.Context)
+	SubmitFeatureRequest(c *gin.Context)
 	SubmitBugReport(c *gin.Context)
 }
 
@@ -185,4 +187,22 @@ func (h *reportHandler) SubmitBugReport(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Bug report submitted successfully. Thank you for your help!"})
+}
+
+func (h *reportHandler) SubmitFeatureRequest(c *gin.Context) {
+	userId, _ := c.Get("userId")
+
+	var req request.CreateFeatureRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.service.SubmitFeatureRequest(c.Request.Context(), userId.(string), req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Feature request submitted successfully. Thank you for your suggestion!"})
 }
