@@ -1,10 +1,17 @@
 "use client";
 
 import { Bug } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { BugReportDialog } from ".";
+
+const BugReportDialog = dynamic(
+  () => import("./index").then((mod) => mod.BugReportDialog),
+  {
+    ssr: false,
+  }
+);
 
 import { cn } from "@/lib/utils";
 
