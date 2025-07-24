@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 import { Footer } from "@/components/footer";
-import Navbar from "@/components/navbar";
+import { Navbar } from "@/components/navbar";
 import { Link } from "@/components/ui/link";
 
 import { createMetadata } from "@/lib/metadata";

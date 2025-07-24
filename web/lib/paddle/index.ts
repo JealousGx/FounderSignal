@@ -16,6 +16,7 @@ export function getPaddleInstance() {
 
   if (!process.env.PADDLE_API_KEY) {
     console.error("Paddle API key is missing");
+    return;
   }
 
   return new Paddle(process.env.PADDLE_API_KEY!, paddleOptions);

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 import { Footer } from "@/components/footer";
-import Navbar from "@/components/navbar";
+import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 
 export default function GlobalError({

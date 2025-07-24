@@ -10,8 +10,11 @@ import {
 import { Link } from "@/components/ui/link";
 
 import { YouTubeFacade } from "@/components/shared/youtube-facade";
+import { clerk } from "@/lib/auth";
 import { createMetadata } from "@/lib/metadata";
 import { prepareFaqLdJson } from "@/lib/prepare-faq-ldjson";
+
+export const revalidate = 86400; // 24 hours
 
 export const metadata: Metadata = createMetadata({
   title: "FounderSignal - Validate Your Startup Idea in 72 Hours",
@@ -89,7 +92,15 @@ const faqSchema = prepareFaqLdJson(
   faqs.map((faq) => ({ question: faq.question, answer: faq.schemaAnswer }))
 );
 
-export default function Home() {
+export default async function Home() {
+  const totalUsers =
+    (await clerk()
+      .then((c) => c.users.getCount())
+      .catch((err) => {
+        console.error("Error fetching user count:", err);
+        return 0;
+      })) || 0;
+
   return (
     <main className="w-full flex min-h-screen flex-col items-center gap-8">
       <section className="max-w-7xl mx-auto px-4 md:px-12 py-12 lg:py-20 w-full flex flex-col lg:flex-row justify-between gap-6 md:gap-8 lg:gap-12 items-center">
@@ -133,6 +144,15 @@ export default function Home() {
                 />
               </svg>
             </Link>
+          </div>
+
+          <div className="mt-8 pt-4 border-t border-gray-200">
+            <p className="text-4xl md:text-5xl font-extrabold text-primary">
+              {totalUsers.toLocaleString()}+
+            </p>
+            <p className="text-lg text-gray-700 mt-2">
+              Founders already validating their ideas
+            </p>
           </div>
         </div>
 

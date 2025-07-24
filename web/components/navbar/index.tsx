@@ -1,11 +1,11 @@
 "use client";
 
-import * as React from "react";
-import { NavbarLogo } from "./navbar-logo";
+import { useAuth } from "@clerk/nextjs";
+
+import { AuthButtons } from "../auth-buttons";
 import { DesktopNav } from "./desktop-nav";
 import { MobileNav } from "./mobile-nav";
-import { AuthButtons } from "../auth-buttons";
-import { useAuth } from "@clerk/nextjs";
+import { NavbarLogo } from "./navbar-logo";
 
 export function Navbar() {
   const { isSignedIn } = useAuth();
@@ -30,5 +30,3 @@ export function Navbar() {
     </header>
   );
 }
-
-export default Navbar;
