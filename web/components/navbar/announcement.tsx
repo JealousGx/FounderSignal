@@ -2,21 +2,8 @@ import { Sparkles } from "lucide-react";
 
 import { Link } from "../ui/link";
 
-import { getPaddleInstance } from "@/lib/paddle";
-
 export async function AnnouncementHeader() {
   if (!process.env.FF_ANNOUNCEMENT_COUPON_CODE) return;
-
-  const discount = await getPaddleInstance()
-    ?.discounts.get(process.env.FF_ANNOUNCEMENT_COUPON_ID || "")
-    .catch((error) => {
-      console.error("Failed to fetch discount:", error);
-      return null;
-    });
-
-  if (discount?.status !== "active") return;
-
-  const timesUsed = discount.timesUsed || 0;
 
   return (
     <div className="sticky top-[64px] z-40 w-full bg-background/95 border-b border-border shadow-sm flex items-center justify-center px-4 py-2 backdrop-blur-md">
@@ -33,18 +20,6 @@ export async function AnnouncementHeader() {
           <span className="font-bold tracking-wide select-all">
             {process.env.FF_ANNOUNCEMENT_COUPON_CODE}
           </span>
-        </span>
-
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-medium border
-              ${
-                timesUsed >= 80
-                  ? "bg-red-500/10 text-red-600 border-red-500/20"
-                  : "bg-green-500/10 text-green-600 border-green-500/20"
-              }
-            `}
-        >
-          {timesUsed > 0 ? `${timesUsed} times used!` : "No uses yet!"}
         </span>
 
         <Link href="/pricing" className="rounded-full font-medium">

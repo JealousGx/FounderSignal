@@ -10,7 +10,6 @@ import {
 import { Link } from "@/components/ui/link";
 
 import { YouTubeFacade } from "@/components/shared/youtube-facade";
-import { clerk } from "@/lib/auth";
 import { createMetadata } from "@/lib/metadata";
 import { prepareFaqLdJson } from "@/lib/prepare-faq-ldjson";
 
@@ -93,13 +92,13 @@ const faqSchema = prepareFaqLdJson(
 );
 
 export default async function Home() {
-  const totalUsers =
-    (await clerk()
-      .then((c) => c.users.getCount())
-      .catch((err) => {
-        console.error("Error fetching user count:", err);
-        return 0;
-      })) || 0;
+  // const totalUsers =
+  //   (await clerk()
+  //     .then((c) => c.users.getCount())
+  //     .catch((err) => {
+  //       console.error("Error fetching user count:", err);
+  //       return 0;
+  //     })) || 0;
 
   return (
     <main className="w-full flex min-h-screen flex-col items-center gap-8">
@@ -146,14 +145,14 @@ export default async function Home() {
             </Link>
           </div>
 
-          <div className="mt-8 pt-4 border-t border-gray-200">
+          {/* <div className="mt-8 pt-4 border-t border-gray-200">
             <p className="text-4xl md:text-5xl font-extrabold text-primary">
               {totalUsers.toLocaleString()}+
             </p>
             <p className="text-lg text-gray-700 mt-2">
               Founders already validating their ideas
             </p>
-          </div>
+          </div> */}
         </div>
 
         <div className="lg:w-1/2 w-full mt-8 lg:mt-0">
