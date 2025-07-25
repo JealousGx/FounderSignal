@@ -22,7 +22,7 @@ export default async function Pricing() {
           Your Next Big Idea
         </h1>
 
-        <p className="text-lg text-gray-700 mb-6">
+        <p className="text-lg text-gray-700 mb-6 text-center max-w-2xl mx-auto">
           Unlock powerful tools to validate and grow your venture.
         </p>
       </section>
