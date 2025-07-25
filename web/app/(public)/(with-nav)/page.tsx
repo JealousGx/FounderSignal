@@ -1,6 +1,7 @@
 import { ChartBar, Lightbulb, Monitor } from "lucide-react";
 import { Metadata } from "next";
 
+import { YouTubeFacade } from "@/components/shared/youtube-facade";
 import {
   Accordion,
   AccordionContent,
@@ -9,11 +10,8 @@ import {
 } from "@/components/ui/accordion";
 import { Link } from "@/components/ui/link";
 
-import { YouTubeFacade } from "@/components/shared/youtube-facade";
 import { createMetadata } from "@/lib/metadata";
 import { prepareFaqLdJson } from "@/lib/prepare-faq-ldjson";
-
-export const revalidate = 86400; // 24 hours
 
 export const metadata: Metadata = createMetadata({
   title: "FounderSignal - Validate Your Startup Idea in 72 Hours",
