@@ -14,7 +14,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { AuthButtons } from "../auth-buttons";
-import { NavbarLogo } from "./navbar-logo";
 
 import { cn } from "@/lib/utils";
 
@@ -41,18 +40,14 @@ export function MobileNav({ isSignedIn }: MobileNavProps) {
       </SheetTrigger>
       <SheetContent side="right" className="px-6">
         <SheetHeader className="px-0">
-          <SheetTitle>
-            <NavbarLogo />
-          </SheetTitle>
+          <SheetTitle>{/* <NavbarLogo /> */}</SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col space-y-4 mt-4">
           <Link
             href="/explore"
             className={cn(
               "py-2 text-lg font-medium transition-colors",
-              pathname === "/explore"
-                ? "text-primary"
-                : "text-muted-foreground hover:text-primary"
+              pathname === "/explore" ? "text-primary" : "hover:text-primary"
             )}
           >
             Explore Ideas
@@ -62,9 +57,7 @@ export function MobileNav({ isSignedIn }: MobileNavProps) {
             href="/submit"
             className={cn(
               "py-2 text-lg font-medium transition-colors",
-              pathname === "/submit"
-                ? "text-primary"
-                : "text-muted-foreground hover:text-primary"
+              pathname === "/submit" ? "text-primary" : "hover:text-primary"
             )}
           >
             Submit Idea
@@ -74,9 +67,7 @@ export function MobileNav({ isSignedIn }: MobileNavProps) {
             href="/pricing"
             className={cn(
               "py-2 text-lg font-medium transition-colors",
-              pathname === "/pricing"
-                ? "text-primary"
-                : "text-muted-foreground hover:text-primary"
+              pathname === "/pricing" ? "text-primary" : "hover:text-primary"
             )}
           >
             Pricing

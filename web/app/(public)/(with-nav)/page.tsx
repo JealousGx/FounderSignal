@@ -1,6 +1,7 @@
 import { ChartBar, Lightbulb, Monitor } from "lucide-react";
 import { Metadata } from "next";
 
+import { YouTubeFacade } from "@/components/shared/youtube-facade";
 import {
   Accordion,
   AccordionContent,
@@ -9,12 +10,10 @@ import {
 } from "@/components/ui/accordion";
 import { Link } from "@/components/ui/link";
 
-import { YouTubeFacade } from "@/components/shared/youtube-facade";
-import { clerk } from "@/lib/auth";
 import { createMetadata } from "@/lib/metadata";
 import { prepareFaqLdJson } from "@/lib/prepare-faq-ldjson";
 
-export const revalidate = 86400; // 24 hours
+// export const revalidate = 86400; // 24 hours
 
 export const metadata: Metadata = createMetadata({
   title: "FounderSignal - Validate Your Startup Idea in 72 Hours",
@@ -93,18 +92,18 @@ const faqSchema = prepareFaqLdJson(
 );
 
 export default async function Home() {
-  const totalUsers =
-    (await clerk()
-      .then((c) => c.users.getCount())
-      .catch((err) => {
-        console.error("Error fetching user count:", err);
-        return 0;
-      })) || 0;
+  // const totalUsers =
+  //   (await clerk()
+  //     .then((c) => c.users.getCount())
+  //     .catch((err) => {
+  //       console.error("Error fetching user count:", err);
+  //       return 0;
+  //     })) || 0;
 
   return (
     <main className="w-full flex min-h-screen flex-col items-center gap-8">
       <section className="max-w-7xl mx-auto px-4 md:px-12 py-12 lg:py-20 w-full flex flex-col lg:flex-row justify-between gap-6 md:gap-8 lg:gap-12 items-center">
-        <div className="flex flex-col space-y-6 lg:w-1/2">
+        <div className="flex flex-col space-y-6 lg:w-1/2 justify-center lg:items-start items-center text-center lg:text-left">
           <div className="inline-flex items-center px-3 py-1.5 bg-primary/10 rounded-full w-max">
             <span className="w-2 h-2 rounded-full bg-primary mr-2 animate-pulse"></span>
             <p className="text-sm font-medium text-primary">
@@ -117,7 +116,7 @@ export default async function Home() {
             <span className="text-primary">in 72 Hours</span>
           </h1>
 
-          <p className="text-xl md:text-2xl text-gray-600">
+          <p className="text-xl md:text-2xl text-gray-600 max-w-2xl">
             Get real-time market insights with a{" "}
             <strong>no-code fake MVP</strong>. Understand user demand, refine
             your concept, and <strong>launch with confidence.</strong>
@@ -145,7 +144,7 @@ export default async function Home() {
               </svg>
             </Link>
           </div>
-
+          {/* 
           <div className="mt-8 pt-4 border-t border-gray-200">
             <p className="text-4xl md:text-5xl font-extrabold text-primary">
               {totalUsers.toLocaleString()}+
@@ -153,7 +152,7 @@ export default async function Home() {
             <p className="text-lg text-gray-700 mt-2">
               Founders already validating their ideas
             </p>
-          </div>
+          </div> */}
         </div>
 
         <div className="lg:w-1/2 w-full mt-8 lg:mt-0">
@@ -183,7 +182,7 @@ export default async function Home() {
               How FounderSignal Works in 3 Simple Steps
             </h2>
 
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Validate your startup idea without writing a single line of code.
             </p>
           </div>
@@ -196,7 +195,7 @@ export default async function Home() {
 
               <h3 className="text-xl font-bold mb-3">Describe Your Idea</h3>
 
-              <p className="text-gray-600">
+              <p className="text-gray-600 max-w-md mx-auto">
                 Tell us about your startup concept, target audience, and the
                 problem you&apos;re solving. Our AI helps refine your pitch.
               </p>
@@ -211,7 +210,7 @@ export default async function Home() {
                 Create Your No-Code MVP
               </h3>
 
-              <p className="text-gray-600">
+              <p className="text-gray-600 max-w-md mx-auto">
                 Generate a realistic landing page with a sign-up form, tailored
                 to your idea - no coding, no design skills needed.
               </p>
@@ -226,7 +225,7 @@ export default async function Home() {
                 Collect Real-Time Insights
               </h3>
 
-              <p className="text-gray-600">
+              <p className="text-gray-600 max-w-md mx-auto">
                 Get actionable insights from user interest, conversion rates,
                 and detailed analytics. Our AI summarizes key feedback.
               </p>
@@ -241,7 +240,7 @@ export default async function Home() {
             See How FounderSignal Validates
           </h2>
 
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Explore a concrete example of how we help founders test their ideas
             effectively.
           </p>
@@ -336,7 +335,7 @@ export default async function Home() {
             Frequently Asked Questions
           </h2>
 
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Answers to common questions about FounderSignal and validating your
             ideas.
           </p>
@@ -363,7 +362,7 @@ export default async function Home() {
             Ready to Confidently Launch Your Next Big Idea?
           </h2>
 
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
             Stop building in the dark. Start validating with real data and user
             feedback in just 72 hours.
           </p>
