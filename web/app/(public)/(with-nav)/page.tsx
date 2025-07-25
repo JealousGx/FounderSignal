@@ -13,6 +13,8 @@ import { Link } from "@/components/ui/link";
 import { createMetadata } from "@/lib/metadata";
 import { prepareFaqLdJson } from "@/lib/prepare-faq-ldjson";
 
+// export const revalidate = 86400; // 24 hours
+
 export const metadata: Metadata = createMetadata({
   title: "FounderSignal - Validate Your Startup Idea in 72 Hours",
   description:
@@ -142,8 +144,8 @@ export default async function Home() {
               </svg>
             </Link>
           </div>
-
-          {/* <div className="mt-8 pt-4 border-t border-gray-200">
+          {/* 
+          <div className="mt-8 pt-4 border-t border-gray-200">
             <p className="text-4xl md:text-5xl font-extrabold text-primary">
               {totalUsers.toLocaleString()}+
             </p>
