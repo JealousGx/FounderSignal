@@ -11,7 +11,7 @@ export async function AnnouncementHeader() {
         <div className="flex items-center gap-2 text-primary text-wrap">
           <Sparkles className="h-5 w-5 animate-bounce" />
 
-          <span className="font-semibold text-base md:text-lg text-balance">
+          <span className="font-semibold text-base md:text-lg">
             🎉 First 100 users get 25% OFF on Pro Monthly Plan!
           </span>
         </div>
