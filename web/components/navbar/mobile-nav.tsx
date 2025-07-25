@@ -10,6 +10,7 @@ import {
   Sheet,
   SheetContent,
   SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { AuthButtons } from "../auth-buttons";
@@ -38,7 +39,9 @@ export function MobileNav({ isSignedIn }: MobileNavProps) {
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="px-6">
-        <SheetHeader className="px-0"></SheetHeader>
+        <SheetHeader className="px-0">
+          <SheetTitle>{/* <NavbarLogo /> */}</SheetTitle>
+        </SheetHeader>
         <nav className="flex flex-col space-y-4 mt-4">
           <Link
             href="/explore"
