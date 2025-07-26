@@ -3,9 +3,7 @@
 import { cache } from "react";
 
 import { api, QueryParams } from "@/lib/api";
-import { getUsers } from "@/lib/auth";
 import { constructNewPath } from "@/lib/utils";
-import { User } from "@clerk/nextjs/server";
 
 export const getAudience = cache(
   async (getStats: boolean = false, qs?: QueryParams) => {
@@ -35,12 +33,9 @@ export const getAudience = cache(
         return null;
       }
 
-      const userIds = getAllUserIds(data.audiences);
-      const users = await getUsers(userIds);
-
       return {
         ...data,
-        audiences: mapUsersToAudience(data.audiences, users),
+        audiences: toUI(data.audiences),
       };
     } catch (error) {
       console.error("Error in getAudience:", error);
@@ -49,31 +44,14 @@ export const getAudience = cache(
   }
 );
 
-const getAllUserIds = (audienceList: Record<string, string>[]) => {
-  const ids = new Set<string>();
-
-  audienceList.forEach((audience) => {
-    ids.add(audience.userId);
-  });
-
-  return Array.from(ids);
-};
-
-const mapUsersToAudience = (
-  audiences: Record<string, string>[],
-  users: User[]
-) => {
-  const userMap = new Map(users.map((user) => [user.id, user]));
+const toUI = (audiences: Record<string, string>[]) => {
   return audiences.map((audience) => {
-    const user = userMap.get(audience.userId);
-
     return {
       ...audience,
       idea: {
         id: audience.ideaId,
         title: audience.ideaTitle,
       },
-      email: user?.emailAddresses[0]?.emailAddress || "unknown user",
     };
   });
 };

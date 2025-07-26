@@ -257,7 +257,7 @@ export default function AudienceList({
                     <TableCell className="font-medium">
                       <div className="flex items-center">
                         <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                        {member.email}
+                        {member.email || "Anonymous"}
                       </div>
                     </TableCell>
                     <TableCell>
