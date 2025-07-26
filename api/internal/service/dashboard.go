@@ -173,8 +173,15 @@ func (s *dashboardService) GetAudienceForFounder(ctx context.Context, founderId 
 
 	audiencesDto := make([]*response.Audience, 0, len(audienceMembersDomain))
 	for _, am := range audienceMembersDomain {
+		userEmail := am.UserEmail
+
+		if userEmail == AnonymousUserPlaceholderEmail || userEmail == "" {
+			userEmail = "Anonymous" // Default to "Anonymous" if email is empty
+		}
+
 		audiencesDto = append(audiencesDto, &response.Audience{
 			UserID:     am.UserID,
+			UserEmail:  userEmail,
 			IdeaID:     am.IdeaID,
 			IdeaTitle:  am.Idea.Title,
 			SignupTime: am.SignupTime.Format(time.RFC3339), // standard time format

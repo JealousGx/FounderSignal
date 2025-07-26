@@ -11,6 +11,7 @@ type AudienceResponse struct {
 
 type Audience struct {
 	UserID     string    `json:"userId"`
+	UserEmail  string    `json:"email"`
 	IdeaID     uuid.UUID `json:"ideaId"`
 	IdeaTitle  string    `json:"ideaTitle"`
 	SignupTime string    `json:"signupTime"`
