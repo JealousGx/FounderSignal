@@ -41,13 +41,15 @@ const NextStepsModal = dynamic(
 );
 
 export default function SubmitPage() {
-  const [state, formAction, isPending] = useActionState<
+  const [state, formAction, isSubmittingIdea] = useActionState<
     SubmitIdeaState | null,
     FormData
   >(submitIdea, null);
 
-  const router = useRouter();
   const [showNextStepsModal, setShowNextStepsModal] = useState(false);
+  const [isGeneratingMvp, setIsGeneratingMvp] = useState(false);
+
+  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -76,74 +78,112 @@ export default function SubmitPage() {
       }
     }
 
+    const errorMessage =
+      "Your idea has been submitted successfully, but we encountered an issue while creating your landing page. You may have to manually create / update the landing page from the dashboard Edit Idea page.";
+
     if (state?.message && !state.error) {
       const createMVPWithAI = async () => {
+        setIsGeneratingMvp(true);
         console.log("Creating MVP with AI...", state.ideaId, state.mvpId);
-        if (state.ideaId && state.mvpId) {
-          const title = form.getValues("title");
-          const description = form.getValues("description");
-          const ctaButtonText = form.getValues("ctaButtonText");
 
-          const generatedHTML = await generateMVPWithAI(
-            state.ideaId,
-            state.mvpId,
-            title,
-            description,
-            ctaButtonText
-          );
+        try {
+          if (state.ideaId && state.mvpId) {
+            const title = form.getValues("title");
+            const description = form.getValues("description");
+            const ctaButtonText = form.getValues("ctaButtonText");
 
-          if (generatedHTML.error) {
-            console.error("Error generating MVP with AI:", generatedHTML.error);
-            return;
-          }
-
-          if (generatedHTML.htmlContent) {
-            const validatedHtmlRes = getValidatedHtml(
+            const generatedHTML = await generateMVPWithAI(
               state.ideaId,
               state.mvpId,
-              generatedHTML.htmlContent,
-              undefined,
               title,
               description,
-              "ctaButton"
+              ctaButtonText
             );
 
-            if (!validatedHtmlRes.isValid) {
-              console.warn(
-                "HTML validation failed:",
-                validatedHtmlRes.errorMessage
+            if (generatedHTML.error) {
+              console.error(
+                "Error generating MVP with AI:",
+                generatedHTML.error
               );
+              toast.error(errorMessage);
+
               return;
             }
 
-            if (validatedHtmlRes.html) {
-              const updatedMVPRes = await updateMVP(
+            if (generatedHTML.htmlContent) {
+              const validatedHtmlRes = getValidatedHtml(
                 state.ideaId,
                 state.mvpId,
-                validatedHtmlRes.html
+                generatedHTML.htmlContent,
+                undefined,
+                title,
+                description,
+                "ctaButton"
               );
 
-              if (updatedMVPRes.error) {
-                console.error("Error updating MVP:", updatedMVPRes.error);
+              if (!validatedHtmlRes.isValid) {
+                console.warn(
+                  "HTML validation failed:",
+                  validatedHtmlRes.errorMessage
+                );
+                toast.error(errorMessage);
                 return;
               }
+
+              if (validatedHtmlRes.html) {
+                const updatedMVPRes = await updateMVP(
+                  state.ideaId,
+                  state.mvpId,
+                  validatedHtmlRes.html
+                );
+
+                if (updatedMVPRes.error) {
+                  console.error("Error updating MVP:", updatedMVPRes.error);
+                  toast.error(errorMessage);
+
+                  return;
+                }
+
+                toast.success(state.message);
+                form.reset();
+
+                if (formRef.current) {
+                  formRef.current.reset();
+                }
+
+                setShowNextStepsModal(true);
+              }
+            } else {
+              console.error("No HTML content generated for MVP");
+              toast.error(errorMessage);
             }
+          } else {
+            console.error("Idea ID or MVP ID is missing in state");
+            toast.error(errorMessage);
           }
+        } catch (error) {
+          console.error(
+            "An unexpected error occurred during MVP generation:",
+            error
+          );
+
+          toast.error(errorMessage);
+        } finally {
+          setIsGeneratingMvp(false);
         }
       };
 
       createMVPWithAI();
-
-      toast.success(state.message);
-      form.reset();
-
-      if (formRef.current) {
-        formRef.current.reset();
-      }
-
-      setShowNextStepsModal(true);
     }
   }, [state, form, router]);
+
+  const isPending = isSubmittingIdea || isGeneratingMvp;
+  let buttonText = "Create My Validation Page";
+  if (isSubmittingIdea) {
+    buttonText = "Submitting Idea...";
+  } else if (isGeneratingMvp) {
+    buttonText = "Generating Landing Page...";
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
@@ -309,7 +349,7 @@ export default function SubmitPage() {
 
             <div className="pt-4">
               <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? "Creating..." : "Create My Validation Page"}
+                {buttonText}
               </Button>
             </div>
           </form>
