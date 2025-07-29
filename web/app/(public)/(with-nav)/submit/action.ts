@@ -77,6 +77,11 @@ export const submitIdea = async (
       revalidateAPICfCache("/ideas/"),
     ]);
 
+    console.log(
+      `Idea ${idea.title} by ${user.userId} submitted successfully:`,
+      responseData
+    );
+
     return {
       message: `Idea "${idea.title}" submitted successfully!`,
       ideaId: responseData.id,

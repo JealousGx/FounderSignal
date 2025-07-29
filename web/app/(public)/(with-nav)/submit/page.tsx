@@ -1,8 +1,9 @@
 "use client";
 
 import { AlertCircle } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -31,6 +32,14 @@ import { getValidatedHtml } from "../../mvp/[ideaId]/edit/hooks/validation";
 import { submitIdea, SubmitIdeaState } from "./action";
 import { formSchema } from "./schema";
 
+const NextStepsModal = dynamic(
+  () =>
+    import("@/components/dashboard/next-steps-modal").then(
+      (mod) => mod.NextStepsModal
+    ),
+  { ssr: false }
+);
+
 export default function SubmitPage() {
   const [state, formAction, isPending] = useActionState<
     SubmitIdeaState | null,
@@ -38,6 +47,7 @@ export default function SubmitPage() {
   >(submitIdea, null);
 
   const router = useRouter();
+  const [showNextStepsModal, setShowNextStepsModal] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -65,6 +75,7 @@ export default function SubmitPage() {
         }
       }
     }
+
     if (state?.message && !state.error) {
       const createMVPWithAI = async () => {
         console.log("Creating MVP with AI...", state.ideaId, state.mvpId);
@@ -130,11 +141,7 @@ export default function SubmitPage() {
         formRef.current.reset();
       }
 
-      if (state.ideaId) {
-        const timer = setTimeout(() => router.push(`/dashboard/ideas`), 1000);
-
-        return () => clearTimeout(timer);
-      }
+      setShowNextStepsModal(true);
     }
   }, [state, form, router]);
 
@@ -320,6 +327,14 @@ export default function SubmitPage() {
           </a>
         </p>
       </div>
+
+      {state?.ideaId && (
+        <NextStepsModal
+          open={showNextStepsModal}
+          onClose={() => setShowNextStepsModal(false)}
+          ideaId={state.ideaId}
+        />
+      )}
     </div>
   );
 }
