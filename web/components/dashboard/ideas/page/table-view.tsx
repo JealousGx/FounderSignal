@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Badge } from "@/components/ui/badge";
 import { OptimizedImage } from "@/components/ui/image";
 import {
@@ -39,7 +41,10 @@ export default function IdeasTableView({ ideas }: IdeasTableViewProps) {
             ideas.map((idea) => (
               <TableRow key={idea.id}>
                 <TableCell className="font-medium">
-                  <div className="flex items-center gap-3">
+                  <Link
+                    href={`/dashboard/ideas/${idea.id}`}
+                    className="w-max flex items-center gap-3"
+                  >
                     <div className="h-12 w-12 rounded overflow-hidden flex-shrink-0">
                       {idea.imageUrl && idea.imageUrl !== "" && (
                         <OptimizedImage
@@ -57,7 +62,7 @@ export default function IdeasTableView({ ideas }: IdeasTableViewProps) {
                         {idea.description}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                 </TableCell>
                 <TableCell>
                   <Badge
