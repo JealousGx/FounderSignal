@@ -21,7 +21,7 @@ export function NextStepsModal({
 }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] p-6 rounded-lg shadow-xl animate-in fade-in-90 zoom-in-95">
+      <DialogContent className="sm:max-w-[425px] p-6 rounded-lg shadow-xl animate-in fade-in-90 zoom-in-95 overflow-auto h-[80vh]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-primary">
             🎉 Idea Submitted!
