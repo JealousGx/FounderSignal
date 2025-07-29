@@ -7,10 +7,7 @@ import { z } from "zod";
 import { updateIdeaSchema, updateMVPSchema } from "./schema";
 
 import { api } from "@/lib/api";
-import {
-  revalidateAPICfCache,
-  revalidateCfCache,
-} from "@/lib/cloudflare/cache";
+import { revalidateCfCacheBatch } from "@/lib/cloudflare/cache";
 
 type FieldError = Partial<
   Record<keyof z.infer<typeof updateIdeaSchema>, string>
@@ -88,10 +85,10 @@ export const updateIdea = async (
     }
 
     revalidateTag(`idea-${ideaId}`);
-    await Promise.all([
-      await revalidateCfCache(`/explore/${ideaId}`),
-      await revalidateAPICfCache(`/ideas/${ideaId}`),
-    ]);
+    await revalidateCfCacheBatch({
+      api: [`/ideas/${ideaId}`],
+      web: [`/explore/${ideaId}`],
+    });
 
     return {
       message: `Idea updated successfully!`,
@@ -128,12 +125,10 @@ export const deleteIdea = async (id: string) => {
     }
 
     revalidateTag(`ideas`);
-    await Promise.all([
-      revalidateCfCache(`/explore/${id}`),
-      revalidateCfCache(`/explore`),
-      revalidateAPICfCache(`/ideas/`),
-      revalidateAPICfCache(`/ideas/${id}`),
-    ]);
+    await revalidateCfCacheBatch({
+      api: ["/ideas/", `/ideas/${id}`],
+      web: ["/explore", `/explore/${id}`],
+    });
 
     return {
       message: `Idea deleted successfully!`,
@@ -170,10 +165,10 @@ export const updateIdeaAttributes = async (
     }
 
     revalidateTag(`idea-${ideaId}`);
-    await Promise.all([
-      revalidateCfCache(`/explore/${ideaId}`),
-      revalidateAPICfCache(`/ideas/${ideaId}`),
-    ]);
+    await revalidateCfCacheBatch({
+      api: [`/ideas/${ideaId}`],
+      web: [`/explore/${ideaId}`],
+    });
 
     return responseData;
   });
@@ -205,10 +200,10 @@ export const setMVPActive = async (ideaId: string, mvpId: string) => {
     }
 
     revalidateTag(`mvp-${mvpId}`);
-    await Promise.all([
-      revalidateCfCache(`/mvp/${ideaId}`),
-      revalidateAPICfCache(`/ideas/${ideaId}/mvp`),
-    ]);
+    await revalidateCfCacheBatch({
+      api: [`/ideas/${ideaId}/mvp`],
+      web: [`/mvp/${ideaId}`],
+    });
 
     return {
       message: `Landing page "${responseData.mvp.name}" is now active!`,
@@ -244,10 +239,10 @@ export const deleteMvp = async (ideaId: string, mvpId: string) => {
     }
 
     revalidateTag(`mvp-${mvpId}`);
-    await Promise.all([
-      revalidateCfCache(`/mvp/${ideaId}`),
-      revalidateAPICfCache(`/ideas/${ideaId}/mvp`),
-    ]);
+    await revalidateCfCacheBatch({
+      api: [`/ideas/${ideaId}/mvp`],
+      web: [`/mvp/${ideaId}`],
+    });
 
     return {
       message: `Landing page "${responseData.mvp.name}" deleted successfully!`,

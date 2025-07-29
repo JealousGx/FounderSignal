@@ -1,8 +1,9 @@
 "use client";
 
 import { AlertCircle } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -23,8 +24,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import {
+  generateMVPWithAI,
+  updateMVP,
+} from "../../mvp/[ideaId]/edit/hooks/actions";
+import { getValidatedHtml } from "../../mvp/[ideaId]/edit/hooks/validation";
 import { submitIdea, SubmitIdeaState } from "./action";
 import { formSchema } from "./schema";
+
+const NextStepsModal = dynamic(
+  () =>
+    import("@/components/dashboard/next-steps-modal").then(
+      (mod) => mod.NextStepsModal
+    ),
+  { ssr: false }
+);
 
 export default function SubmitPage() {
   const [state, formAction, isPending] = useActionState<
@@ -33,6 +47,7 @@ export default function SubmitPage() {
   >(submitIdea, null);
 
   const router = useRouter();
+  const [showNextStepsModal, setShowNextStepsModal] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -60,7 +75,65 @@ export default function SubmitPage() {
         }
       }
     }
+
     if (state?.message && !state.error) {
+      const createMVPWithAI = async () => {
+        console.log("Creating MVP with AI...", state.ideaId, state.mvpId);
+        if (state.ideaId && state.mvpId) {
+          const title = form.getValues("title");
+          const description = form.getValues("description");
+          const ctaButtonText = form.getValues("ctaButtonText");
+
+          const generatedHTML = await generateMVPWithAI(
+            state.ideaId,
+            state.mvpId,
+            title,
+            description,
+            ctaButtonText
+          );
+
+          if (generatedHTML.error) {
+            console.error("Error generating MVP with AI:", generatedHTML.error);
+            return;
+          }
+
+          if (generatedHTML.htmlContent) {
+            const validatedHtmlRes = getValidatedHtml(
+              state.ideaId,
+              state.mvpId,
+              generatedHTML.htmlContent,
+              undefined,
+              title,
+              description,
+              "ctaButton"
+            );
+
+            if (!validatedHtmlRes.isValid) {
+              console.warn(
+                "HTML validation failed:",
+                validatedHtmlRes.errorMessage
+              );
+              return;
+            }
+
+            if (validatedHtmlRes.html) {
+              const updatedMVPRes = await updateMVP(
+                state.ideaId,
+                state.mvpId,
+                validatedHtmlRes.html
+              );
+
+              if (updatedMVPRes.error) {
+                console.error("Error updating MVP:", updatedMVPRes.error);
+                return;
+              }
+            }
+          }
+        }
+      };
+
+      createMVPWithAI();
+
       toast.success(state.message);
       form.reset();
 
@@ -68,11 +141,7 @@ export default function SubmitPage() {
         formRef.current.reset();
       }
 
-      if (state.ideaId) {
-        const timer = setTimeout(() => router.push(`/dashboard/ideas`), 1000);
-
-        return () => clearTimeout(timer);
-      }
+      setShowNextStepsModal(true);
     }
   }, [state, form, router]);
 
@@ -258,6 +327,14 @@ export default function SubmitPage() {
           </a>
         </p>
       </div>
+
+      {state?.ideaId && (
+        <NextStepsModal
+          open={showNextStepsModal}
+          onClose={() => setShowNextStepsModal(false)}
+          ideaId={state.ideaId}
+        />
+      )}
     </div>
   );
 }

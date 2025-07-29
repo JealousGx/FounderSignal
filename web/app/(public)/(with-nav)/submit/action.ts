@@ -7,10 +7,7 @@ import { z } from "zod";
 import { formSchema } from "./schema";
 
 import { api } from "@/lib/api";
-import {
-  revalidateAPICfCache,
-  revalidateCfCache,
-} from "@/lib/cloudflare/cache";
+import { revalidateCfCacheBatch } from "@/lib/cloudflare/cache";
 
 type FieldError = Partial<Record<keyof z.infer<typeof formSchema>, string>>;
 
@@ -19,6 +16,7 @@ export type SubmitIdeaState = {
   error?: string;
   fieldErrors?: FieldError;
   ideaId?: string;
+  mvpId?: string;
 };
 
 export const submitIdea = async (
@@ -71,14 +69,20 @@ export const submitIdea = async (
     }
 
     revalidateTag("ideas");
-    await Promise.all([
-      revalidateCfCache("/explore"),
-      revalidateAPICfCache("/ideas/"),
-    ]);
+    await revalidateCfCacheBatch({
+      api: [`/ideas/`],
+      web: [`/explore`],
+    });
+
+    console.log(
+      `Idea ${idea.title} by ${user.userId} submitted successfully:`,
+      responseData
+    );
 
     return {
       message: `Idea "${idea.title}" submitted successfully!`,
       ideaId: responseData.id,
+      mvpId: responseData.mvpId,
     };
   } catch (e: unknown) {
     console.error("Submission failed:", e);

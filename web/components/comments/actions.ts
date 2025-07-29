@@ -6,10 +6,7 @@ import { revalidateTag } from "next/cache";
 import { ReplyFormValues, messageSchema } from "./schema";
 
 import { api } from "@/lib/api";
-import {
-  revalidateAPICfCache,
-  revalidateCfCache,
-} from "@/lib/cloudflare/cache";
+import { revalidateCfCacheBatch } from "@/lib/cloudflare/cache";
 
 type FieldError = Partial<Record<keyof ReplyFormValues, string>>;
 
@@ -77,10 +74,10 @@ export const submitReply = async (
     }
 
     revalidateTag(`comments-${ideaId}`);
-    await Promise.all([
-      revalidateCfCache(`/explore/${ideaId}`),
-      revalidateAPICfCache(`/ideas/${ideaId}/feedback`),
-    ]);
+    await revalidateCfCacheBatch({
+      api: [`/ideas/${ideaId}/feedback`],
+      web: [`/explore/${ideaId}`],
+    });
 
     return {
       message: commentId
@@ -135,10 +132,11 @@ export const submitReaction = async (
     }
 
     revalidateTag(revalidationTag);
-    await Promise.all([
-      revalidateCfCache(`/explore/${ideaId}`),
-      revalidateAPICfCache(cfAPIRevalidationPath),
-    ]);
+
+    await revalidateCfCacheBatch({
+      api: [cfAPIRevalidationPath],
+      web: [`/explore/${ideaId}`],
+    });
 
     return {
       message: "Reaction submitted successfully!",
@@ -185,10 +183,10 @@ export const updateComment = async (
     }
 
     revalidateTag(`comments-${ideaId}`);
-    await Promise.all([
-      revalidateCfCache(`/explore/${ideaId}`),
-      revalidateAPICfCache(`/ideas/${ideaId}/feedback`),
-    ]);
+    await revalidateCfCacheBatch({
+      api: [`/ideas/${ideaId}/feedback`],
+      web: [`/explore/${ideaId}`],
+    });
 
     return {
       message: "Comment updated successfully!",
@@ -227,10 +225,10 @@ export const deleteComment = async (
     }
 
     revalidateTag(`comments-${ideaId}`);
-    await Promise.all([
-      revalidateCfCache(`/explore/${ideaId}`),
-      revalidateAPICfCache(`/ideas/${ideaId}/feedback`),
-    ]);
+    await revalidateCfCacheBatch({
+      api: [`/ideas/${ideaId}/feedback`],
+      web: [`/explore/${ideaId}`],
+    });
 
     return {
       message: "Comment deleted successfully!",

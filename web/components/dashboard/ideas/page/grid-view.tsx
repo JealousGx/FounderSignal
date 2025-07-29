@@ -1,4 +1,5 @@
 import { BarChart2 } from "lucide-react";
+import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { OptimizedImage } from "@/components/ui/image";
-import { Link } from "@/components/ui/link";
+import { Link as CustomLink } from "@/components/ui/link";
 import { EngagementIndicator } from "./engagement-indicator";
 
 import { Idea } from "@/types/idea";
@@ -47,7 +48,9 @@ export default function IdeasGridView({ ideas }: IdeasGridViewProps) {
             </div>
 
             <CardHeader className="pb-2 flex-grow">
-              <CardTitle className="text-lg">{idea.title}</CardTitle>
+              <CardTitle className="text-lg">
+                <Link href={`/dashboard/ideas/${idea.id}`}>{idea.title}</Link>
+              </CardTitle>
 
               <CardDescription className="line-clamp-2">
                 {idea.description}
@@ -96,10 +99,10 @@ export default function IdeasGridView({ ideas }: IdeasGridViewProps) {
             </CardContent>
 
             <CardFooter className="pt-0 flex justify-between">
-              <Link size="sm" href={`/dashboard/ideas/${idea.id}`}>
+              <CustomLink size="sm" href={`/dashboard/ideas/${idea.id}`}>
                 <BarChart2 className="h-4 w-4 mr-1" />
                 Analytics
-              </Link>
+              </CustomLink>
 
               <IdeaCardActions idea={idea} />
             </CardFooter>

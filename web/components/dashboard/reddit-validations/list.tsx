@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { CheckCircle, Clock, TrendingUp, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import {
@@ -142,6 +143,14 @@ export function RedditValidationList({
           <Link
             href="/dashboard/ideas"
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
+            onClick={() => {
+              toast.info(
+                "Generate your first Reddit validation from an idea page to get started!",
+                {
+                  duration: 5000,
+                }
+              );
+            }}
           >
             Validate an Idea
           </Link>
