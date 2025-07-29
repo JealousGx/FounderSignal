@@ -22,7 +22,7 @@ import (
 )
 
 type IdeaService interface {
-	Create(ctx context.Context, userId string, req *request.CreateIdea) (uuid.UUID, error)
+	Create(ctx context.Context, userId string, req *request.CreateIdea) (uuid.UUID, uuid.UUID, error)
 	Update(ctx context.Context, userId string, ideaId uuid.UUID, req request.UpdateIdea) error
 	Delete(ctx context.Context, userId string, ideaId uuid.UUID) error
 	GetIdeas(ctx context.Context, queryParams domain.QueryParams) (*response.IdeaListResponse, error)
@@ -58,13 +58,13 @@ func NewIdeasService(repo repository.IdeaRepository, mvpRepo repository.MVPRepos
 	}
 }
 
-func (s *ideaService) Create(ctx context.Context, userId string, req *request.CreateIdea) (uuid.UUID, error) {
+func (s *ideaService) Create(ctx context.Context, userId string, req *request.CreateIdea) (uuid.UUID, uuid.UUID, error) {
 	user, err := s.u.FindByID(ctx, userId)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("failed to find user: %w", err)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to find user: %w", err)
 	}
 	if user == nil {
-		return uuid.Nil, fmt.Errorf("user not found")
+		return uuid.Nil, uuid.Nil, fmt.Errorf("user not found")
 	}
 
 	// The following commented-out code is a placeholder for future logic to handle starter trial limits.
@@ -77,18 +77,18 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 	activeStatus := domain.IdeaStatusActive
 	currentCount, err := s.repo.GetCountForUser(ctx, userId, nil, nil, &activeStatus)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("failed to check idea count: %w", err)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to check idea count: %w", err)
 	}
 	if int(currentCount) >= ideaLimit {
 		ideaStatus = domain.IdeaStatusDraft // If user has reached their limit, set status to draft
 	}
 
 	if err := validator.Validate(req); err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, uuid.Nil, err
 	}
 
 	if userId == "" {
-		return uuid.Nil, fmt.Errorf("userId is required")
+		return uuid.Nil, uuid.Nil, fmt.Errorf("userId is required")
 	}
 
 	// unique slug for the idea, include last part of userId at the end of the slug
@@ -114,13 +114,13 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 
 	existingDeletedIdea, err := s.repo.FindDeletedByTitleAndUserID(ctx, userId, req.Title)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("failed to check for existing deleted idea: %w", err)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to check for existing deleted idea: %w", err)
 	}
 
 	if existingDeletedIdea != nil {
 		if req.ForceNew {
 			if err := s.repo.HardDelete(ctx, existingDeletedIdea.ID); err != nil {
-				return uuid.Nil, fmt.Errorf("failed to hard delete previous idea for new creation: %w", err)
+				return uuid.Nil, uuid.Nil, fmt.Errorf("failed to hard delete previous idea for new creation: %w", err)
 			}
 
 			log.Printf("Successfully hard-deleted old idea %s to create a new one with title '%s'", existingDeletedIdea.ID, req.Title)
@@ -131,15 +131,15 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 
 			// If a soft-deleted idea is found, restore it instead of creating a new one
 			if err := s.repo.Restore(ctx, idea); err != nil {
-				return uuid.Nil, fmt.Errorf("failed to restore idea: %w", err)
+				return uuid.Nil, uuid.Nil, fmt.Errorf("failed to restore idea: %w", err)
 			}
-			return existingDeletedIdea.ID, nil
+			return existingDeletedIdea.ID, uuid.Nil, nil
 		}
 	}
 
 	ideaId, err := s.repo.Create(ctx, idea)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("failed to create idea: %w", err)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to create idea: %w", err)
 	}
 
 	mvp := &domain.MVPSimulator{
@@ -152,7 +152,7 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 
 	if _, err := s.mvpRepo.Create(ctx, mvp); err != nil {
 		log.Printf("Error creating MVP for idea %s: %v", idea.ID, err)
-		return ideaId, fmt.Errorf("failed to create MVP for idea: %w", err)
+		return ideaId, uuid.Nil, fmt.Errorf("failed to create MVP for idea: %w", err)
 	}
 
 	// If the user is on the starter plan / not paying, set the UsedFreeTrial flag to true
@@ -166,7 +166,7 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		}
 	}
 
-	return ideaId, nil
+	return ideaId, mvp.ID, nil
 }
 
 func (s *ideaService) Update(ctx context.Context, userId string, ideaId uuid.UUID, req request.UpdateIdea) error {

@@ -42,14 +42,14 @@ func (h *ideaHandler) Create(c *gin.Context) {
 		return
 	}
 
-	createdIdeaId, err := h.service.Create(c.Request.Context(), userId.(string), &idea)
+	createdIdeaId, mvpId, err := h.service.Create(c.Request.Context(), userId.(string), &idea)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"id": createdIdeaId})
+	c.JSON(http.StatusCreated, gin.H{"id": createdIdeaId, "mvpId": mvpId, "message": "Idea created successfully"})
 }
 
 func (h *ideaHandler) Update(c *gin.Context) {
