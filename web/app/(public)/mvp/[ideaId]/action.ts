@@ -4,10 +4,7 @@ import { revalidateTag } from "next/cache";
 import { cache } from "react";
 
 import { api } from "@/lib/api";
-import {
-  revalidateAPICfCache,
-  revalidateCfCache,
-} from "@/lib/cloudflare/cache";
+import { revalidateCfCacheBatch } from "@/lib/cloudflare/cache";
 
 export async function sendSignal(
   ideaId: string,
@@ -23,10 +20,10 @@ export async function sendSignal(
     console.log(`Signal '${eventType}' sent for idea ${ideaId}`, metadata);
 
     revalidateTag(`idea-${ideaId}`);
-    await Promise.all([
-      revalidateCfCache(`/explore/${ideaId}`),
-      revalidateAPICfCache(`/ideas/${ideaId}`),
-    ]);
+    await revalidateCfCacheBatch({
+      api: [`/ideas/${ideaId}`],
+      web: [`/explore/${ideaId}`],
+    });
   } catch (error) {
     console.error("Error in sendSignal:", error);
   }

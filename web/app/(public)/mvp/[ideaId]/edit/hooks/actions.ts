@@ -5,10 +5,7 @@ import { revalidateTag } from "next/cache";
 
 import { getLandingPagePromptTemplate } from "@/constants/prompts/landing-page";
 import { api } from "@/lib/api";
-import {
-  revalidateAPICfCache,
-  revalidateCfCache,
-} from "@/lib/cloudflare/cache";
+import { revalidateCfCacheBatch } from "@/lib/cloudflare/cache";
 import { deleteFile, getSignedUrlForUpload } from "@/lib/cloudflare/r2";
 
 export const updateMVP = async (
@@ -69,10 +66,10 @@ export const updateMVP = async (
     }
 
     revalidateTag(`mvp-${ideaId}`);
-    await Promise.all([
-      revalidateCfCache(`/mvp/${ideaId}`),
-      revalidateAPICfCache(`/ideas/${ideaId}/mvp`),
-    ]);
+    await revalidateCfCacheBatch({
+      api: [`/ideas/${ideaId}/mvp`],
+      web: [`/mvp/${ideaId}`],
+    });
 
     return {
       message: `Landing page updated successfully!`,

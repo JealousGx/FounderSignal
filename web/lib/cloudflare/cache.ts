@@ -2,6 +2,64 @@
 
 /**
  *
+ * @param params An object containing two arrays: `api` and `web`.
+ * Each array should contain paths that you want to invalidate in the Cloudflare cache.
+ * The paths should be relative to the base URLs of your API and web applications.
+ * For example, if your API URL is `https://api.example.com` and you want to invalidate the cache for `https://api.example.com/api/v1/some/path`, you would pass `/api/v1/some/path` in the `api` array.
+ * Similarly, if your web URL is `https://example.com` and you want to invalidate the cache for `https://example.com/some/path`, you would pass `/some/path` in the `web` array.
+ * @returns
+ */
+export const revalidateCfCacheBatch = async ({
+  api,
+  web,
+}: {
+  api: string[];
+  web: string[];
+}) => {
+  if (process.env.ENVIRONMENT === "local") {
+    console.log("Skipping Cloudflare cache invalidation in local mode.");
+    return;
+  }
+
+  const apiUrls = api.map(
+    (path) => new URL(`${process.env.NEXT_PUBLIC_API_URL}${path}`)
+  );
+  const webUrls = web.map(
+    (path) => new URL(`${process.env.NEXT_PUBLIC_APP_URL}${path}`)
+  );
+
+  const prefixes = [...apiUrls, ...webUrls].map(
+    (url) => url.hostname + url.pathname
+  );
+
+  console.log(
+    `Invalidating Cloudflare cache for (${apiUrls.length}) API URLs and (${webUrls.length}) Web URLs`
+  );
+
+  try {
+    const res = await customFetch(
+      JSON.stringify({
+        prefixes,
+      })
+    );
+
+    if (!res.ok) {
+      const errorText = await res.text();
+
+      console.error("Error invalidating cache:", errorText);
+
+      throw new Error(`Failed to invalidate cache: ${errorText}`);
+    }
+
+    const data = await res.json();
+    console.log("Cache invalidation response:", data);
+  } catch (error) {
+    console.error("Unhandled error during cache invalidation:", error);
+  }
+};
+
+/**
+ *
  * @param path The path to invalidate in the Cloudflare cache.
  * This should be the path relative to the base URL of your application.
  * For example, if your app URL is `https://example.com` and you want to
