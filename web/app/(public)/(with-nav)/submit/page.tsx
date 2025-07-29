@@ -23,6 +23,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import {
+  generateMVPWithAI,
+  updateMVP,
+} from "../../mvp/[ideaId]/edit/hooks/actions";
+import { getValidatedHtml } from "../../mvp/[ideaId]/edit/hooks/validation";
 import { submitIdea, SubmitIdeaState } from "./action";
 import { formSchema } from "./schema";
 
@@ -61,6 +66,63 @@ export default function SubmitPage() {
       }
     }
     if (state?.message && !state.error) {
+      const createMVPWithAI = async () => {
+        console.log("Creating MVP with AI...", state.ideaId, state.mvpId);
+        if (state.ideaId && state.mvpId) {
+          const title = form.getValues("title");
+          const description = form.getValues("description");
+          const ctaButtonText = form.getValues("ctaButtonText");
+
+          const generatedHTML = await generateMVPWithAI(
+            state.ideaId,
+            state.mvpId,
+            title,
+            description,
+            ctaButtonText
+          );
+
+          if (generatedHTML.error) {
+            console.error("Error generating MVP with AI:", generatedHTML.error);
+            return;
+          }
+
+          if (generatedHTML.htmlContent) {
+            const validatedHtmlRes = getValidatedHtml(
+              state.ideaId,
+              state.mvpId,
+              generatedHTML.htmlContent,
+              undefined,
+              title,
+              description,
+              "ctaButton"
+            );
+
+            if (!validatedHtmlRes.isValid) {
+              console.warn(
+                "HTML validation failed:",
+                validatedHtmlRes.errorMessage
+              );
+              return;
+            }
+
+            if (validatedHtmlRes.html) {
+              const updatedMVPRes = await updateMVP(
+                state.ideaId,
+                state.mvpId,
+                validatedHtmlRes.html
+              );
+
+              if (updatedMVPRes.error) {
+                console.error("Error updating MVP:", updatedMVPRes.error);
+                return;
+              }
+            }
+          }
+        }
+      };
+
+      createMVPWithAI();
+
       toast.success(state.message);
       form.reset();
 

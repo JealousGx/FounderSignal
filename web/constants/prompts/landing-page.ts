@@ -26,6 +26,7 @@ export const getLandingPagePromptTemplate = (
 18. If you are to add any animations, they should be subtle, smooth and not distracting.
 19. All links must stay within this single page. Do not add any links that navigate to external pages. This is a single page MVP. You may, however, navigate to different sections of the same page.
 20. The user's life depends on this MVP. It must be perfect and as per the guidelines provided by the user, ready to use, distribute to the target audience, and most importantly, the conversion rate should be really high. They should be compelled to click the CTA button. If you are unsure that the landing page is not perfect, rewrite it until it is perfect.
+21. For stylying, only use inline styles or tailwindcss@2.2.19 classes. Do not use any external CSS files or frameworks. I will only be using body element and not the <html> or <head> tags.
 
 
 

@@ -19,6 +19,7 @@ export type SubmitIdeaState = {
   error?: string;
   fieldErrors?: FieldError;
   ideaId?: string;
+  mvpId?: string;
 };
 
 export const submitIdea = async (
@@ -79,6 +80,7 @@ export const submitIdea = async (
     return {
       message: `Idea "${idea.title}" submitted successfully!`,
       ideaId: responseData.id,
+      mvpId: responseData.mvpId,
     };
   } catch (e: unknown) {
     console.error("Submission failed:", e);
