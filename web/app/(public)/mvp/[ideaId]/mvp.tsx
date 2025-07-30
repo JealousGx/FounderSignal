@@ -1,28 +1,26 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
+
 import { sendSignal } from "./action";
 
 interface MVPProps {
   htmlContent: string;
   ideaId: string;
+  mvpId: string | null | undefined;
 }
 
-export const MVP = ({ htmlContent, ideaId }: MVPProps) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  useEffect(() => {
-    if (iframeRef?.current && htmlContent) {
-      const doc =
-        iframeRef.current.contentDocument ||
-        iframeRef.current.contentWindow?.document;
-      if (doc) {
-        doc.open();
-        doc.writeln(htmlContent);
-        doc.close();
+export const MVP = ({ htmlContent, ideaId, mvpId }: MVPProps) => {
+  const handleSignal = useCallback(
+    async (eventType: string, metadata?: { [key: string]: unknown }) => {
+      try {
+        await sendSignal(ideaId, mvpId, eventType, metadata);
+      } catch (error) {
+        console.error("Error sending signal:", error);
       }
-    }
-  }, [htmlContent]);
+    },
+    [ideaId, mvpId]
+  );
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -33,18 +31,19 @@ export const MVP = ({ htmlContent, ideaId }: MVPProps) => {
         type,
         eventType,
         ideaId: msgIdeaId,
-        mvpId,
+        mvpId: msgMvpId,
         metadata,
       } = event.data;
 
       if (type === "founderSignalTrack" && msgIdeaId === ideaId && eventType) {
         console.log("Received track event from MVP iframe:", {
           eventType,
-          ideaId,
-          mvpId,
+          ideaId: msgIdeaId,
+          mvpId: msgMvpId,
           metadata,
         });
-        sendSignal(ideaId, mvpId, eventType, metadata);
+
+        handleSignal(eventType, metadata);
       }
     };
 
@@ -53,11 +52,10 @@ export const MVP = ({ htmlContent, ideaId }: MVPProps) => {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [ideaId]);
+  }, [ideaId, handleSignal]);
 
   return (
     <iframe
-      ref={iframeRef}
       title="MVP Landing Page Preview"
       style={{ width: "100%", height: "100vh", border: "none" }}
       sandbox="allow-scripts allow-same-origin allow-modals"

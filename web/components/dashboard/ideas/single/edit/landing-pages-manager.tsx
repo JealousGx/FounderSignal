@@ -2,6 +2,7 @@
 
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,7 @@ import { LandingPageCard } from "./landing-page-card";
 
 import { DBUser } from "@/types/db-user";
 import { LandingPage } from "@/types/idea";
+import { toast } from "sonner";
 
 interface LandingPagesManagerProps {
   mvps: LandingPage[];
@@ -27,6 +29,8 @@ export default function LandingPagesManager({
   ideaId,
   user,
 }: LandingPagesManagerProps) {
+  const [isCreating, setIsCreating] = useState(false);
+
   const getMVPLimit = () => {
     switch (user?.plan) {
       case "pro":
@@ -39,11 +43,25 @@ export default function LandingPagesManager({
   };
 
   const onCreateMVP = async () => {
+    if (isCreating) return; // Prevent multiple clicks
+
+    if (mvps.length >= getMVPLimit()) {
+      toast.error(
+        `You have reached the limit of ${getMVPLimit()} landing pages for your plan. Upgrade to create more.`
+      );
+
+      return;
+    }
+
+    setIsCreating(true);
+
     const result = await createMVP(ideaId);
     if (result.error || !result.mvpId) {
       console.error("Error creating MVP:", result.error);
       return;
     }
+
+    setIsCreating(false);
 
     window.open(`/mvp/${ideaId}/edit?mvpId=${result.mvpId}`, "_blank");
   };
@@ -74,9 +92,37 @@ export default function LandingPagesManager({
             </TooltipContent>
           </Tooltip>
         ) : (
-          <Button onClick={onCreateMVP}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create New Landing Page
+          <Button onClick={onCreateMVP} disabled={isCreating}>
+            {isCreating ? (
+              <span className="flex items-center">
+                <svg
+                  className="animate-spin h-4 w-4 mr-2"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0a10 10 0 00-10 10h2zm2.93 5.07A8 8 0 0112 20v2a10 10 0 0010-10h-2a8 8 0 01-7.07 7.07zM12 4a8 8 0 018 8h2a10 10 0 00-10-10V4z"
+                  ></path>
+                </svg>
+                Creating...
+              </span>
+            ) : (
+              <>
+                <Plus className="mr-2 h-4 w-4" />
+                Create New Landing Page
+              </>
+            )}
           </Button>
         )}
       </div>

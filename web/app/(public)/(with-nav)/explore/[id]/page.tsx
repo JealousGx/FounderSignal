@@ -153,7 +153,7 @@ export default async function IdeaPage({
                 </div>
 
                 <div className="flex items-center text-gray-600">
-                  <Users className="w-4 h-4 mr-1.5" />
+                  <Users className="w-4 h-4 mr-1.5 flex-shrink-0" />
                   <span>{idea.targetAudience}</span>
                 </div>
               </div>
