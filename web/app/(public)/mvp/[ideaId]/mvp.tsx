@@ -7,7 +7,7 @@ import { sendSignal } from "./action";
 interface MVPProps {
   htmlContent: string;
   ideaId: string;
-  mvpId: string | null | undefined;
+  mvpId?: string | null;
 }
 
 export const MVP = ({ htmlContent, ideaId, mvpId }: MVPProps) => {
