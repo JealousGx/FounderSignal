@@ -69,7 +69,7 @@ export function IdeaSettings({ idea }: { idea: Idea }) {
         </CardContent>
       </Card>
 
-      <div className="w-full flex space-x-4">
+      <div className="w-full flex gap-4 flex-wrap">
         <IdeaVisibility ideaId={idea.id} isPrivate={idea.isPrivate} />
 
         <Card className="flex-1 bg-white border-gray-200">

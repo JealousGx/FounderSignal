@@ -91,18 +91,21 @@ export function OverviewTab({ validation }: { validation: RedditValidation }) {
                 {validation.topRedditThreads.slice(0, 5).map((thread) => (
                   <div
                     key={thread.id}
-                    className="flex items-start justify-between p-3 border rounded-lg"
+                    className="flex flex-col sm:flex-row sm:items-start sm:justify-between p-3 border rounded-lg gap-2"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className="text-xs">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <Badge
+                          variant="outline"
+                          className="text-xs max-w-[90vw] break-words"
+                        >
                           r/{thread.subreddit}
                         </Badge>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 break-words">
                           {thread.score} points • {thread.comments} comments
                         </span>
                       </div>
-                      <h4 className="font-medium text-sm line-clamp-2">
+                      <h4 className="font-medium text-sm line-clamp-2 break-words max-w-[90vw]">
                         {thread.title}
                       </h4>
                     </div>

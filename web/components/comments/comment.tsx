@@ -164,7 +164,7 @@ export const CommentItem = ({
               </p>
 
               <div className="w-full flex items-center gap-1 flex-col">
-                <div className="flex items-center gap-1 flex-start w-full">
+                <div className="flex items-center gap-1 flex-start w-full flex-wrap">
                   {userId && (
                     <>
                       <ReactionButtons

@@ -18,7 +18,7 @@ export default function IdeaHeader({ ideaId }: IdeaHeaderProps) {
         <h1 className="font-semibold text-lg md:text-xl">Idea Details</h1>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
         <Link
           href={`/dashboard/ideas/${ideaId}/edit`}
           variant="outline"

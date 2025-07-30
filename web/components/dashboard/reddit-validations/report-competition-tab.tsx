@@ -30,10 +30,13 @@ export function CompetitionTab({
           <div className="space-y-4">
             {competition.existingTools.map((tool, index) => (
               <div key={index} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium">{tool.name}</h4>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
+                  <h4 className="font-medium break-words max-w-[90vw]">
+                    {tool.name}
+                  </h4>
                   <Badge
                     variant={tool.sentiment > 0.6 ? "default" : "secondary"}
+                    className="break-words"
                   >
                     {(tool.sentiment * 100).toFixed(0)}% sentiment
                   </Badge>
@@ -46,7 +49,10 @@ export function CompetitionTab({
                     </h5>
                     <ul className="text-sm text-gray-600 space-y-1">
                       {tool.strengths.map((strength, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 break-words max-w-[90vw]"
+                        >
                           <span className="text-green-500 mt-1">•</span>
                           {strength}
                         </li>
@@ -59,7 +65,10 @@ export function CompetitionTab({
                     </h5>
                     <ul className="text-sm text-gray-600 space-y-1">
                       {tool.weaknesses.map((weakness, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 break-words max-w-[90vw]"
+                        >
                           <span className="text-red-500 mt-1">•</span>
                           {weakness}
                         </li>

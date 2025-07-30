@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Download, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 interface PageHeaderProps {
   totalSubscribers: number;
@@ -18,12 +17,12 @@ export default function PageHeader({ totalSubscribers }: PageHeaderProps) {
           pages
         </p>
       </div>
-      <div className="flex gap-2">
+      {/* <div className="flex gap-2">
         <Button variant="outline" className="bg-white">
           <Download className="mr-2 h-4 w-4" />
           Export CSV
         </Button>
-      </div>
+      </div> */}
     </div>
   );
 }

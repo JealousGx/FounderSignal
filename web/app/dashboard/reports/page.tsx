@@ -42,7 +42,7 @@ export default async function ValidationReportsPage() {
 
       {data && data.reports?.length > 0 ? (
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="mb-6 bg-gray-200">
+          <TabsList className="mb-6 flex-wrap h-auto bg-gray-200">
             <TabsTrigger value="all">All Reports</TabsTrigger>
             <TabsTrigger value="insights">Key Insights</TabsTrigger>
             <TabsTrigger value="recommendations">Recommendations</TabsTrigger>

@@ -53,24 +53,27 @@ export function VoiceOfCustomerTab({
           <div className="space-y-4">
             {voice.quotes.slice(0, 10).map((quote, index) => (
               <div key={index} className="border-l-4 border-blue-500 pl-4">
-                <blockquote className="text-sm text-gray-700 italic mb-2">
+                <blockquote className="text-sm text-gray-700 italic mb-2 break-words">
                   &quot;{quote.text}&quot;
                 </blockquote>
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500 gap-2">
+                  <span className="break-words">
                     — u/{quote.author} in{" "}
                     <Link
                       href={quote.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="text-blue-600 hover:underline break-words"
                     >
                       r/{quote.subreddit}
                     </Link>
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span>{quote.score} points</span>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge
+                      variant="outline"
+                      className="text-xs whitespace-normal break-words max-w-[90vw]"
+                    >
                       {(quote.sentiment * 100).toFixed(0)}% positive
                     </Badge>
                   </div>
@@ -89,7 +92,11 @@ export function VoiceOfCustomerTab({
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {voice.commonThemes.map((theme, index) => (
-              <Badge key={index} variant="secondary">
+              <Badge
+                key={index}
+                variant="secondary"
+                className="whitespace-break-spaces"
+              >
                 {theme}
               </Badge>
             ))}

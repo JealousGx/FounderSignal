@@ -49,7 +49,7 @@ export function IdeaOverview({ idea }: { idea: Idea }) {
           </div>
 
           <div className="flex-grow">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div className="flex flex-wrap gap-2 mb-2">
                 <Badge
                   className={`${getStatusBadgeColor(idea.status)} capitalize`}

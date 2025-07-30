@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Download, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import GenerateReports from "../reports/generate";
 
 interface PageHeaderProps {
@@ -20,12 +19,12 @@ export default function PageHeader({ reportsCount }: PageHeaderProps) {
         </p>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <GenerateReports />
-        <Button variant="outline">
+        {/* <Button variant="outline">
           <Download className="mr-2 h-4 w-4" />
           Export Reports
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

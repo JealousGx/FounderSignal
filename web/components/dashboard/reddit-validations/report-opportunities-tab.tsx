@@ -30,18 +30,26 @@ export function OpportunitiesTab({
           <div className="space-y-4">
             {opportunities.opportunities.map((opportunity, index) => (
               <div key={index} className="border rounded-lg p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-medium">{opportunity.title}</h4>
-                  <div className="flex gap-2">
-                    <Badge variant="outline">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2 flex-wrap">
+                  <h4 className="font-medium break-words max-w-[90vw]">
+                    {opportunity.title}
+                  </h4>
+                  <div className="flex gap-2 flex-wrap">
+                    <Badge
+                      variant="outline"
+                      className="break-words max-w-[90vw]"
+                    >
                       {(opportunity.confidence * 100).toFixed(0)}% confidence
                     </Badge>
-                    <Badge variant="secondary" className="capitalize">
+                    <Badge
+                      variant="secondary"
+                      className="capitalize break-words max-w-[90vw]"
+                    >
                       {opportunity.effort} effort
                     </Badge>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 break-words max-w-[90vw]">
                   {opportunity.description}
                 </p>
               </div>
@@ -60,7 +68,7 @@ export function OpportunitiesTab({
             {opportunities.positioning.map((strategy, index) => (
               <li
                 key={index}
-                className="text-sm text-gray-700 flex items-start gap-2"
+                className="text-sm text-gray-700 flex items-start gap-2 break-words"
               >
                 <span className="text-blue-500 mt-1">•</span>
                 {strategy}
@@ -78,12 +86,19 @@ export function OpportunitiesTab({
         <CardContent>
           <div className="space-y-4">
             {trends.trends.map((trend, index) => (
-              <div key={index} className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h4 className="font-medium">{trend.name}</h4>
-                  <p className="text-sm text-gray-600">{trend.description}</p>
+              <div
+                key={index}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 flex-wrap"
+              >
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium break-words max-w-[90vw]">
+                    {trend.name}
+                  </h4>
+                  <p className="text-sm text-gray-600 break-words max-w-[90vw]">
+                    {trend.description}
+                  </p>
                 </div>
-                <Badge variant="outline">
+                <Badge variant="outline" className="break-words max-w-[90vw]">
                   {(trend.confidence * 100).toFixed(0)}% confidence
                 </Badge>
               </div>
@@ -102,7 +117,7 @@ export function OpportunitiesTab({
             {trends.predictions.map((prediction, index) => (
               <li
                 key={index}
-                className="text-sm text-gray-700 flex items-start gap-2"
+                className="text-sm text-gray-700 flex items-start gap-2 break-words max-w-[90vw]"
               >
                 <span className="text-purple-500 mt-1">•</span>
                 {prediction}

@@ -81,7 +81,7 @@ export function DetailedReport({ validation }: DetailedReportProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6 bg-gray-200">
+        <TabsList className="w-full flex-wrap h-auto bg-gray-200">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="market">Market</TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
