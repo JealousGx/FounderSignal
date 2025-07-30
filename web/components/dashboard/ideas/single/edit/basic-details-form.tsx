@@ -102,6 +102,10 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
   });
 
   async function onSubmit(data: UpdateIdeaFormValues) {
+    setFileUploaded(false);
+    setUploadError("");
+    setIsUploading(true);
+
     try {
       const formData = new FormData();
       formData.append("title", data.title);
@@ -113,13 +117,8 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
       formData.append("targetSignups", String(data.targetSignups));
 
       if (selectedFile) {
-        const fileName = generateIconFileName(idea.id);
-
-        setFileUploaded(false);
-        setUploadError("");
-        setIsUploading(true);
-
         const contentType = selectedFile.type || "image/png";
+        const fileName = generateIconFileName(idea.id, contentType);
 
         const _buff = await selectedFile.arrayBuffer();
         const base64String = Buffer.from(_buff).toString("base64");
@@ -533,8 +532,8 @@ export default function BasicDetailsForm({ idea }: BasicDetailsFormProps) {
           </Card>
 
           <div className="flex justify-end pt-4">
-            <Button type="submit" disabled={isPending}>
-              {isPending ? (
+            <Button type="submit" disabled={isPending || isUploading}>
+              {isPending || isUploading ? (
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Saving...</span>
@@ -579,6 +578,24 @@ function validateIconFile(file: File) {
   return { valid: true };
 }
 
-function generateIconFileName(ideaId: string) {
-  return `${ideaId}/icon`;
+function generateIconFileName(ideaId: string, fileType: string) {
+  let ext = "";
+  switch (fileType) {
+    case "image/png":
+      ext = ".png";
+      break;
+    case "image/jpeg":
+      ext = ".jpg";
+      break;
+    case "image/webp":
+      ext = ".webp";
+      break;
+    case "image/svg+xml":
+      ext = ".svg";
+      break;
+    default:
+      ext = "";
+  }
+
+  return `${ideaId}/icon${ext}`;
 }
