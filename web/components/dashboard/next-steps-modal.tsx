@@ -38,7 +38,7 @@ export function NextStepsModal({
           </div> */}
         </DialogHeader>
 
-        <div>
+        <div className="py-4">
           <ol className="list-decimal ml-6 space-y-4 text-lg">
             <li>
               <Link
