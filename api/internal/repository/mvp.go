@@ -41,6 +41,7 @@ func (r *mvpRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.MVPS
 	var mvp domain.MVPSimulator
 	err := r.db.WithContext(ctx).Model(&domain.MVPSimulator{}).
 		Where("id = ?", id).
+		Preload("Idea").
 		First(&mvp).Error
 	if err != nil {
 		fmt.Println("Error fetching MVP by ID:", err)

@@ -9,11 +9,16 @@ import { createMetadata } from "@/lib/metadata";
 
 type Props = {
   params: Promise<{ ideaId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: Props): Promise<Metadata> {
   const { ideaId } = await params;
-  const data = await getMVP(ideaId);
+  const { mvpId } = (await searchParams) as { mvpId?: string };
+  const data = await getMVP(ideaId, mvpId);
 
   if (!data?.idea) {
     return {
@@ -33,9 +38,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 }
 
-export default async function MVPPage({ params }: Props) {
+export default async function MVPPage({ params, searchParams }: Props) {
   const { ideaId } = await params;
-  const mvp = await getMVP(ideaId);
+  const { mvpId } = (await searchParams) as { mvpId?: string };
+  const mvp = await getMVP(ideaId, mvpId);
 
   if (!mvp || !mvp.htmlContent) {
     // You could redirect or show a more user-friendly error page
@@ -62,7 +68,7 @@ export default async function MVPPage({ params }: Props) {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <MVP htmlContent={mvp.htmlContent} ideaId={ideaId} />
+      <MVP htmlContent={mvp.htmlContent} ideaId={ideaId} mvpId={mvpId} />
     </Suspense>
   );
 }
