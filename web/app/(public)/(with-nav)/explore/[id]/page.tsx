@@ -25,7 +25,7 @@ import { IdeaActions } from "./idea-actions";
 import { createMetadata } from "@/lib/metadata";
 import { formatDate } from "@/lib/utils";
 
-export const revalidate = 7200;
+export const revalidate = 7200; // 2 hours
 
 type Props = {
   params: Promise<{ id: string }>;
