@@ -21,7 +21,7 @@ export function NextStepsModal({
 }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] p-6 rounded-lg shadow-xl animate-in fade-in-90 zoom-in-95 overflow-auto h-[80vh]">
+      <DialogContent className="sm:max-w-[425px] p-6 rounded-lg shadow-xl animate-in fade-in-90 zoom-in-95 overflow-auto max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-primary">
             🎉 Idea Submitted!
@@ -30,6 +30,12 @@ export function NextStepsModal({
           <DialogDescription className="text-muted-foreground mt-2">
             Fantastic! Here&apos;s what you can do next to manage your idea.
           </DialogDescription>
+
+          {/* <div className="bg-blue-50 border border-blue-200 rounded-md p-3 my-4 text-blue-900 text-base">
+            🚀 We&apos;re now working on creating an MVP for your idea. Once
+            it&apos;s ready, you&apos;ll receive an email notification with all
+            the details. Stay tuned!
+          </div> */}
         </DialogHeader>
 
         <div className="py-4">

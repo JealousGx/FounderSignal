@@ -8,10 +8,10 @@ import { IdeaOverview } from "@/components/dashboard/ideas/single/overview";
 import { IdeaSettings } from "@/components/dashboard/ideas/single/settings";
 import SignupAnalytics from "@/components/dashboard/ideas/single/signup-analytics";
 import ValidationProgress from "@/components/dashboard/ideas/single/validation-progress";
+import { RedditValidationCard } from "@/components/dashboard/reddit-validations/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { RedditValidationCard } from "@/components/dashboard/reddit-validations/card";
 import { getIdea } from "./get-idea";
 
 interface IdeaPageProps {

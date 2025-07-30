@@ -66,7 +66,7 @@ export default function ActionItems({ report, insights }: ActionItemsProps) {
                 <Link
                   href={item.link}
                   variant="outline"
-                  className="w-full justify-start text-left h-auto py-3 font-normal bg-white"
+                  className="w-full justify-start text-left h-auto py-3 font-normal whitespace-break-spaces bg-white"
                 >
                   <span>{item.text}</span>
 

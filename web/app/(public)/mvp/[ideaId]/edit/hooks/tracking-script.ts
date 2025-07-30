@@ -4,7 +4,7 @@ export const getTrackingScript = (
   ideaId: string,
   mvpId: string | null,
   ctaBtnId: string
-) => `<script data-founder-signal-script="true">(function() {
+) => `<script data-founder-signal-script="true" data-cfasync="false">(function() {
             const ideaId = "${ideaId}";
             const mvpId = "${mvpId}";
             const postTrackEvent = (eventType, metadata) => {

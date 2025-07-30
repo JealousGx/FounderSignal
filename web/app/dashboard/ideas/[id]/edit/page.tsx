@@ -48,7 +48,7 @@ export default async function EditIdeaPage({ params }: EditIdeaPageProps) {
       </Suspense>
 
       <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="w-full md:w-auto grid grid-cols-3 mb-4 bg-gray-200">
+        <TabsList className="w-full md:w-auto h-auto flex-wrap mb-4 bg-gray-200">
           <TabsTrigger value="basic">Basic Details</TabsTrigger>
           <TabsTrigger value="landing-pages">Landing Pages</TabsTrigger>
           <TabsTrigger value="advanced">Advanced Settings</TabsTrigger>
