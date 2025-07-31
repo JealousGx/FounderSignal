@@ -31,6 +31,10 @@ type IdeaService interface {
 	RecordSignal(ctx context.Context, ideaID, mvpId uuid.UUID, userID string, eventType string, ipAddress string, userAgent string, metadata map[string]interface{}) error
 }
 
+type IdeaServiceConfig struct {
+	StarterPlanIdeaCreationDays int
+}
+
 type ideaService struct {
 	u            repository.UserRepository
 	repo         repository.IdeaRepository
@@ -39,6 +43,7 @@ type ideaService struct {
 	audienceRepo repository.AudienceRepository
 
 	aiService AIService
+	config    IdeaServiceConfig
 }
 
 const (
@@ -47,7 +52,7 @@ const (
 )
 
 func NewIdeasService(repo repository.IdeaRepository, mvpRepo repository.MVPRepository, u repository.UserRepository, signalRepo repository.SignalRepository,
-	audienceRepo repository.AudienceRepository, aiService AIService) *ideaService {
+	audienceRepo repository.AudienceRepository, aiService AIService, config IdeaServiceConfig) *ideaService {
 	return &ideaService{
 		u:            u,
 		repo:         repo,
@@ -55,6 +60,7 @@ func NewIdeasService(repo repository.IdeaRepository, mvpRepo repository.MVPRepos
 		signalRepo:   signalRepo,
 		audienceRepo: audienceRepo,
 		aiService:    aiService,
+		config:       config,
 	}
 }
 
@@ -80,7 +86,11 @@ func (s *ideaService) Create(ctx context.Context, userId string, req *request.Cr
 		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to check idea count: %w", err)
 	}
 	if int(currentCount) >= ideaLimit {
-		ideaStatus = domain.IdeaStatusDraft // If user has reached their limit, set status to draft
+		if time.Now().Before(user.CreatedAt.AddDate(0, 0, s.config.StarterPlanIdeaCreationDays)) {
+			ideaStatus = domain.IdeaStatusDraft // Allow creation of a draft idea if within the starter plan creation days
+		} else {
+			return uuid.Nil, uuid.Nil, fmt.Errorf("you have reached your idea limit for the %s plan. please upgrade your plan to create more", user.Plan)
+		}
 	}
 
 	if err := validator.Validate(req); err != nil {

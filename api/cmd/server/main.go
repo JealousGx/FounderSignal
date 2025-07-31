@@ -61,6 +61,9 @@ func main() {
 			DiscordFeatureSuggestionsWebhookURL: cfg.Envs.DISCORD_FEATURE_SUGGESTIONS_WEBHOOK_URL,
 			Environment:                         cfg.Envs.APP_ENV,
 		},
+		Idea: service.IdeaServiceConfig{
+			StarterPlanIdeaCreationDays: cfg.Envs.STARTER_PLAN_IDEA_CREATION_DAYS,
+		},
 		SampleRedditValidationID: uuid.MustParse(cfg.Envs.SAMPLE_REDDIT_VALIDATION_ID),
 	}
 
