@@ -27,6 +27,7 @@ type Services struct {
 type ServicesConfig struct {
 	Paddle                   PaddleServiceConfig
 	Report                   ReportServiceConfig
+	Idea                     IdeaServiceConfig
 	SampleRedditValidationID uuid.UUID // ID for the sample Reddit validation
 }
 
@@ -36,7 +37,7 @@ func NewServices(repos *repository.Repositories, broadcaster websocket.ActivityB
 	return &Services{
 		User:        NewUserService(repos.User, repos.Idea),
 		Paddle:      NewPaddleService(repos.User, repos.Paddle, cfg.Paddle),
-		Idea:        NewIdeasService(repos.Idea, repos.MVP, repos.User, repos.Signal, repos.Audience, aiService),
+		Idea:        NewIdeasService(repos.Idea, repos.MVP, repos.User, repos.Signal, repos.Audience, aiService, cfg.Idea),
 		Feedback:    NewFeedbackService(repos.Feedback, repos.Idea, broadcaster),
 		Reaction:    NewReactionService(repos.Reaction),
 		MVP:         NewMVPService(repos.MVP, repos.Idea, repos.User, aiService),
