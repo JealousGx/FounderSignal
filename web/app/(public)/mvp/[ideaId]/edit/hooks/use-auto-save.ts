@@ -103,7 +103,9 @@ export function useAutoSave({
 
         if (!isAutoSave) {
           toast.dismiss();
-          toast.success("Landing page saved successfully!");
+          toast.success("Landing page saved successfully!", {
+            duration: 3000,
+          });
         }
       } catch (error) {
         const err = error as Error;
@@ -115,12 +117,10 @@ export function useAutoSave({
 
         setSaveStatus("error");
 
-        toast.error(err.message || "Failed to save landing page.");
+        toast.error(err.message || "Failed to save landing page.", {
+          duration: 5000,
+        });
       } finally {
-        if (!isAutoSave) {
-          toast.dismiss();
-        }
-
         isSavingRef.current = false;
         setTimeout(() => setSaveStatus("idle"), 2000);
       }
