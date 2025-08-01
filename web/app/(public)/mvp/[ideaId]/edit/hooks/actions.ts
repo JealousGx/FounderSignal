@@ -69,6 +69,9 @@ export const updateMVP = async (
     await revalidateCfCacheBatch({
       api: [`/ideas/${ideaId}/mvp`],
       web: [`/mvp/${ideaId}`],
+      R2_Assets: [
+        `${process.env.NODE_ENV === "production" ? "" : "/dev"}/${ideaId}/mvp/${mvpId}`,
+      ],
     });
 
     return {

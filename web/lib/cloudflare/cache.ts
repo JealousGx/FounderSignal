@@ -10,11 +10,13 @@
  * @returns
  */
 export const revalidateCfCacheBatch = async ({
-  api,
-  web,
+  api = [],
+  web = [],
+  R2_Assets = [],
 }: {
-  api: string[];
-  web: string[];
+  api?: string[];
+  web?: string[];
+  R2_Assets?: string[];
 }) => {
   if (process.env.ENVIRONMENT === "local") {
     console.log("Skipping Cloudflare cache invalidation in local mode.");
@@ -27,13 +29,16 @@ export const revalidateCfCacheBatch = async ({
   const webUrls = web.map(
     (path) => new URL(`${process.env.NEXT_PUBLIC_APP_URL}${path}`)
   );
+  const cfAssetUrls = R2_Assets.map(
+    (path) => new URL(`${process.env.NEXT_PUBLIC_R2_ENDPOINT}${path}`)
+  );
 
-  const prefixes = [...apiUrls, ...webUrls].map(
+  const prefixes = [...apiUrls, ...webUrls, ...cfAssetUrls].map(
     (url) => url.hostname + url.pathname
   );
 
   console.log(
-    `Invalidating Cloudflare cache for (${apiUrls.length}) API URLs and (${webUrls.length}) Web URLs`
+    `Invalidating Cloudflare cache for (${apiUrls.length}) API URLs and (${webUrls.length}) Web URLs and (${cfAssetUrls.length}) CF Asset URLs`
   );
 
   try {
