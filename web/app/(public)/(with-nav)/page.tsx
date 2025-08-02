@@ -1,6 +1,5 @@
 import { ChartBar, Lightbulb, Monitor } from "lucide-react";
 import { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 
 import { YouTubeFacade } from "@/components/shared/youtube-facade";
@@ -10,6 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { OptimizedImage } from "@/components/ui/image";
 import { Link as CustomLink } from "@/components/ui/link";
 
 import { createMetadata } from "@/lib/metadata";
@@ -433,7 +433,7 @@ function TestimonialsSection() {
                 <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 h-full flex flex-col hover:shadow-lg transition-shadow duration-300">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center">
-                      <Image
+                      <OptimizedImage
                         src={testimonial.avatar}
                         alt={testimonial.author}
                         width={48}
@@ -465,7 +465,7 @@ function TestimonialsSection() {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center">
-                    <Image
+                    <OptimizedImage
                       src={testimonial.avatar}
                       alt={testimonial.author}
                       width={48}
