@@ -14,6 +14,7 @@ import { Link as CustomLink } from "@/components/ui/link";
 
 import { createMetadata } from "@/lib/metadata";
 import { prepareFaqLdJson } from "@/lib/prepare-faq-ldjson";
+import { cn } from "@/lib/utils";
 
 import { testimonials } from "@/data/testimonials";
 
@@ -430,61 +431,16 @@ function TestimonialsSection() {
                 rel="noopener noreferrer"
                 className="block"
               >
-                <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 h-full flex flex-col hover:shadow-lg transition-shadow duration-300">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center">
-                      <OptimizedImage
-                        src={testimonial.avatar}
-                        alt={testimonial.author}
-                        width={48}
-                        height={48}
-                        className="rounded-full mr-4"
-                      />
-                      <div>
-                        <p className="font-bold">{testimonial.author}</p>
-                        <p className="text-sm text-gray-500">
-                          {testimonial.handle}
-                        </p>
-                      </div>
-                    </div>
-                    <TwitterIcon />
-                  </div>
-                  <div className="flex-grow text-gray-800">
-                    <p>{testimonial.content}</p>
-                  </div>
-                </div>
+                <Testimonial
+                  testimonial={testimonial}
+                  className="hover:shadow-lg transition-shadow duration-300"
+                />
               </Link>
             );
           }
 
           if (testimonial.type === "text") {
-            return (
-              <div
-                key={index}
-                className="bg-white p-6 rounded-xl shadow-md border border-gray-100 h-full flex flex-col"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center">
-                    <OptimizedImage
-                      src={testimonial.avatar}
-                      alt={testimonial.author}
-                      width={48}
-                      height={48}
-                      className="rounded-full mr-4"
-                    />
-                    <div>
-                      <p className="font-bold">{testimonial.author}</p>
-                      <p className="text-sm text-gray-500">
-                        {testimonial.handle}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex-grow text-gray-700">
-                  {testimonial.content}
-                </div>
-              </div>
-            );
+            return <Testimonial testimonial={testimonial} key={index} />;
           }
 
           return null;
@@ -493,3 +449,41 @@ function TestimonialsSection() {
     </div>
   );
 }
+
+const Testimonial = ({
+  testimonial,
+  className,
+}: {
+  testimonial: (typeof testimonials)[number];
+  className?: string;
+}) => {
+  return (
+    <div
+      className={cn(
+        "bg-white p-6 rounded-xl shadow-md border border-gray-100 h-full flex flex-col",
+        className
+      )}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center">
+          <OptimizedImage
+            src={testimonial.avatar}
+            alt={testimonial.author}
+            width={48}
+            height={48}
+            className="rounded-full mr-4"
+          />
+
+          <div>
+            <p className="font-bold">{testimonial.author}</p>
+            <p className="text-sm text-gray-500">{testimonial.handle}</p>
+          </div>
+        </div>
+
+        {testimonial.type === "tweet" && <TwitterIcon />}
+      </div>
+
+      <p className="flex-grow text-gray-700">{testimonial.content}</p>
+    </div>
+  );
+};

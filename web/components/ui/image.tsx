@@ -29,7 +29,7 @@ export function OptimizedImage({
   priority = false,
   quality = 80,
   className,
-  fallbackSrc = "/assets/images/placeholder.webp",
+  fallbackSrc = "/logo-light.svg",
   objectFit = "cover",
   onLoad,
 }: OptimizedImageProps) {
