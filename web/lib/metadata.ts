@@ -65,6 +65,7 @@ export const createMetadata = (pageMetadata: {
           alt: title,
         },
       ],
+      siteName: siteConfig.title,
     },
     twitter: {
       card: "summary_large_image",
