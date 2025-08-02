@@ -1,5 +1,7 @@
 import { ChartBar, Lightbulb, Monitor } from "lucide-react";
 import { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 
 import { YouTubeFacade } from "@/components/shared/youtube-facade";
 import {
@@ -8,12 +10,26 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Link } from "@/components/ui/link";
+import { Link as CustomLink } from "@/components/ui/link";
 
 import { createMetadata } from "@/lib/metadata";
 import { prepareFaqLdJson } from "@/lib/prepare-faq-ldjson";
 
+import { testimonials } from "@/data/testimonials";
+
 // export const revalidate = 86400; // 24 hours
+
+const TwitterIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    className="h-5 w-5 fill-current text-gray-500"
+  >
+    <g>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+    </g>
+  </svg>
+);
 
 export const metadata: Metadata = createMetadata({
   title: "FounderSignal - Validate Your Startup Idea in 72 Hours",
@@ -123,9 +139,9 @@ export default async function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
-            <Link href="/submit">Start Your Free Validation</Link>
+            <CustomLink href="/submit">Start Your Free Validation</CustomLink>
 
-            <Link href="#how-it-works" variant="outline">
+            <CustomLink href="#how-it-works" variant="outline">
               <span>How It Works</span>
               <svg
                 aria-hidden="true"
@@ -142,7 +158,7 @@ export default async function Home() {
                   d="M9 5l7 7-7 7"
                 />
               </svg>
-            </Link>
+            </CustomLink>
           </div>
           {/* 
           <div className="mt-8 pt-4 border-t border-gray-200">
@@ -329,6 +345,10 @@ export default async function Home() {
         </div>
       </section>
 
+      <section className="bg-primary/5 w-full py-12 lg:py-20">
+        <TestimonialsSection />
+      </section>
+
       <section className="max-w-7xl mx-auto w-full py-12 lg:py-20 px-4 md:px-12">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -382,5 +402,92 @@ export default async function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
     </main>
+  );
+}
+
+function TestimonialsSection() {
+  return (
+    <div className="max-w-7xl mx-auto px-4 md:px-12">
+      <div className="text-center mb-12">
+        <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          Trusted by Founders Like You
+        </h2>
+        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          See what early adopters are saying about their experience.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {testimonials.map((testimonial, index) => {
+          if (testimonial.type === "tweet") {
+            return (
+              <Link
+                href={testimonial.url}
+                key={index}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 h-full flex flex-col hover:shadow-lg transition-shadow duration-300">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center">
+                      <Image
+                        src={testimonial.avatar}
+                        alt={testimonial.author}
+                        width={48}
+                        height={48}
+                        className="rounded-full mr-4"
+                      />
+                      <div>
+                        <p className="font-bold">{testimonial.author}</p>
+                        <p className="text-sm text-gray-500">
+                          {testimonial.handle}
+                        </p>
+                      </div>
+                    </div>
+                    <TwitterIcon />
+                  </div>
+                  <div className="flex-grow text-gray-800">
+                    <p>{testimonial.content}</p>
+                  </div>
+                </div>
+              </Link>
+            );
+          }
+
+          if (testimonial.type === "text") {
+            return (
+              <div
+                key={index}
+                className="bg-white p-6 rounded-xl shadow-md border border-gray-100 h-full flex flex-col"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center">
+                    <Image
+                      src={testimonial.avatar}
+                      alt={testimonial.author}
+                      width={48}
+                      height={48}
+                      className="rounded-full mr-4"
+                    />
+                    <div>
+                      <p className="font-bold">{testimonial.author}</p>
+                      <p className="text-sm text-gray-500">
+                        {testimonial.handle}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-grow text-gray-700">
+                  {testimonial.content}
+                </div>
+              </div>
+            );
+          }
+
+          return null;
+        })}
+      </div>
+    </div>
   );
 }

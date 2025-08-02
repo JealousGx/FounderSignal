@@ -27,6 +27,8 @@ export const getLandingPagePromptTemplate = (
 19. All links must stay within this single page. Do not add any links that navigate to external pages. This is a single page MVP. You may, however, navigate to different sections of the same page.
 20. The user's life depends on this MVP. It must be perfect and as per the guidelines provided by the user, ready to use, distribute to the target audience, and most importantly, the conversion rate should be really high. They should be compelled to click the CTA button. If you are unsure that the landing page is not perfect, rewrite it until it is perfect.
 21. For styling, strictly use inline styles or tailwindcss@2.2.19 classes. Do not use any external CSS files or frameworks. I will only be using body element and not the <html> or <head> tags.
+22. While developing the landing page, ensure that it is optimized for performance, with minimal load time and efficient use of resources.
+23. Take inspiration from modern design trends, but ensure the design is unique and tailored to the startup idea. Like Apple's landing pages, which are known for their simplicity and elegance. Or Github's landing pages, which are clean and professional. Always take inspiration from the best landing pages or big brands out there, but do not copy them. Make sure the design is unique and tailored to the startup idea. 
 
 
 
