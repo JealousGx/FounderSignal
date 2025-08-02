@@ -424,7 +424,7 @@ function TestimonialsSection() {
           if (testimonial.type === "tweet") {
             return (
               <Link
-                href={testimonial.url}
+                href={testimonial.url!}
                 key={index}
                 target="_blank"
                 rel="noopener noreferrer"

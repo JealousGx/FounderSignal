@@ -4,7 +4,7 @@ export const testimonials: {
   handle: string;
   avatar: string;
   content: string;
-  [key: string]: string;
+  url?: string;
 }[] = [
   {
     type: "tweet",
