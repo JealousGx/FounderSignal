@@ -14,6 +14,7 @@ import (
 
 type MVPHandler interface {
 	Create(c *gin.Context)
+	GenerateAndSave(c *gin.Context)
 	Update(c *gin.Context)
 	GetByIdea(c *gin.Context)
 	GetByID(c *gin.Context)
@@ -60,6 +61,35 @@ func (h *mvpHandler) Create(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"mvpId": mvpId})
+}
+
+func (h *mvpHandler) GenerateAndSave(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	var req request.GenerateLandingPage
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.MVPId == uuid.Nil || req.IdeaID == uuid.Nil || req.Prompt == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "MVP ID, Idea ID, and Prompt are required"})
+		return
+	}
+
+	err := h.service.GenerateAndSave(c.Request.Context(), userId.(string), req)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "MVP not found"})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Landing page generation has been initiated. It may take a few minutes. You will receive a notification once it's ready."})
 }
 
 func (h *mvpHandler) GetByID(c *gin.Context) {

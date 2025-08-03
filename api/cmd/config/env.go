@@ -30,6 +30,17 @@ type Config struct {
 	DISCORD_BUG_REPORT_WEBHOOK_URL          string
 	DISCORD_FEATURE_SUGGESTIONS_WEBHOOK_URL string
 
+	TAILWIND_CSS_URL   string
+	CTA_BUTTON_ID      string
+	APP_URL            string
+	SCROLL_DEBOUNCE_MS int
+
+	CLOUDFLARE_R2_BUCKET_NAME       string
+	CLOUDFLARE_R2_ACCOUNT_ID        string
+	CLOUDFLARE_R2_ACCESS_KEY_ID     string
+	CLOUDFLARE_R2_ACCESS_KEY_SECRET string
+	CLOUDFLARE_R2_BUCKET_PUBLIC_URL string
+
 	SAMPLE_REDDIT_VALIDATION_ID string
 
 	STARTER_PLAN_IDEA_CREATION_DAYS int
@@ -78,6 +89,17 @@ func initConfig() Config {
 
 		SAMPLE_REDDIT_VALIDATION_ID:     getEnv("SAMPLE_REDDIT_VALIDATION_ID", "c52af4c0-28f5-45ad-bfa2-eba8e437b3ba"),
 		STARTER_PLAN_IDEA_CREATION_DAYS: getEnvAsInt("STARTER_PLAN_IDEA_CREATION_DAYS", 3),
+
+		TAILWIND_CSS_URL:   getEnv("TAILWIND_CSS_URL", "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"),
+		CTA_BUTTON_ID:      getEnv("CTA_BUTTON_ID", "ctaButton"),
+		SCROLL_DEBOUNCE_MS: getEnvAsInt("SCROLL_DEBOUNCE_MS", 250),
+		APP_URL:            getEnv("APP_URL", "http://localhost:3000"),
+
+		CLOUDFLARE_R2_BUCKET_NAME:       getEnv("CLOUDFLARE_R2_BUCKET_NAME", "foundersignal"),
+		CLOUDFLARE_R2_ACCOUNT_ID:        getEnv("CLOUDFLARE_R2_ACCOUNT_ID", "your-account-id"),
+		CLOUDFLARE_R2_ACCESS_KEY_ID:     getEnv("CLOUDFLARE_R2_ACCESS_KEY_ID", "your-access-key-id"),
+		CLOUDFLARE_R2_ACCESS_KEY_SECRET: getEnv("CLOUDFLARE_R2_ACCESS_KEY_SECRET", "your-access-key-secret"),
+		CLOUDFLARE_R2_BUCKET_PUBLIC_URL: getEnv("CLOUDFLARE_R2_BUCKET_PUBLIC_URL", "https://your-account-id.r2.cloudflarestorage.com/foundersignal"),
 
 		APP_ENV: getEnv("APP_ENV", "development"),
 

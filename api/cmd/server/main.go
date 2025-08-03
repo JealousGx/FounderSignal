@@ -5,7 +5,9 @@ import (
 	cfg "foundersignal/cmd/config"
 	"foundersignal/internal/pkg/ai"
 	"foundersignal/internal/pkg/auth"
+	"foundersignal/internal/pkg/cloudflare"
 	"foundersignal/internal/pkg/reddit"
+	"foundersignal/internal/pkg/validation"
 	"foundersignal/internal/repository"
 	"foundersignal/internal/service"
 	"foundersignal/internal/transport/http"
@@ -50,6 +52,14 @@ func main() {
 	})
 
 	servicesCfg := service.ServicesConfig{
+		MVP: service.MVPConfig{
+			HTMLValidator: validation.HTMLValidatorConfig{
+				TailwindCSSUrl:   cfg.Envs.TAILWIND_CSS_URL,
+				CTAButtonID:      cfg.Envs.CTA_BUTTON_ID,
+				AppUrl:           cfg.Envs.APP_URL,
+				ScrollDebounceMs: cfg.Envs.SCROLL_DEBOUNCE_MS,
+			},
+		},
 		Paddle: service.PaddleServiceConfig{
 			StarterPlanID:  cfg.Envs.PADDLE_STARTER_PLAN_ID,
 			ProPlanID:      cfg.Envs.PADDLE_PRO_PLAN_ID,
@@ -63,6 +73,14 @@ func main() {
 		},
 		Idea: service.IdeaServiceConfig{
 			StarterPlanIdeaCreationDays: cfg.Envs.STARTER_PLAN_IDEA_CREATION_DAYS,
+		},
+		CloudflareR2: cloudflare.R2Config{
+			BucketName:        cfg.Envs.CLOUDFLARE_R2_BUCKET_NAME,
+			AccountId:         cfg.Envs.CLOUDFLARE_R2_ACCOUNT_ID,
+			AccessKeyId:       cfg.Envs.CLOUDFLARE_R2_ACCESS_KEY_ID,
+			AccessKeySecret:   cfg.Envs.CLOUDFLARE_R2_ACCESS_KEY_SECRET,
+			R2BucketPublicUrl: cfg.Envs.CLOUDFLARE_R2_BUCKET_PUBLIC_URL,
+			Environment:       cfg.Envs.APP_ENV,
 		},
 		SampleRedditValidationID: uuid.MustParse(cfg.Envs.SAMPLE_REDDIT_VALIDATION_ID),
 	}
