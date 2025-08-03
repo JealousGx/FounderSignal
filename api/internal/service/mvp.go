@@ -120,88 +120,6 @@ func (s *mvpService) GenerateAndSave(ctx context.Context, userId string, req req
 
 	go s.generateAndSaveMVPWorkflow(idea, &localMVP, req, userId)
 
-	// go func() {
-	// 	detachedCtx := context.Background()
-
-	// 	activityItem := &response.ActivityItem{
-	// 		ID:        idea.ID.String(),
-	// 		Type:      "error",
-	// 		IdeaID:    idea.ID.String(),
-	// 		IdeaTitle: idea.Title,
-	// 	}
-
-	// 	generatedHTML, err := s.GenerateLandingPage(detachedCtx, req.MVPId, req.IdeaID, userId, req.Prompt)
-	// 	if err != nil {
-	// 		fmt.Printf("ERROR: failed to generate landing page for MVP %s: %v\n", req.MVPId, err)
-	// 		activityItem.Message = "Failed to generate landing page. Please try again later."
-	// 		s.broadcaster.BroadcastActivity(userId, activityItem)
-	// 		return
-	// 	}
-
-	// 	validatedHtml, err := validation.GetValidatedHTML(generatedHTML, *req.MetaTitle, *req.MetaDescription, req.IdeaID.String(), req.MVPId.String(), s.cfg.HTMLValidator)
-	// 	if err != nil {
-	// 		fmt.Printf("ERROR: failed to validate HTML for MVP %s: %v\n", req.MVPId, err)
-	// 		activityItem.Message = "Generated HTML is invalid. Please try again."
-	// 		s.broadcaster.BroadcastActivity(userId, activityItem)
-	// 		// send notification to the user using websocket / email
-	// 		return
-	// 	}
-
-	// 	// upload the validated HTML to R2
-	// 	contentType := "text/html"
-	// 	key := fmt.Sprintf("%s/mvp/%s", req.IdeaID.String(), req.MVPId.String())
-	// 	signedUrl, htmlUrl, err := s.r2Client.GetSignedURL(detachedCtx, key, contentType)
-	// 	if err != nil {
-	// 		fmt.Printf("ERROR: failed to get signed URL for MVP %s: %v\n", req.MVPId, err)
-	// 		activityItem.Message = "Failed to save the generated HTML. Please try again later."
-	// 		s.broadcaster.BroadcastActivity(userId, activityItem)
-	// 		// send notification to the user using websocket / email
-	// 		return
-	// 	}
-
-	// 	// upload the HTML to R2
-	// 	reqPut, err := http.NewRequestWithContext(detachedCtx, "PUT", signedUrl, strings.NewReader(validatedHtml))
-	// 	if err != nil {
-	// 		fmt.Printf("ERROR: failed to create PUT request for MVP %s: %v\n", req.MVPId, err)
-	// 		activityItem.Message = "Failed to save the generated HTML. Please try again later."
-	// 		s.broadcaster.BroadcastActivity(userId, activityItem)
-	// 		return
-	// 	}
-	// 	reqPut.Header.Set("Content-Type", contentType)
-
-	// 	resp, err := http.DefaultClient.Do(reqPut)
-	// 	if err != nil {
-	// 		fmt.Printf("ERROR: failed to upload HTML to R2 for MVP %s: %v\n", req.MVPId, err)
-	// 		activityItem.Message = "Failed to save the generated HTML. Please try again later."
-	// 		s.broadcaster.BroadcastActivity(userId, activityItem)
-	// 		return
-	// 	}
-	// 	defer resp.Body.Close()
-
-	// 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-	// 		fmt.Printf("ERROR: failed to upload HTML to R2 for MVP %s: status %s\n", req.MVPId, resp.Status)
-	// 		activityItem.Message = "Failed to save the generated HTML. Please try again later."
-	// 		s.broadcaster.BroadcastActivity(userId, activityItem)
-	// 		return
-	// 	}
-
-	// 	// Update the MVP with the HTML URL
-	// 	mvp.HTMLURL = htmlUrl
-	// 	if err := s.repo.Update(detachedCtx, mvp); err != nil {
-	// 		fmt.Printf("ERROR: failed to update MVP %s with HTML URL: %v\n", req.MVPId, err)
-	// 		activityItem.Message = "Failed to save the generated HTML. Please try again later."
-	// 		s.broadcaster.BroadcastActivity(userId, activityItem)
-	// 		// send notification to the user using websocket / email
-	// 		return
-	// 	}
-
-	// 	activityItem.ID = mvp.ID.String()
-	// 	activityItem.Type = "mvp_generated"
-	// 	activityItem.Message = "Landing page generation has been completed successfully."
-	// 	activityItem.ReferenceURL = fmt.Sprintf("/mvp/%s?mvpId=%s", req.IdeaID.String(), mvp.ID.String())
-	// 	s.broadcaster.BroadcastActivity(userId, activityItem)
-	// }()
-
 	return nil
 }
 
@@ -348,7 +266,7 @@ func (s *mvpService) GenerateLandingPage(ctx context.Context, mvpId, ideaId uuid
 func (s *mvpService) generateAndSaveMVPWorkflow(idea *domain.Idea, mvp *domain.MVPSimulator, req request.GenerateLandingPage, userId string) {
 	aiGenerationTimeout := 2 * time.Minute
 
-	detachedCtx, cancel := context.WithTimeout(context.Background(), aiGenerationTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), aiGenerationTimeout)
 	defer cancel()
 
 	activityItem := &response.ActivityItem{
@@ -358,7 +276,7 @@ func (s *mvpService) generateAndSaveMVPWorkflow(idea *domain.Idea, mvp *domain.M
 		IdeaTitle: idea.Title,
 	}
 
-	generatedHTML, err := s.GenerateLandingPage(detachedCtx, req.MVPId, req.IdeaID, userId, req.Prompt)
+	generatedHTML, err := s.GenerateLandingPage(ctx, req.MVPId, req.IdeaID, userId, req.Prompt)
 	if err != nil {
 		fmt.Printf("ERROR: failed to generate landing page for MVP %s: %v\n", req.MVPId, err)
 		activityItem.Message = "Failed to generate landing page. Please try again later."
@@ -378,7 +296,7 @@ func (s *mvpService) generateAndSaveMVPWorkflow(idea *domain.Idea, mvp *domain.M
 	// upload the validated HTML to R2
 	contentType := "text/html"
 	key := fmt.Sprintf("%s/mvp/%s", req.IdeaID.String(), req.MVPId.String())
-	signedUrl, htmlUrl, err := s.r2Client.GetSignedURL(detachedCtx, key, contentType)
+	signedUrl, htmlUrl, err := s.r2Client.GetSignedURL(ctx, key, contentType)
 	if err != nil {
 		fmt.Printf("ERROR: failed to get signed URL for MVP %s: %v\n", req.MVPId, err)
 		activityItem.Message = "Failed to save the generated HTML. Please try again later."
@@ -388,7 +306,7 @@ func (s *mvpService) generateAndSaveMVPWorkflow(idea *domain.Idea, mvp *domain.M
 	}
 
 	// upload the HTML to R2
-	reqPut, err := http.NewRequestWithContext(detachedCtx, "PUT", signedUrl, strings.NewReader(validatedHtml))
+	reqPut, err := http.NewRequestWithContext(ctx, "PUT", signedUrl, strings.NewReader(validatedHtml))
 	if err != nil {
 		fmt.Printf("ERROR: failed to create PUT request for MVP %s: %v\n", req.MVPId, err)
 		activityItem.Message = "Failed to save the generated HTML. Please try again later."
@@ -416,7 +334,7 @@ func (s *mvpService) generateAndSaveMVPWorkflow(idea *domain.Idea, mvp *domain.M
 
 	// Update the MVP with the HTML URL
 	mvp.HTMLURL = htmlUrl
-	if err := s.repo.Update(detachedCtx, mvp); err != nil {
+	if err := s.repo.Update(ctx, mvp); err != nil {
 		fmt.Printf("ERROR: failed to update MVP %s with HTML URL: %v\n", req.MVPId, err)
 		activityItem.Message = "Failed to save the generated HTML. Please try again later."
 		s.broadcaster.BroadcastActivity(userId, activityItem)
