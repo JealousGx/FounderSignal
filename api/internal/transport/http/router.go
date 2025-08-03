@@ -60,6 +60,8 @@ func registerProtectedRoutes(router *gin.RouterGroup, h *Handlers) {
 	router.POST("/validations/generate/reddit", h.Reddit.GenerateValidation)
 	router.GET("/validations", h.Reddit.GetValidationsForUser)
 	router.GET("/validations/:validationId", h.Reddit.GetValidation)
+
+	router.POST("/jobs/mvp/generate", h.MVP.GenerateAndSave)
 }
 
 func registerPublicRoutes(router *gin.RouterGroup, h *Handlers) {

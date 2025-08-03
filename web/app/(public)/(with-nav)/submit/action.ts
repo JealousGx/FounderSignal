@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { formSchema } from "./schema";
 
+import { getLandingPagePromptTemplate } from "@/constants/prompts/landing-page";
 import { api } from "@/lib/api";
 import { revalidateCfCacheBatch } from "@/lib/cloudflare/cache";
 
@@ -68,6 +69,26 @@ export const submitIdea = async (
       };
     }
 
+    if (responseData.id && responseData.mvpId) {
+      const mvpResponse = await generateAndSaveMVP(
+        responseData.id,
+        responseData.mvpId,
+        idea.title,
+        idea.description,
+        idea.ctaButtonText
+      );
+
+      if (mvpResponse.error) {
+        console.error("MVP Generation Error:", mvpResponse.error);
+
+        return {
+          error: mvpResponse.error,
+          ideaId: responseData.id,
+          mvpId: responseData.mvpId,
+        };
+      }
+    }
+
     revalidateTag("ideas");
     await revalidateCfCacheBatch({
       api: [`/ideas/`],
@@ -91,6 +112,53 @@ export const submitIdea = async (
       error:
         (e as Error).message ||
         "An unexpected error occurred during submission.",
+    };
+  }
+};
+
+const generateAndSaveMVP = async (
+  ideaId: string,
+  mvpId: string,
+  metaTitle: string,
+  metaDescription: string,
+  ctaButtonText = "Get Started"
+) => {
+  try {
+    const prompt = getLandingPagePromptTemplate(
+      metaTitle,
+      metaDescription,
+      ctaButtonText
+    );
+
+    const res = await api.post(
+      "/dashboard/jobs/mvp/generate",
+      JSON.stringify({
+        prompt,
+        ideaId,
+        mvpId,
+        metaTitle,
+        metaDescription,
+      })
+    );
+
+    const resData = await res.json();
+
+    if (!res.ok || resData.error) {
+      console.error("API Error:", resData.error || `Status: ${res.status}`);
+
+      return {
+        error: resData.error || "Failed to generate MVP. Please try again.",
+      };
+    }
+
+    return {
+      message: resData.message || "MVP generation has been initiated.",
+    };
+  } catch (err) {
+    console.error("Error generating MVP:", err);
+
+    return {
+      error: "Failed to generate MVP. Please try again.",
     };
   }
 };

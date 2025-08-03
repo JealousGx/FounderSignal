@@ -16,11 +16,12 @@ export const testimonials: {
     url: "https://x.com/c_sonnier/status/1951279310020440324",
   },
   {
-    type: "text",
+    type: "tweet",
     author: "Ignacio Aguilar",
-    handle: "Early Adopter",
+    handle: "@nachoagu7",
     avatar: "/assets/testimonials/ignacio-aguilar-avatar.webp",
     content:
       "I was blown away by how much time FounderSignal saved me. The process I used to dread now takes a fraction of the time, and the results are consistently better. It's an indispensable tool in my workflow.",
+    url: "https://x.com/nachoagu7/status/1951688521023967687",
   },
 ];

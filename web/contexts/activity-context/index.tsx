@@ -11,6 +11,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { toast } from "sonner";
 import { getInitialActivity } from "./get-activity";
 
 const MAX_DISPLAY_ACTIVITIES = 20;
@@ -114,6 +115,33 @@ export const ActivityProvider = ({ children }: { children: ReactNode }) => {
                   return prevActivities;
                 }
                 const updatedActivities = [newActivity, ...prevActivities];
+
+                if (newActivity.message) {
+                  toast.info(newActivity.message, {
+                    id: `activity-${newActivity.id}`,
+                    position: "top-right",
+                    duration: 5000,
+                    dismissible: true,
+                    ...(newActivity.referenceUrl && {
+                      action: {
+                        label: "View",
+                        onClick: () => {
+                          console.log(
+                            "Navigating to activity:",
+                            newActivity.id
+                          );
+                          window.open(newActivity.referenceUrl, "_blank");
+                        },
+                      },
+                      actionButtonStyle: {
+                        color: "var(--primary-foreground)",
+                        backgroundColor: "var(--primary)",
+                        borderRadius: "calc(var(--radius)  - 2px)",
+                      },
+                    }),
+                  });
+                }
+
                 setUnreadCount((prev) => prev + 1);
                 return updatedActivities.slice(0, MAX_DISPLAY_ACTIVITIES);
               });

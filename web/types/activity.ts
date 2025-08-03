@@ -7,7 +7,9 @@ export type ActivityType =
   | "like"
   | "dislike"
   | "reaction"
-  | "content_reported";
+  | "content_reported"
+  | "error"
+  | "mvp_generated";
 
 export type Activity = {
   id: string;

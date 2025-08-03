@@ -11,6 +11,7 @@ import {
   HelpCircle,
   MessageSquare,
   MousePointerClick,
+  Rocket,
   ThumbsDown,
   ThumbsUp,
   UserPlus,
@@ -69,9 +70,9 @@ export default function ActivityFeed() {
                   {getActivityIcon(activity.type)}
                 </div>
                 <div>
-                  <p className="text-xs md:text-sm font-medium">
+                  <div className="text-xs md:text-sm font-medium">
                     <CollapsibleText text={activity.message} />
-                  </p>
+                  </div>
                   {activity.ideaTitle &&
                     activity.ideaTitle !== "Unknown Idea" && (
                       <Link
@@ -124,6 +125,10 @@ function getActivityIcon(type: ActivityType) {
       return <AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4" />;
     case "reaction":
       return <Heart className="h-3.5 w-3.5 md:h-4 md:w-4" />;
+    case "mvp_generated":
+      return <Rocket className="h-3.5 w-3.5 md:h-4 md:w-4" />;
+    case "error":
+      return <AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4" />;
     default:
       return <HelpCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />;
   }
@@ -149,6 +154,10 @@ function getActivityIconStyles(type: ActivityType) {
       return "bg-orange-50 text-orange-600";
     case "reaction":
       return "bg-pink-50 text-pink-600";
+    case "error":
+      return "bg-red-50 text-red-600";
+    case "mvp_generated":
+      return "bg-indigo-50 text-indigo-600";
     default:
       return "bg-gray-100 text-gray-500";
   }

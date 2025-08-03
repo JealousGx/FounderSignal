@@ -5,7 +5,15 @@ import (
 	"fmt"
 	"foundersignal/internal/domain"
 	"foundersignal/internal/dto/request"
+	"foundersignal/internal/dto/response"
+	"foundersignal/internal/pkg/cloudflare"
+	"foundersignal/internal/pkg/validation"
 	"foundersignal/internal/repository"
+	"foundersignal/internal/websocket"
+	"io"
+	"net/http"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -13,6 +21,7 @@ import (
 
 type MVPService interface {
 	Create(ctx context.Context, userId string, ideaId uuid.UUID, req request.CreateMVP) (uuid.UUID, error)
+	GenerateAndSave(ctx context.Context, userId string, req request.GenerateLandingPage) error
 	GetAllByIdea(ctx context.Context, userId string, ideaId uuid.UUID) ([]domain.MVPSimulator, error)
 	GetByIdea(ctx context.Context, ideaId uuid.UUID, userId *string) (*domain.MVPSimulator, error)
 	Update(ctx context.Context, ideaId uuid.UUID, userId string, mvpId uuid.UUID, req request.UpdateMVP) error
@@ -23,18 +32,30 @@ type MVPService interface {
 }
 
 type mvpService struct {
-	repo      repository.MVPRepository
-	ideaRepo  repository.IdeaRepository
-	userRepo  repository.UserRepository
-	aiService AIService
+	repo        repository.MVPRepository
+	ideaRepo    repository.IdeaRepository
+	userRepo    repository.UserRepository
+	aiService   AIService
+	r2Client    cloudflare.R2Bucket
+	broadcaster websocket.ActivityBroadcaster
+
+	cfg MVPConfig
 }
 
-func NewMVPService(repo repository.MVPRepository, ideaRepo repository.IdeaRepository, userRepo repository.UserRepository, aiService AIService) *mvpService {
+type MVPConfig struct {
+	HTMLValidator validation.HTMLValidatorConfig
+}
+
+func NewMVPService(repo repository.MVPRepository, ideaRepo repository.IdeaRepository, userRepo repository.UserRepository, aiService AIService, r2Client cloudflare.R2Bucket, broadcaster websocket.ActivityBroadcaster, cfg MVPConfig) *mvpService {
 	return &mvpService{
-		repo:      repo,
-		ideaRepo:  ideaRepo,
-		userRepo:  userRepo,
-		aiService: aiService,
+		repo:        repo,
+		ideaRepo:    ideaRepo,
+		userRepo:    userRepo,
+		aiService:   aiService,
+		r2Client:    r2Client,
+		broadcaster: broadcaster,
+
+		cfg: cfg,
 	}
 }
 
@@ -81,6 +102,25 @@ func (s *mvpService) Create(ctx context.Context, userId string, ideaId uuid.UUID
 	}
 
 	return id, nil
+}
+
+func (s *mvpService) GenerateAndSave(ctx context.Context, userId string, req request.GenerateLandingPage) error {
+	idea, err := s.checkOwner(ctx, userId, req.IdeaID)
+	if err != nil {
+		return err
+	}
+
+	mvp, err := s.repo.GetByID(ctx, req.MVPId)
+	if err != nil {
+		fmt.Printf("ERROR: failed to get MVP by ID %s: %v\n", req.MVPId, err)
+		return gorm.ErrRecordNotFound
+	}
+
+	localMVP := *mvp
+
+	go s.generateAndSaveMVPWorkflow(idea, &localMVP, req, userId)
+
+	return nil
 }
 
 // GetAllByIdea retrieves all MVPs for a specific idea, ensuring the user is the owner.
@@ -221,6 +261,92 @@ func (s *mvpService) GenerateLandingPage(ctx context.Context, mvpId, ideaId uuid
 	}
 
 	return htmlContent, nil
+}
+
+func (s *mvpService) generateAndSaveMVPWorkflow(idea *domain.Idea, mvp *domain.MVPSimulator, req request.GenerateLandingPage, userId string) {
+	aiGenerationTimeout := 2 * time.Minute
+
+	ctx, cancel := context.WithTimeout(context.Background(), aiGenerationTimeout)
+	defer cancel()
+
+	activityItem := &response.ActivityItem{
+		ID:        idea.ID.String(),
+		Type:      "error",
+		IdeaID:    idea.ID.String(),
+		IdeaTitle: idea.Title,
+	}
+
+	generatedHTML, err := s.GenerateLandingPage(ctx, req.MVPId, req.IdeaID, userId, req.Prompt)
+	if err != nil {
+		fmt.Printf("ERROR: failed to generate landing page for MVP %s: %v\n", req.MVPId, err)
+		activityItem.Message = "Failed to generate landing page. Please try again later."
+		s.broadcaster.BroadcastActivity(userId, activityItem)
+		return
+	}
+
+	validatedHtml, err := validation.GetValidatedHTML(generatedHTML, *req.MetaTitle, *req.MetaDescription, req.IdeaID.String(), req.MVPId.String(), s.cfg.HTMLValidator)
+	if err != nil {
+		fmt.Printf("ERROR: failed to validate HTML for MVP %s: %v\n", req.MVPId, err)
+		activityItem.Message = "Generated HTML is invalid. Please try again."
+		s.broadcaster.BroadcastActivity(userId, activityItem)
+		// send notification to the user using websocket / email
+		return
+	}
+
+	// upload the validated HTML to R2
+	contentType := "text/html"
+	key := fmt.Sprintf("%s/mvp/%s", req.IdeaID.String(), req.MVPId.String())
+	signedUrl, htmlUrl, err := s.r2Client.GetSignedURL(ctx, key, contentType)
+	if err != nil {
+		fmt.Printf("ERROR: failed to get signed URL for MVP %s: %v\n", req.MVPId, err)
+		activityItem.Message = "Failed to save the generated HTML. Please try again later."
+		s.broadcaster.BroadcastActivity(userId, activityItem)
+		// send notification to the user using websocket / email
+		return
+	}
+
+	// upload the HTML to R2
+	reqPut, err := http.NewRequestWithContext(ctx, "PUT", signedUrl, strings.NewReader(validatedHtml))
+	if err != nil {
+		fmt.Printf("ERROR: failed to create PUT request for MVP %s: %v\n", req.MVPId, err)
+		activityItem.Message = "Failed to save the generated HTML. Please try again later."
+		s.broadcaster.BroadcastActivity(userId, activityItem)
+		return
+	}
+	reqPut.Header.Set("Content-Type", contentType)
+
+	resp, err := http.DefaultClient.Do(reqPut)
+	if err != nil {
+		fmt.Printf("ERROR: failed to upload HTML to R2 for MVP %s: %v\n", req.MVPId, err)
+		activityItem.Message = "Failed to save the generated HTML. Please try again later."
+		s.broadcaster.BroadcastActivity(userId, activityItem)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		fmt.Printf("ERROR: failed to upload HTML to R2 for MVP %s: status %s\n%s\n", req.MVPId, resp.Status, string(bodyBytes))
+		activityItem.Message = "Failed to save the generated HTML. Please try again later."
+		s.broadcaster.BroadcastActivity(userId, activityItem)
+		return
+	}
+
+	// Update the MVP with the HTML URL
+	mvp.HTMLURL = htmlUrl
+	if err := s.repo.Update(ctx, mvp); err != nil {
+		fmt.Printf("ERROR: failed to update MVP %s with HTML URL: %v\n", req.MVPId, err)
+		activityItem.Message = "Failed to save the generated HTML. Please try again later."
+		s.broadcaster.BroadcastActivity(userId, activityItem)
+		// send notification to the user using websocket / email
+		return
+	}
+
+	activityItem.ID = mvp.ID.String()
+	activityItem.Type = "mvp_generated"
+	activityItem.Message = "Landing page generation has been completed successfully."
+	activityItem.ReferenceURL = fmt.Sprintf("/mvp/%s?mvpId=%s", req.IdeaID.String(), mvp.ID.String())
+	s.broadcaster.BroadcastActivity(userId, activityItem)
 }
 
 func (s *mvpService) checkOwner(ctx context.Context, userId string, ideaId uuid.UUID) (*domain.Idea, error) {
