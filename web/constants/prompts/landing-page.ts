@@ -10,7 +10,7 @@ export const getLandingPagePromptTemplate = (
 2. Only return the HTML content without any additional text or explanations. The output should only contain body content, no <head> or <html> or any other tag. It will be scanned by advanced AI systems, so it must be perfect.
 3. The landing page should be visually appealing, modern, and professional, clean, modern, beautiful, and minimalistic with rounded edges and subtle animations.
 4. The structure should include a hero section, a features/benefits section (3-4 features), and a final call-to-action section.
-5. Do not include any other "<script>" tags or external JavaScript files. If you are to iuse any JavaScript, it must be inline and only for the popup functionality and should be minimal and be injected directly into the body tag.
+5. Do not include any other "<script>" tags or external JavaScript files. If you are to use any JavaScript, it must be inline and only for the popup functionality and should be minimal and be injected directly into the body tag.
 6. The main call-to-action button must have id="ctaButton".
 7. The call-to-action button and section should not redirect to each other.
 8. On  clicking the call-to-action button, it should show a popup with the message "Thanks for your interest!".
