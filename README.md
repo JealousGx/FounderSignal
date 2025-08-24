@@ -1,5 +1,7 @@
 ## 🧠 FounderSignal — Test Startup Ideas Fast
 
+> **⚠️ NOTE:** FounderSignal website is no longer functional. The backend was deployed on a paid platform on free tier and since it's already expired and I could not get enough active users, I decided to archive the project.
+
 A real-time micro-validation platform for startup founders to test startup ideas within 72 hours — powered by dynamic MVPs, user feedback, and AI summaries.
 
 ---
