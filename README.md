@@ -8,7 +8,7 @@ A real-time micro-validation platform for startup founders to test startup ideas
 
 ### Watch the demo video:
 
-[![FounderSignal demo](https://i.ytimg.com/vi/3hjUeTAXixw/hqdefault.jpg)](https://www.youtube.com/watch?v=3hjUeTAXixw)
+[![FounderSignal demo](https://i.ytimg.com/vi/DrhSM3VJu9A/hqdefault.jpg)](https://www.youtube.com/watch?v=DrhSM3VJu9A)
 
 ---
 
